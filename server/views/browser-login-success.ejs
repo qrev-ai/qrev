@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Login Success</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style type="text/css" media="screen">
+        body {
+            background: linear-gradient(269.83deg, #3a3e46 18.46%, #2a2c30 86.13%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .card {
+            /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2); */
+            border-radius: 5px;
+            transition: 0.3s;
+            width: 40%;
+            /* background-color: white; */
+            background: rgba(0, 0, 0, .43);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-evenly;
+            align-items: center;
+            min-height: 30vh;
+        }
+
+        .a:hover {
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        a {
+            background-color: #0492da;
+            border: none;
+            color: white;
+            padding: 0.75em 0.75em;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-family: azo-sans-web, sans-serif;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .loading-text {
+            font-family: "Avenir";
+            font-style: normal;
+            color: #dce0e8;
+            font-size: 2em;
+            opacity: .6;
+            text-align: center;
+        }
+
+        .logo {
+            width: 10%;
+            position: absolute;
+            top: 1em;
+            left: 1em;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <span class="loading-text">Authentication successful</span>
+        <span class="loading-text">Please close this window and go back to QRev in the other browser window.</span>
+    </div>
+    <script>
+        const delayTime = 1200;
+        console.log("Inside close window script, wait time is " + delayTime + "ms ");
+        setTimeout(() => {
+            console.log("Inside set timeout");
+            window.opener.postMessage({ action: "CLOSE_GOOGLE_MODAL" }, "*");
+        }, delayTime);
+    </script>
+</body>
+
+</html>
