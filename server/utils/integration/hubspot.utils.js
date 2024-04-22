@@ -10,10 +10,9 @@ const fileName = "HubSpot Utils";
 async function _exchangeCodeForTokens({ oauthCode }, { logg, txid, funcName }) {
     const CLIENT_ID = process.env.HUBSPOT_CLIENT_ID;
     const CLIENT_SECRET = process.env.HUBSPOT_CLIENT_SECRET;
-    let REDIRECT_URI = process.env.HUBSPOT_REDIRECT_URI;
-    if (process.env.LOCAL_COMPUTER === "yes") {
-        REDIRECT_URI = "http://localhost:8080/api/hubspot/redirect";
-    }
+    let REDIRECT_URI =
+        process.env.SERVER_URL_PATH + process.env.HUBSPOT_REDIRECT_URI;
+
     let formData = qs.stringify({
         code: oauthCode,
         client_secret: CLIENT_SECRET,

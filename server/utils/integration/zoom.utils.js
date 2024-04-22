@@ -14,18 +14,17 @@ async function _exchangeCodeForTokens(
     logg.info(`started`);
     let CLIENT_ID = process.env.ZOOM_CLIENT_ID;
     let CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
-    let REDIRECT_URI = process.env.ZOOM_REDIRECT_URI;
+    let REDIRECT_URI =
+        process.env.SERVER_URL_PATH + process.env.ZOOM_REDIRECT_URI;
 
     if (isDev) {
         logg.info(`Using dev credentials`);
         CLIENT_ID = process.env.ZOOM_DEV_CLIENT_ID;
         CLIENT_SECRET = process.env.ZOOM_DEV_CLIENT_SECRET;
-        REDIRECT_URI = process.env.ZOOM_DEV_REDIRECT_URI;
+        REDIRECT_URI =
+            process.env.SERVER_URL_PATH + process.env.ZOOM_DEV_REDIRECT_URI;
     }
 
-    if (process.env.LOCAL_COMPUTER === "yes") {
-        REDIRECT_URI = "http://localhost:8080/api/zoom/redirect";
-    }
     let formData = qs.stringify({
         grant_type: "authorization_code",
         code: oauthCode,

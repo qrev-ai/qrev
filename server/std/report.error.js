@@ -20,8 +20,8 @@ export async function reportErrorToQRevTeam({
             location = "unknown";
         }
 
-        if (process.env.LOCAL_COMPUTER === "yes") {
-            logg.info(`email not sent because LOCAL_COMPUTER=yes`);
+        if (process.env.ENVIRONMENT_TYPE === "dev") {
+            logg.info(`email not sent because it is a dev environment`);
             logg.info(`ended`);
             return;
         }
@@ -47,12 +47,6 @@ export async function reportErrorToQRevTeam({
         let primaryReportEmail = process.env.PRIMARY_REPORT_EMAIL;
         let secondaryReportEmail = process.env.SECONDARY_REPORT_EMAIL;
         let recipientList = [primaryReportEmail, secondaryReportEmail];
-        if (process.env.LOCAL_COMPUTER === "yes") {
-            logg.info(
-                `sending email to only primary email because LOCAL_COMPUTER=yes`
-            );
-            recipientList = [primaryReportEmail];
-        }
 
         let fromEmail = process.env.REPORT_FROM_EMAIL;
         let templateId = process.env.SENDGRID_REPORT_ERROR_TEMPLATE_ID;
