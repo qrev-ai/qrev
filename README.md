@@ -13,8 +13,6 @@ Here is what you need to be able to run QRev.
 
     > If you want to enable any of the available integrations, you will have to obtain credentials for each one. More details on this can be found below under the [integrations section](#integrations).
 
-## Development
-
 ### Setup
 
 1. Clone the GitHub repo
@@ -64,9 +62,9 @@ Here is what you need to be able to run QRev.
     npm start
     ```
 
-## Integrations
+### Integrations
 
-### Creating Google Credentials for Signing in to QRev
+#### Creating Google Credentials for Signing in to QRev
 
 1. Open [Google API Console](https://console.cloud.google.com/apis/dashboard). If you don't have a project in your Google Cloud subscription, you'll need to create one before proceeding further. Under Dashboard pane, select Enable APIS and Services.
 2. Under Scopes, select the scope with scope value `https://www.googleapis.com/auth/gmail.send` and `https://www.googleapis.com/auth/gmail.readonly`.
@@ -74,7 +72,7 @@ Here is what you need to be able to run QRev.
 4. Under `Credentials` section, create a `OAuth Client ID` credential with `Web Application` as the application type. Then add the following as the redirect URI: `<SERVER_URL_PATH>/api/google/auth/code/to/tokens`. If you are running on your local machine then `SERVER_URL_PATH` will be `http://localhost:8080`.
 5. Now, copy the client ID and client secret and store it under `.env` as fields `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` respectively.
 
-### Zoom Integration
+#### Zoom Integration
 
 1. Open [Zoom Marketplace](https://marketplace.zoom.us/) and sign in with your Zoom account.
 2. Under `Develop` build a `User-managed app` of `OAuth` type.
@@ -82,13 +80,13 @@ Here is what you need to be able to run QRev.
 4. Set the Redirect URL as `<SERVER_URL_PATH>/api/zoom/redirect` under `Production` (also add this URL under `OAuth Allow Lists`). If you are running on your local machine then `SERVER_URL_PATH` will be `http://localhost:8080`.
 5. Now copy the Client ID and Client Secret for Production to your `.env` file as fields: `ZOOM_CLIENT_ID` and `ZOOM_CLIENT_SECRET`. Also, copy the Secret Token and Verification Token as fields: `ZOOM_SECRET_TOKEN` and `ZOOM_VERIFICATION_TOKEN`. These values will be useful to verify the event notifications sent by Zoom.
 
-### HubSpot Integration
+#### HubSpot Integration
 
 1. Open [HubSpot Developer](https://developer.hubspot.com/) and sign into your account and then create a app.
 2. Now copy the App ID, Client ID and Client Secret to your `.env` file as fields: `HUBSPOT_APP_ID`, `HUBSPOT_CLIENT_ID` and `HUBSPOT_CLIENT_SECRET`.
 3. Set the Redirect URL for OAuth as `<SERVER_URL_PATH>/api/hubspot/redirect`.
 
-### Sendgrid Integration for Error Reporting (Optional)
+#### Sendgrid Integration for Error Reporting (Optional)
 
 > We currently use Sendgrid for error reporting whenever en error occurs in the backend server. So this is optional if you do not want to enable error reporting.
 
