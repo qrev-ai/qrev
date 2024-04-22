@@ -1524,7 +1524,7 @@ async function _getAllSequencesAndItsAnalytics(
         let status = seqProspect.status;
         if (status === "bounced" || status === "failed") {
             resultMap[seqId].current_prospects.bounced++;
-        } else {
+        } else if (status === "sent") {
             resultMap[seqId].current_prospects.active++;
         }
     }
@@ -1610,7 +1610,7 @@ async function _getSequenceDetails(
         let status = seqProspect.status;
         if (status === "bounced" || status === "failed") {
             result.current_prospects.bounced++;
-        } else {
+        } else if (status === "sent") {
             result.current_prospects.active++;
         }
     }
