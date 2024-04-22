@@ -11,14 +11,14 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/QRevAI/qrev-app-be.git"
+        "url": "git+https://github.com/qrev-ai/qrev.git"
     },
     "author": "",
     "license": "ISC",
     "bugs": {
-        "url": "https://github.com/QRevAI/qrev-app-be/issues"
+        "url": "https://github.com/qrev-ai/qrev/issues"
     },
-    "homepage": "https://github.com/QRevAI/qrev-app-be#readme",
+    "homepage": "https://github.com/qrev-ai/qrev#readme",
     "devDependencies": {
         "@babel/cli": "^7.23.0",
         "@babel/core": "^7.23.0",
