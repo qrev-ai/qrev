@@ -156,6 +156,9 @@ async function _addUserQueryToConversation(
     if (uploadedData && uploadedData.file_name) {
         messageObj.uploaded_file = uploadedData.file_name;
     }
+    if (uploadedData && uploadedData.values) {
+        messageObj.uploaded_data = uploadedData.values;
+    }
     let updateObj = { $push: { messages: messageObj } };
     if (!conversation.messages || conversation.messages.length === 0) {
         updateObj.$set = { title: query };
