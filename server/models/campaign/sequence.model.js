@@ -11,6 +11,8 @@ const SequenceSchema = new Schema({
     conversation: { type: String, ref: "qai.conversation" },
     uploaded_file_name: String,
 
+    status: String,
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });

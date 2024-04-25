@@ -192,6 +192,7 @@ async function _createCampaignSequence(
         account: accountId,
         created_by: userId,
         conversation: conversationId,
+        status: "created",
     };
     if (uploadedData && uploadedData.file_name) {
         obj.uploaded_file_name = uploadedData.file_name;
@@ -405,7 +406,7 @@ const createCampaignSequenceProspectMessagesFromQAi = functionWrapper(
     _createCampaignSequenceProspectMessagesFromQAi
 );
 
-async function _setupSequenceProspectMessages(
+async function _setupSequenceProspectMessageTime(
     { sequenceId, accountId, userId },
     { txid, logg, funcName }
 ) {
@@ -418,6 +419,16 @@ async function _setupSequenceProspectMessages(
 
     if (!sequenceDoc)
         throw `sequenceDoc is invalid for sequenceId: ${sequenceId}`;
+
+    if (sequenceDoc.status === "messages_scheduled")
+        throw `sequenceId: ${sequenceId} already has messages_scheduled status`;
+
+    // update sequence status to "messages_scheduling"
+    // this is to avoid multiple calls to this function at the same time
+    let seqStatusUpdateResp = await SequenceModel.updateOne(seqQueryObj, {
+        status: "messages_scheduling",
+    });
+    logg.info(`seqStatusUpdateResp: ${JSON.stringify(seqStatusUpdateResp)}`);
 
     let sequenceStepQueryObj = { sequence: sequenceId };
     let sequenceStepDocs = await SequenceStep.find(sequenceStepQueryObj).lean();
@@ -445,14 +456,20 @@ async function _setupSequenceProspectMessages(
         );
     if (scheduleErr) throw scheduleErr;
 
+    // update sequence status to "messages_scheduled"
+    let seqStatusUpdateResp2 = await SequenceModel.updateOne(seqQueryObj, {
+        status: "messages_scheduled",
+    });
+    logg.info(`seqStatusUpdateResp2: ${JSON.stringify(seqStatusUpdateResp2)}`);
+
     logg.info(`ended`);
     return [scheduleResp, null];
 }
 
-export const setupSequenceProspectMessages = functionWrapper(
+export const setupSequenceProspectMessageTime = functionWrapper(
     fileName,
-    "setupSequenceProspectMessages",
-    _setupSequenceProspectMessages
+    "setupSequenceProspectMessageTime",
+    _setupSequenceProspectMessageTime
 );
 
 async function _scheduleTimeForCampaignProspectsFromQAi(

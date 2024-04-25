@@ -25,7 +25,7 @@ export async function sendCampaignApi(req, res, next) {
     if (!sequenceId) throw `Missing sequence_id in body`;
 
     let [campCreateResp, campErr] =
-        await CampaignUtils.setupSequenceProspectMessages(
+        await CampaignUtils.setupSequenceProspectMessageTime(
             { sequenceId, accountId, userId },
             { txid }
         );
