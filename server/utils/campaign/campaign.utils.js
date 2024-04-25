@@ -1780,3 +1780,90 @@ export const executeCampaignCronJob = functionWrapper(
     "executeCampaignCronJob",
     _executeCampaignCronJob
 );
+
+async function _getSequenceProspects(
+    { accountId, sequenceId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+
+    let queryObj = { account: accountId, sequence: sequenceId };
+    let seqProspects = await SequenceProspect.find(queryObj)
+        .populate("contact")
+        .lean();
+    logg.info(`seqProspects.length: ${seqProspects.length}`);
+    if (seqProspects.length < 10) {
+        logg.info(`seqProspects: ${JSON.stringify(seqProspects)}`);
+    }
+
+    let data = [];
+    const headers = {
+        _id: {
+            label: "ID",
+            type: "string",
+            hidden: true,
+            order: 0,
+        },
+        email: {
+            label: "Email",
+            type: "string",
+            order: 1,
+        },
+        name: {
+            label: "Name",
+            type: "string",
+            order: 2,
+        },
+        phone_number: {
+            label: "Phone Number",
+            type: "string",
+            order: 3,
+        },
+        company_name: {
+            label: "Company Name",
+            type: "string",
+            order: 4,
+        },
+        linkedin_url: {
+            label: "LinkedIn URL",
+            type: "string",
+            order: 5,
+        },
+        status: {
+            label: "Status",
+            type: "chip",
+            values: ["pending", "sent", "bounced"],
+            order: 6,
+        },
+    };
+
+    for (let i = 0; i < seqProspects.length; i++) {
+        let seqProspect = seqProspects[i];
+        let contact = seqProspect.contact || {};
+        let name = contact.first_name || "";
+        if (contact.last_name) name += " " + contact.last_name;
+
+        let item = {
+            _id: seqProspect._id,
+            email: contact.email || "",
+            name,
+            phone_number: contact.phone_number || "",
+            company_name: contact.company_name || "",
+            linkedin_url: contact.linkedin_url || "",
+            status: seqProspect.status,
+        };
+
+        data.push(item);
+    }
+
+    logg.info(`ended`);
+    return [{ headers, data }, null];
+}
+
+export const getSequenceProspects = functionWrapper(
+    fileName,
+    "getSequenceProspects",
+    _getSequenceProspects
+);

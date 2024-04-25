@@ -181,6 +181,35 @@ export async function getSequenceDetailsApi(req, res, next) {
     });
 }
 
+export async function getSequenceProspectsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceProspectsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId, sequence_id: sequenceId } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+
+    let [result, resultErr] = await CampaignUtils.getSequenceProspects(
+        { accountId, sequenceId },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
 export async function setSenderListForCampaignApi(req, res, next) {
     const txid = req.id;
     const funcName = "setSenderListForCampaignApi";

@@ -16,6 +16,11 @@ router.get("/sequence/all", apiWrapper(CampaignApis.getAllSequenceApi));
 
 router.get("/sequence", apiWrapper(CampaignApis.getSequenceDetailsApi));
 
+router.get(
+    "/sequence/prospects",
+    apiWrapper(CampaignApis.getSequenceProspectsApi)
+);
+
 router.post(
     "/config/senders",
     apiWrapper(CampaignApis.setSenderListForCampaignApi)
