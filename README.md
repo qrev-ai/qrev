@@ -1,6 +1,6 @@
 # qrev
 
-## Getting Started
+## Getting Started with the QRev App Server
 
 To get a local copy up and running, please follow these simple steps.
 
@@ -8,7 +8,7 @@ To get a local copy up and running, please follow these simple steps.
 
 Here is what you need to be able to run QRev.
 
--   Node.js (Version: =18.18.0)
+-   Node.js (Version: >=18.18.0)
 -   Mongo (Version: >=5.x)
 
     > If you want to enable any of the available integrations, you will have to obtain credentials for each one. More details on this can be found below under the [integrations section](#integrations).
