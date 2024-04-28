@@ -29,6 +29,14 @@ If Salesforce were built today, starting with AI, it would be built with AI Agen
 
 > NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set with ideas from contributors like you. This repository will be updated regularly with changes and new releases.
 
+## 🚀 Tech Stack
+
+- ✅ **Framework**: [Typescript for frontend](https://www.typescriptlang.org/) & [NodeJS for backend](https://nodejs.org/en)
+- ✅ **App Server Database**: [MongoDB](https://www.mongodb.com/).
+- ✅ **Vector Database**: [ChromaDB](https://www.trychroma.com/).
+- ✅ **AI Server Database**: [SQLite](https://www.sqlite.org/).
+- ✅ **LLM Tooling**: [Langchain](https://github.com/hwchase17/langchain).
+
 ## Prerequisites :point_down:
 
 Before you get started, please make sure you have the following installed:
