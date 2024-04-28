@@ -24,23 +24,22 @@ These are referenced in the [Client Code](https://github.com/qrev-ai/qrev/tree/m
 
 ### Setup 
 
-1. Go to the `client` folder 
+1. **Go to the `client` folder**
+```bash
+cd client 
+```
 
-```sh
-    cd client
-    ```
+2. **Install libraries**
 
-2. Install libraries
+```bash 
+npm install
+```
 
-```sh
-    npm install
-    ```
+3. **Run the client** 
 
-3. Run the client 
-
-```sh 
-   npm start 
-   ```
+```bash  
+npm start  
+```
 
 ## Getting Started with the QRev App Server
 
