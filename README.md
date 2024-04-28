@@ -21,7 +21,7 @@
 </p>
 
 <p align="center">
-    <img alt="Node version" src="https://img.shields.io/static/v1?label=node&message=%20%3E=18%2E.18&logo=node.js&color=2334D058" />
+    <img alt="Node version" src="https://img.shields.io/static/v1?label=node&message=%20%3E=18%2E18&logo=node.js&color=2334D058" />
       <img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English">
 </p>
 
