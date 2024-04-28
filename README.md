@@ -16,30 +16,6 @@ There's 3 main components to running the code
 - 🗂️ [App Server](https://github.com/qrev-ai/qrev/tree/main/server) 
 - 🤖 [AI Server](https://github.com/qrev-ai/qrev/tree/main/ai) 
 
-## Getting Started with the QRev App Client 
-
-Make sure you have the right [Environment variables](https://github.com/qrev-ai/qrev/tree/main/client/.env.example)
-
-These are referenced in the [Client Code](https://github.com/qrev-ai/qrev/tree/main/client/src/config/credential.js)
-
-### Setup 
-
-1. **Go to the `client` folder**
-```bash
-cd client 
-```
-
-2. **Install libraries**
-
-```bash 
-npm install
-```
-
-3. **Run the client** 
-
-```bash  
-npm start  
-```
 
 ## Getting Started with the QRev App Server
 
@@ -102,6 +78,31 @@ Here is what you need to be able to run QRev.
     ```sh
     npm start
     ```
+
+## Getting Started with the QRev App Client 
+
+Make sure you have the right [Environment variables](https://github.com/qrev-ai/qrev/tree/main/client/.env.example)
+
+These are referenced in the [Client Code](https://github.com/qrev-ai/qrev/tree/main/client/src/config/credential.js)
+
+### Setup 
+
+1. **Go to the `client` folder**
+```bash
+cd client 
+```
+
+2. **Install libraries**
+
+```bash 
+npm install
+```
+
+3. **Run the client** 
+
+```bash  
+npm start  
+```
 
 ### Integrations
 
