@@ -1,9 +1,33 @@
-# qrev
+<h1 align="center"> Welcome to QRev 👋</h1> 
 
-QRev is an Open Source alternative to Salesforce. If Salesforce were built today, 
-starting with AI, it would be built with AI Agents at the foundation. 
+<h3 align="center">
+	<a href="https://qrev.ai?utm_medium=community&utm_source=github&utm_campaign=qrev%20repo">Website</a>
+	<span> | </span>
+	<a href="https://join.slack.com/t/qrev/shared_invite/zt-2gsc6omvb-L5bLaBubluDEdK5ZB133dg">Community Slack</a>
+</h3>
 
-> NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set. This repository will be updated regularly with changes and new releases.
+<div style="text-align: center;">
+  <img
+    width="1028"  
+	style="display: block; margin-left: auto; margin-right: auto;"
+    class="block dark:hidden"
+    src="/images/Qai-Structure.png"
+    alt="Architecture"
+  />
+</div>
+
+<p align="center">
+  <em>🤖 AI Agents to scale your Sales org infinitely; Open Source alternative to Salesforce 🤖   </em>
+</p>
+
+<p align="center">
+    <img alt="Node version" src="https://img.shields.io/static/v1?label=node&message=%20%3E=18%2E.18&logo=node.js&color=2334D058" />
+      <img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English">
+</p>
+
+If Salesforce were built today, starting with AI, it would be built with AI Agents at the foundation. 
+
+> NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set with ideas from contributors like you. This repository will be updated regularly with changes and new releases.
 
 ## Prerequisites :point_down:
 
