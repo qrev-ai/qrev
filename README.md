@@ -27,7 +27,22 @@
 
 If Salesforce were built today, starting with AI, it would be built with AI Agents at the foundation. 
 
+But Salesforce is too expensive, and hard to customise. 
+
 > NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set with ideas from contributors like you. This repository will be updated regularly with changes and new releases.
+
+## Digital Workers or Superagent (a.k.a Qai )? 🤔
+
+Sales orgs have people like SDR's, BDR's, Account Execs, Head of Sales etc. 
+
+The question we ask ourselves constantly is whether we should mimic the real world and have Digital Worker equivalents 
+within the app ? or Have one superagent that co-ordinates with other software agents internally. 
+
+We are starting with the latter approach. We think based on the users role and role based permissions, Qai will be able 
+to do different things. It will also simplify the requirement of remembering names of Digial workers like Qai 
+just for the sake of seeming cool. But internally, there will be an army of digial workers / agents doing their job anyways. 
+
+Open to ideas. 
 
 ## 🚀 Tech Stack
 
