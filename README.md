@@ -1,6 +1,11 @@
 # qrev
 
-## Prerequisites :point_up:
+QRev is an Open Source alternative to Salesforce. If Salesforce were built today, 
+starting with AI, it would be built with AI Agents at the foundation. 
+
+> NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set. This repository will be updated regularly with changes and new releases.
+
+## Prerequisites :point_down:
 
 Before you get started, please make sure you have the following installed:
 
@@ -15,7 +20,6 @@ There's 3 main components to running the code
 - 🎨 [Client App](https://github.com/qrev-ai/qrev/tree/main/client)
 - 🗂️ [App Server](https://github.com/qrev-ai/qrev/tree/main/server) 
 - 🤖 [AI Server](https://github.com/qrev-ai/qrev/tree/main/ai) 
-
 
 ## Getting Started with the QRev App Server
 
