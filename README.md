@@ -31,7 +31,7 @@ But Salesforce is too expensive, and hard to customise.
 
 > NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set with ideas from contributors like you. This repository will be updated regularly with changes and new releases.
 
-## Digital Workers or Superagent (a.k.a Qai )? 🤔
+## Digital Workers for each Sales Role or Superagent (a.k.a Qai )? 🤔
 
 Sales orgs have people like SDR's, BDR's, Account Execs, Head of Sales etc. 
 
