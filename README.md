@@ -1,5 +1,47 @@
 # qrev
 
+## Prerequisites :point_up:
+
+Before you get started, please make sure you have the following installed:
+
+- An editor of your choice. For example, [Visual Studio Code (VS Code)](https://code.visualstudio.com/download)
+- [Node.js](https://nodejs.org/en/download)
+- [Git](https://git-scm.com/downloads)
+
+## Getting started :rocket:
+
+There's 3 main components to running the code 
+
+- 🎨 [Client App](https://github.com/qrev-ai/qrev/tree/main/client)
+- 🗂️ [App Server](https://github.com/qrev-ai/qrev/tree/main/server) 
+- 🤖 [AI Server](https://github.com/qrev-ai/qrev/tree/main/ai) 
+
+## Getting Started with the QRev App Client 
+
+Make sure you have the right [Environment variables](https://github.com/qrev-ai/qrev/tree/main/client/.env.example)
+
+These are referenced in the [Client Code](https://github.com/qrev-ai/qrev/tree/main/client/src/config/credential.js)
+
+### Setup 
+
+1. Go to the `client` folder 
+
+```sh
+    cd client
+    ```
+
+2. Install libraries
+
+```sh
+    npm install
+    ```
+
+3. Run the client 
+
+```sh 
+   npm start 
+   ```
+
 ## Getting Started with the QRev App Server
 
 To get a local copy up and running, please follow these simple steps.
