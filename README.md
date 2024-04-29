@@ -159,4 +159,4 @@ npm start
 
 QRev supports a few Integrations, which will expand over time
 
-Please refer the [Integrations README](https://github.com/qrev-ai/qrev/tree/main/server/INTEGRATIONS_README.md)
+Please refer the [Server README](https://github.com/qrev-ai/qrev/tree/main/server/SERVER_README.md)
