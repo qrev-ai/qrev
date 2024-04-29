@@ -1,4 +1,6 @@
-# Welcome to the Server side integrations document 
+# Welcome to the Server side documention guide 
+
+## Integrations
 
 QRev supports a few Integrations, which will expand over time. 
 
@@ -87,3 +89,30 @@ These APIs is responsible for handling all QAI bot-related operations, such as c
 Campaign Sequence is the entity that represents a marketing campaign in QRev. A campaign sequence is a series of steps that are executed in a specific order to send messages to prospects that are part of the sequence.
 
 These APIs is responsible for handling all campaign sequence-related operations, such as fetching all the existing campaign sequences and their performance metrics.
+
+
+## Campaign Sequence Workflow using QAI bot
+
+### Things involved in the workflow:
+1. User: User is a human who is logged in to QRev who wants to generate campaign
+2. Frontend Server: User communicates to QRev through the Frontend server.
+    1. QAI bot: A text based AI agent in Frontend Server that user can communicate with, to create campaigns for them.
+3. Backend Server: The Backend Server handle user requests sent by the Frontend server. It wll verify the user's access token for authenticaation purposes.
+4. AI server: AI server uses LLMs to handle user query through requests sent by the Backend Server.
+
+### Workflow:
+1. User asks a query to create a campaign with QAi (the user will alsoupload CSV)
+2. The Frontend Server calls the Backend server API with the access token of the user.
+3. The Backend Server verifies the user's access token and if it succeeds then it will forward the request to the AI server.
+4. The AI server will performm the following things:
+   1. Parse the user query to a list of actions to be done 
+   2. Generate a new sequence ID and store the prospect list in a Mongo collection. 
+   3. AI server will asynchronously generate a message subject and message body for each prospect and store it in the Mongo collection and it will call a backend API notifying that message generation is complete.
+   4. Return back the list of actions in the response.
+5. After recieving response from AI server, it performs the following actions:
+   1. Detect the sequence ID in the list of actions present in the response of AI server.
+   2. Create/update People in the CRM.
+   3. Create the sequence, sequence step, and sequence prospects.
+   4. Return the list of actions back to the Frontend.
+6. Frontend server will show the UI for list of actions to the user.
+7. Once the user clicks on the "Send" button, the Backend Server will start assigning a time at which messages will be sent for each prospect in the sequence.
