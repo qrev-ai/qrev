@@ -1,5 +1,9 @@
 <h1 align="center"> Welcome to QRev 👋</h1> 
 
+<p align="center">
+  <em>🤖 AI Agents to scale your Sales org infinitely; Open Source alternative to Salesforce 🤖   </em>
+</p>
+
 <h3 align="center">
 	<a href="https://qrev.ai?utm_medium=community&utm_source=github&utm_campaign=qrev%20repo">Website</a>
 	<span> | </span>
@@ -15,10 +19,6 @@
     alt="Architecture"
   />
 </div>
-
-<p align="center">
-  <em>🤖 AI Agents to scale your Sales org infinitely; Open Source alternative to Salesforce 🤖   </em>
-</p>
 
 <p align="center">
     <img alt="Node version" src="https://img.shields.io/static/v1?label=node&message=%20%3E=18%2E18&logo=node.js&color=2334D058" />
@@ -149,7 +149,22 @@ cd client
 npm install
 ```
 
-3. **Run the client** 
+3. Set up the `.env` file via following commands
+
+    - Copy the example environment file:
+      ```
+      cp .env.example .env
+      ```
+    
+    - Add your Google client id for the variable `REACT_APP_GOOGLE_CLIENT_ID`
+
+    - Add your app backend server host url for `REACT_APP_BASE_API_URL`
+
+    - Add your app backend server host url for `REACT_APP_BACKEND_HOST_URL`
+
+    **Note**: Please make sure there is no `/` at the end of the URL environment values.
+
+4. **Run the client** 
 
 ```bash  
 npm start  
