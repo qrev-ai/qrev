@@ -160,3 +160,11 @@ npm start
 QRev supports a few Integrations, which will expand over time
 
 Please refer the [Server README](https://github.com/qrev-ai/qrev/tree/main/server/SERVER_README.md)
+
+<!-- CONTRIBUTORS -->
+
+### Contributors
+
+<a href="https://github.com/qrev-ai/qrev/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=qrev-ai/qrev" />
+</a>
