@@ -1,0 +1,892 @@
+.dashboard {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+
+  &--container {
+    width: 100%;
+    height: 100%;
+    padding: 24px 0 0;
+    position: relative;
+    box-sizing: border-box;
+
+    @media (max-width: 960px) {
+      padding: 35px 0 0;
+    }
+  }
+
+  h2 {
+    font-family: "Inter";
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 28px;
+    margin: 0;
+    padding: 0 32px;
+    box-sizing: border-box;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+
+    .dashboard-icon {
+      display: flex;
+      width: 48px;
+      height: 48px;
+      padding: 8px;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      border-radius: 4px;
+      border: 1px solid var(--grey-800, #303232);
+      background: var(--base-white, #fff);
+      margin-right: 12px;
+      box-sizing: border-box;
+    }
+
+    .pageview-previous {
+      color: var(--text-secondary-default, #787d7d);
+      margin-right: 6px;
+      cursor: pointer;
+      font-weight: 400;
+    }
+  }
+
+  .dashboard-time-selector {
+    width: 320px;
+    height: 40px;
+    position: absolute;
+    border: 1px solid var(--grey-100, #e4e5e5);
+    right: 32px;
+    top: 28px;
+    border-radius: 4px;
+    overflow: visible;
+  }
+
+  &--body {
+    width: 100%;
+    height: calc(100% - 72px);
+    overflow-x: hidden;
+    overflow-y: scroll;
+    padding: 48px 32px;
+    box-sizing: border-box;
+    background: var(--grey-50);
+  }
+
+  .dashboard-main {
+    width: 100%;
+    height: fit-content;
+
+    &--booked-summary {
+      width: 100%;
+      height: auto;
+      margin-bottom: 32px;
+      display: flex;
+      align-items: stretch;
+      flex-wrap: wrap;
+      justify-content: space-between;
+
+      & > div {
+        min-height: 128px;
+        padding: 28px 0;
+        box-sizing: border-box;
+        border-radius: 4px;
+        background: var(--base-white, #fff);
+        box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+      }
+
+      &-1 {
+        width: calc(16.6% - 5px);
+      }
+
+      &-2 {
+        width: calc(33.2% - 10px);
+        display: flex;
+        align-items: center;
+
+        & > div {
+          width: 50%;
+        }
+      }
+
+      &-3 {
+        width: calc(49.8% - 15px);
+        display: flex;
+        align-items: center;
+
+        & > div {
+          width: 33.33%;
+        }
+      }
+
+      @media (max-width: 960px) {
+        &-1 {
+          width: calc(33.3% - 5px);
+        }
+
+        &-2 {
+          width: calc(66.6% - 10px);
+        }
+
+        &-3 {
+          width: 99.9%;
+          margin-top: 15px;
+        }
+      }
+    }
+
+    &--all-summaries {
+      width: 100%;
+      height: auto;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+
+      .inbound-compaigns {
+        width: calc(75% - 10px);
+
+        & > div {
+          width: 100%;
+          margin-bottom: 32px;
+        }
+
+        .engagement-summaries {
+          display: flex;
+          width: 100%;
+          height: auto;
+          justify-content: space-between;
+          align-items: stretch;
+
+          & > div {
+            border-radius: 4px;
+            background: var(--base-white, #fff);
+            box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+            padding: 16px;
+            box-sizing: border-box;
+          }
+
+          .total-engagement {
+            width: 370px;
+            text-align: center;
+
+            p {
+              text-align: left;
+            }
+
+            .engagement-chart {
+              width: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+
+            @media (max-width: 1400px) {
+              width: 310px;
+            }
+          }
+
+          .revbot-traffic {
+            width: calc(100% - 394px);
+            text-align: center;
+            position: relative;
+
+            p {
+              text-align: left;
+            }
+
+            .revbot-traffic-filter {
+              width: 168px;
+              height: 32px;
+              border-radius: 4px;
+              border: 1px solid var(--grey-100);
+              background: var(--base-white);
+              position: absolute;
+              top: 16px;
+              right: 24px;
+            }
+
+            .traffic-area-chart {
+              width: 100%;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 350px;
+            }
+
+            @media (max-width: 1400px) {
+              width: calc(100% - 334px);
+            }
+          }
+        }
+
+        .inbound-summaries {
+          display: flex;
+          width: 100%;
+          height: auto;
+          justify-content: space-between;
+          align-items: stretch;
+
+          & > div {
+            width: calc(50% - 8px);
+          }
+
+          .inbound-summaries-content1 {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+
+            & > div {
+              width: calc(50% - 8px);
+              border-radius: 4px;
+              background: var(--base-white, #fff);
+              box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+              min-height: 100px;
+              height: auto;
+              padding: 16px;
+              position: relative;
+              box-sizing: border-box;
+            }
+
+            .total-form-visit {
+              margin-bottom: 16px;
+            }
+
+            .form-visitors {
+              margin-bottom: 16px;
+
+              &-analytics {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+
+                & > div {
+                  .form-visitors-span {
+                    display: flex;
+                    align-items: center;
+
+                    & > div {
+                      width: 8px;
+                      height: 8px;
+                      background: #7517eb;
+                      margin-right: 5px;
+                    }
+
+                    p {
+                      font-family: "Inter";
+                      font-style: normal;
+                      font-weight: 500;
+                      font-size: 10px;
+                      line-height: 16px;
+                      letter-spacing: 0.5px;
+                      color: var(--text-primary-default, #303232);
+                      margin: 3px 0;
+                    }
+                  }
+                }
+              }
+            }
+
+            .meetings-converted,
+            .disqualified-leads {
+              position: relative;
+
+              .trends-view {
+                position: absolute;
+                right: 24px;
+                bottom: 20px;
+                display: flex;
+                align-items: center;
+
+                p {
+                  color: var(--semantics-error-dark, #930000);
+                  font-family: "Inter";
+                  font-size: 14px;
+                  font-style: normal;
+                  font-weight: 700;
+                  line-height: 20px;
+                  margin: 0 3px 0 0;
+                }
+              }
+            }
+          }
+
+          .inbound-summaries-qualified {
+            padding: 24px;
+            border-radius: 4px;
+            background: var(--base-white, #fff);
+            box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+            height: auto;
+            min-height: 210px;
+            position: relative;
+            box-sizing: border-box;
+
+            &-title {
+              font-family: "Inter";
+              font-style: normal;
+              font-weight: 700;
+              font-size: 16px;
+              line-height: 24px;
+              letter-spacing: 1px;
+              color: var(--text-primary-default, #303232);
+              margin: 0 0 8px;
+
+              span {
+                font-weight: 800;
+                font-size: 24px;
+                line-height: 28px;
+              }
+            }
+
+            &-contents {
+              width: 100%;
+              box-sizing: border-box;
+              margin-top: 20px;
+            }
+          }
+        }
+
+        .compaigns-summaries {
+          display: flex;
+          align-items: stretch;
+          justify-content: space-between;
+          flex-wrap: wrap;
+          width: 100%;
+
+          & > div {
+            border-radius: 4px;
+            background: var(--base-white, #fff);
+            box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+            height: auto;
+            min-height: 156px;
+            padding: 24px;
+            box-sizing: border-box;
+          }
+
+          .link-opened,
+          .booking-source {
+            width: calc(25% - 8px);
+          }
+
+          .campaign-details {
+            width: calc(75% - 8px);
+            padding: 10px 50px 10px 24px;
+            position: relative;
+            box-sizing: border-box;
+
+            .campaign-details-bookings {
+              flex-shrink: 0;
+              width: fit-content;
+              margin-right: 15px;
+              margin-bottom: 8px;
+
+              p {
+                font-family: "Inter";
+                font-style: normal;
+                font-weight: 800;
+                font-size: 24px;
+                line-height: 28px;
+                letter-spacing: 1px;
+                color: var(--text-primary-default, #303232);
+                margin: 5px 0;
+
+                span {
+                  color: var(--text-primary-default, #303232);
+                  font-size: 14px;
+                  font-style: normal;
+                  line-height: 20px;
+                }
+              }
+            }
+
+            .campaign-details-bars {
+              flex-grow: 1;
+              display: flex;
+              flex-direction: column;
+            }
+          }
+        }
+      }
+
+      .team-overview {
+        width: calc(25% - 5px);
+        border-radius: 4px;
+        background: var(--base-white, #fff);
+        box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+        height: fit-content;
+        min-height: 410px;
+        padding: 16px 24px;
+        position: relative;
+        box-sizing: border-box;
+
+        &-title {
+          color: var(--text-primary-default, #303232);
+          font-family: "Inter";
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 700;
+          line-height: 20px;
+          letter-spacing: 0.28px;
+          margin: 0 0 8px 0;
+        }
+
+        &-desc {
+          color: var(--text-secondary-default, #787d7d);
+          font-family: "Inter";
+          font-size: 10px;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 14px;
+          margin: 0;
+        }
+
+        &-views {
+          width: 100%;
+          overflow-x: hidden;
+          overflow-y: scroll;
+          height: calc(100% - 70px);
+          margin-top: 20px;
+        }
+      }
+
+      @media (max-width: 1024px) {
+        .inbound-compaigns {
+          width: 100%;
+        }
+
+        .team-overview {
+          width: 308px;
+          margin-top: 0;
+        }
+      }
+    }
+  }
+
+  .booked-summary-card {
+    padding: 0 24px;
+    position: relative;
+    box-sizing: border-box;
+
+    .__react_component_tooltip {
+      padding: 0 !important;
+    }
+
+    p {
+      font-family: "Inter";
+      font-style: normal;
+      color: var(--text-primary-default, #303232);
+    }
+
+    &-title {
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 24px;
+      margin-bottom: 10px;
+      white-space: nowrap;
+    }
+
+    &-small-title {
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 24px;
+      color: var(--text-primary-default, #303232);
+      margin: 0 0 5px 0;
+
+      span {
+        position: relative;
+        left: 6px;
+        top: 3px;
+        cursor: pointer;
+      }
+    }
+
+    &-number {
+      font-weight: 800;
+      font-size: 32px;
+      line-height: 40px;
+      letter-spacing: 2px;
+      margin: 0;
+    }
+
+    &-percentage {
+      font-weight: 500;
+      font-size: 16px;
+      line-height: 24px;
+      position: absolute;
+      bottom: 0;
+      right: 24px;
+      margin: 0;
+    }
+
+    &-small-text {
+      font-weight: 500;
+      font-size: 10px;
+      line-height: 16px;
+      letter-spacing: 0.5px;
+      margin: 0;
+
+      span {
+        margin: 0 5px;
+      }
+    }
+  }
+
+  .booked-bordered-card {
+    border-right: 1px solid var(--grey-500, #787d7d);
+  }
+
+  .analytics-opening-view {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+
+    p {
+      color: var(--semantics-info-default, #264daf);
+      font-family: "Inter";
+      font-size: 10px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 14px;
+      margin: 0 0 0 2px;
+    }
+  }
+
+  .analytics-cursor-pointer {
+    cursor: pointer;
+
+    &:hover {
+      box-shadow: #67a9ed 0px 0px 25px -5px;
+    }
+  }
+
+  .analytics-custom-circle-progress {
+    position: relative;
+    overflow: visible;
+    width: 100px;
+    height: 80px;
+    flex-shrink: 0;
+    margin: 0 auto;
+
+    & > p {
+      font-family: "Inter";
+      font-style: normal;
+      font-weight: 900;
+      font-size: 8px;
+      line-height: 16px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-primary-default, #303232);
+      margin: 0;
+      position: absolute;
+      z-index: 2;
+    }
+
+    .main-progress {
+      width: 80px;
+      height: 80px;
+      left: 15px;
+      top: 0;
+      position: absolute;
+      z-index: 1;
+    }
+
+    .progress-submitted {
+      right: -8px;
+      bottom: 0px;
+    }
+
+    .progress-incompleted {
+      left: 0;
+      top: 5px;
+    }
+  }
+
+  .analytics-bar-progress {
+    width: 100%;
+    height: 16px;
+    border-radius: 2px;
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    &--process {
+      height: 16px;
+      margin-right: 5px;
+    }
+
+    p {
+      font-family: "Inter";
+      font-style: normal;
+      font-weight: 500;
+      font-size: 10px;
+      line-height: 16px;
+      letter-spacing: 0.5px;
+      color: #ffffff;
+      margin: 0;
+    }
+  }
+
+  .dashboard-horizontal-progress {
+    width: 100%;
+    display: flex;
+    margin-top: 10px;
+
+    .dashboard-bar-container {
+      flex-shrink: 0;
+      text-align: center;
+
+      .filled-bar {
+        width: 100%;
+        height: 12px;
+        border-radius: 2px 0 0 2px;
+        margin-bottom: 4px;
+      }
+
+      .incomplete-bar {
+        width: 100%;
+        height: 12px;
+        border-radius: 0 2px 2px 0;
+        margin-bottom: 4px;
+      }
+
+      p {
+        width: 100%;
+        text-align: center;
+        color: var(--text-primary-default, #303232);
+        text-align: center;
+        font-family: "Inter";
+        font-size: 10px;
+        font-style: normal;
+        font-weight: 500;
+        line-height: 12px;
+        letter-spacing: 0.4px;
+        margin: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .analytics-bar-row {
+    margin: 12px 0;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+
+    label,
+    p {
+      font-family: "Inter";
+      font-style: normal;
+      font-weight: 500;
+      font-size: 10px;
+      line-height: 12px;
+      color: var(--text-primary-default, #303232);
+      margin: 0;
+      width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.4px;
+    }
+
+    .analytics-bar-row-process {
+      width: calc(100% - 100px);
+      flex-shrink: 0;
+    }
+  }
+
+  .dashboard-total-engagement {
+    width: 100%;
+    height: 100%;
+
+    .engagement-card {
+      width: 200px;
+      height: 108px;
+      border-radius: 4px;
+      background: var(--base-white, #fff);
+      box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+      margin-bottom: 32px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .engagement-head {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+
+      .engagement-title {
+        color: var(--text-primary-default, #303232);
+        font-family: "Inter";
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 700;
+        line-height: 24px;
+        letter-spacing: 0.32px;
+        margin: 0 auto 0 0;
+      }
+
+      .engagement-back {
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      .engagement-filter {
+        width: 160px;
+        height: 32px;
+        margin-left: 12px;
+        border-radius: 4px;
+        border: 1px solid var(--grey-800, #303232);
+        overflow: visible;
+      }
+    }
+
+    .engagement-table {
+      width: 100%;
+      height: calc(100% - 175px);
+      overflow-x: scroll;
+      overflow-y: hidden;
+
+      .engagement-table-row {
+        width: fit-content;
+        min-width: 100%;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        box-sizing: border-box;
+        cursor: pointer;
+
+        p {
+          color: var(--text-primary-default, #303232);
+          font-family: "Inter";
+          font-size: 14px;
+          font-style: normal;
+          font-weight: 400;
+          line-height: 20px;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .engagement-table-name {
+          width: calc(25% - 140px);
+          min-width: 180px;
+          padding-right: 12px;
+          box-sizing: border-box;
+        }
+
+        .engagement-table-remarks {
+          width: 230px;
+          padding-right: 12px;
+          box-sizing: border-box;
+        }
+
+        .engagement-table-status {
+          width: 330px;
+          padding-right: 12px;
+          box-sizing: border-box;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+
+          p {
+            margin: 0 5px 0 0;
+            width: fit-content;
+            padding: 2px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 400;
+            line-height: 16px;
+            box-sizing: border-box;
+          }
+        }
+
+        .engagement-clickable-btn {
+          display: flex;
+          align-items: center;
+
+          p {
+            width: 28px;
+            height: 28px;
+            border-radius: 28px;
+            background: #e5f6ff;
+            cursor: pointer;
+            text-align: center;
+            color: #0072c3;
+            line-height: 26px;
+            font-weight: bold;
+          }
+        }
+      }
+
+      .engagement-table-row-expandable {
+        background: var(--grey-100);
+        border-bottom: 1px solid var(--base-beige-light, #efedec);
+        width: fit-content;
+        min-width: 100%;
+
+        .arrow-icon {
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: rotate(90deg);
+          margin: 5px;
+          cursor: pointer;
+        }
+
+        .arrow-icon-rotate {
+          transform: rotate(180deg);
+        }
+
+        .aggrated-booked {
+          color: #8a3ffc;
+        }
+      }
+
+      .engagement-table-header {
+        background: var(--base-beige-light, #efedec);
+
+        p {
+          color: var(--primary-default, #2f4858);
+          font-weight: 500;
+        }
+      }
+
+      .engagement-table-body {
+        width: fit-content;
+        min-width: 100%;
+        height: calc(100% - 84px);
+        overflow-x: hidden;
+        overflow-y: scroll;
+      }
+
+      .engagement-table-footer {
+        background: var(--base-beige-light, #efedec);
+      }
+
+      img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+      }
+    }
+  }
+
+  .dashboard-bookings {
+    width: 100%;
+    height: 100%;
+
+    .engagement-table {
+      height: calc(100% - 30px);
+    }
+  }
+}

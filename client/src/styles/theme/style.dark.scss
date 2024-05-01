@@ -1,0 +1,168 @@
+.theme-dark {
+  .app-layout {
+    background: var(--base-dark-layout-bg);
+    color: var(--base-dark-text-color);
+
+    /* LeftDrawer.tsx */
+    .app-left-drawer {
+      background: var(--base-dark-drawer-bg);
+
+      .app-left-drawer-container {
+        .app-left-drawer-list {
+          .app-left-drawer-listitem {
+            &:hover {
+              background: #333333;
+            }
+          }
+          .Mui-selected {
+            background: #474b53;
+
+            &:hover {
+              background: #474b53;
+            }
+          }
+        }
+
+        .app-left-drawer-logout {
+          &:hover {
+            background: #333333;
+          }
+        }
+      }
+    }
+  }
+
+  /* MiddleModal.tsx */
+  .middle-screen-modal {
+    .middle-screen-container {
+      background: var(--base-default-grey);
+
+      h2,
+      p {
+        color: var(--base-dark-text-color);
+      }
+    }
+  }
+
+  /* Chatbots.tsx */
+  .chatbots {
+    h2 {
+      color: var(--text-dark-primary);
+    }
+  }
+
+  /* EmptyComponent.tsx */
+  .app-empty {
+    p {
+      color: var(--text-dark-primary);
+    }
+  }
+
+  /* SidePanel.tsx */
+  .app-sidepanel {
+    background: var(--base-dark-drawer-bg);
+  }
+
+  /* ConversationView.tsx */
+  .conversation-view {
+    &--header {
+      border-bottom: 2px solid var(--base-inactive-grey);
+
+      h3 {
+        color: var(--text-dark-primary);
+      }
+    }
+  }
+
+  /* apps.tsx */
+  .desktop-apps {
+    h2 {
+      color: var(--text-dark-primary);
+    }
+
+    &--scrollable {
+      .desktop-label {
+        color: var(--text-dark-primary);
+      }
+
+      .desktop-grid-view {
+        .desktop-app-btn {
+          p {
+            color: var(--text-dark-primary);
+          }
+
+          &:hover {
+            p {
+              color: var(--base-inactive-grey);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /* links.tsx */
+  .links {
+    h2 {
+      color: var(--text-dark-primary);
+    }
+
+    .link-row-item {
+      .link-actions {
+        .link-action-icon {
+          background: var(--base-dark-drawer-bg);
+        }
+      }
+    }
+  }
+
+  /* ShortCutButton.tsx */
+  .shortcut-button {
+    color: var(--base-inactive-grey);
+    background: var(--base-dark-drawer-bg);
+    border-bottom: 2px solid var(--base-inactive-grey);
+    box-shadow: inset 0px -1px 0px var(--base-inactive-grey);
+  }
+
+  /* routings.tsx */
+  .routings {
+    h2 {
+      color: var(--text-dark-primary);
+    }
+
+    .routing-row-item {
+      .routing-actions {
+        .routing-action-icon {
+          background: var(--base-dark-drawer-bg);
+        }
+      }
+    }
+  }
+
+  /* insights.tsx */
+  .insights {
+    &--header {
+      .insight-alert-selector {
+        background: var(--base-dark-drawer-bg);
+      }
+    }
+  }
+
+  /* CustomDropdown.tsx */
+  .app-custom-dropdown {
+    &--header {
+      background: var(--base-dark-drawer-bg);
+    }
+
+    &--options {
+      background: var(--base-dark-drawer-bg);
+
+      .app-dropdown-row-item {
+        &:hover {
+          background: var(--action-emphasis-grey-03);
+          border-left: 4px solid var(--action-emphasis-grey-04);
+        }
+      }
+    }
+  }
+}

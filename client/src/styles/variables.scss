@@ -1,0 +1,53 @@
+:root {
+  /* from Figma Design */
+  --primary-default: #2f4858;
+  --accent-colour-default: #ddeb18;
+  --accent-colour-light: #f8fcc7;
+  --grey-50: #f9f9f8;
+  --grey-100: #e4e5e5;
+  --grey-500: #787D7D;
+  --grey-800: #303232;
+  --primary-400: linear-gradient(0deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.1) 100%);
+  --text-primary-default: #303232;
+  --text-primary-disabled: #c9cbcb;
+  --base-beige-light: #efedec;
+  --base-white: #ffffff;
+  --semantics-info-default: #264daf;
+  --semantics-info-light: #eaf3fb;
+  --semantics-error-default: #d31502;
+  --semantics-error-light: #ffebe7;
+  --semantics-success-default: #07a721;
+  --semantics-success-lightest: #e6fddf;
+
+  /* dark vs light */
+  --base-dark-layout-bg: #2a2930;
+  --base-light-layout-bg: white;
+  --base-dark-text-color: rgba(255, 255, 255, 0.8);
+  --base-light-text-color: black;
+  --base-dark-drawer-bg: #1e1c23;
+  --base-light-drawer-bg: #b4b4b4;
+  --text-dark-primary: rgba(255, 255, 255, 0.8);
+  --text-light-primary: #000000;
+  --row-dark-bg-col: rgba(30, 28, 35, 0.8);
+  --row-light-bg-col: rgba(201, 201, 201, 0.8);
+
+  --button-light-color: white;
+  --button-dark-color: #1e1c23;
+  --button-light-bg-col: #67a9ed;
+  --button-dark-bg-col: #67a9ed;
+
+  /* default */
+  --base-default-grey-01: #2a2930;
+  --base-default-grey-02: #1e1c23;
+  --base-inactive-grey: #7f7f83;
+  --base-default-blue: #3e87dc;
+  --base-default-blue-1: #67a9ed;
+  --base-default-grey: #4c4b56;
+  --action-emphasis-grey-03: #63626a;
+  --action-emphasis-grey-04: #d4d4d6;
+
+  /* status tag color */
+  --tag-online-color: #2da24f;
+  --tag-active-color: #fcaf58;
+  --tag-inactive-color: #6c6b73;
+}
