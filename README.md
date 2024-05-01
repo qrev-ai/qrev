@@ -166,7 +166,12 @@ npm install
 
     **Note**: Please make sure there is no `/` at the end of the URL environment values.
 
-4. **Run the client** 
+4. **To prevent any formatting issues in the code files, run the following**
+```bash
+git config --global core.autocrlf true
+```
+
+5. **Run the client** 
 
 ```bash  
 npm start  
