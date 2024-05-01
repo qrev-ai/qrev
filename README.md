@@ -68,6 +68,8 @@ There's 3 main components to running the code
 - 🗂️ [App Server](https://github.com/qrev-ai/qrev/tree/main/server) 
 - 🤖 [AI Server](https://github.com/qrev-ai/qrev/tree/main/ai) 
 
+  > Please refer to the [sample People CSV file](https://github.com/qrev-ai/qrev/blob/main/qai_csv_sample.csv) for the structure of the CSV file that the user can upload to the QAI bot for generating campaigns.
+
 ## Getting Started with the QRev App Server
 
 To get a local copy up and running, please follow these simple steps.
