@@ -11,7 +11,6 @@ class mockable:
     """
 
     def __init__(self, model_cls: type[BaseModel]):
-        print(f"mockable: vars={vars}", flush=True)
         self.model_cls = model_cls
 
     def __call__(self, func):
