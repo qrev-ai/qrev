@@ -1,0 +1,42 @@
+## App
+test_conversational_db
+results
+
+## Python
+*.py[co]
+__pycache__
+*.egg
+*.egg-info
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+dist
+.pytest_cache
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+## caches
+cachedir
+.cache
+
+# Mac
+.DS_Store
+
+## temp files
+*.bk.*
+test_retrieval_*
+tempdb
+t.csv
+
+## vscode
+.vscode

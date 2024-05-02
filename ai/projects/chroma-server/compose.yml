@@ -1,0 +1,32 @@
+version: "3.9"
+services:
+  chroma_db_loader:
+    image: chroma_db_loader
+    container_name: chroma_db_loader
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      args:
+        CHROMA_SERVER_AUTH_CREDENTIALS: ${CHROMA_SERVER_AUTH_CREDENTIALS}
+    networks:
+      - net
+
+  chroma:
+    image: ghcr.io/chroma-core/chroma:0.4.22
+    # volumes:
+    #   - index_data:/chroma/.chroma/index
+    build:
+      args:
+        CHROMA_SERVER_AUTH_CREDENTIALS: ${CHROMA_SERVER_AUTH_CREDENTIALS}
+    ports:
+      - 8000:8000
+    networks:
+      - net
+
+volumes:
+  index_data:
+    driver: local
+
+networks:
+  net:
+    driver: bridge
