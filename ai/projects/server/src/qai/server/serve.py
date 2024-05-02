@@ -179,7 +179,6 @@ def campaign():
 
             agent = CampaignAgent.create(**model.to_params())
             
-            # chat_session[model.user_id] = agent ### TODO
         if model.uploaded_data:
             ## convert list of dict to dict of dict
             uploaded_data = {d["name"]: d for d in model.uploaded_data}
@@ -198,7 +197,7 @@ def campaign():
 
                 e_js = em.dict()
                 e_js.update(
-                    {"type": "email_sequence_draft", "sequence_id": model.id, "title": em.subject}
+                    {"type": "email_sequence_draft", "sequence_id": response.sequence_id, "title": em.subject}
                 )
                 js["actions"].append(e_js)
 

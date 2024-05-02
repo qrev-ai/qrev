@@ -20,13 +20,14 @@ openai = "^1.23.2"
 pi-conf = "^0.7.7.4"
 pi-log = "^0.5.7.3"
 python-dotenv = "^1.0.1"
-torch = "^2.2.1"
-# torch = [
-#     {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", url = "https://download.pytorch.org/whl/cpu/torch-2.2.1-cp311-none-macosx_11_0_arm64.whl"},
-#     {markers = "sys_platform == 'linux'", url = "https://download.pytorch.org/whl/cpu-cxx11-abi/torch-2.2.1%2Bcpu.cxx11.abi-cp311-cp311-linux_x86_64.whl"},
-# ]
+torch = [
+  {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},
+  {platform = "darwin", source = "pypi", version = "^2.3.0"},
+  {platform = "linux", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
+  {platform = "win32", source = "pytorch-cpu-src", version = "=2.3.0+cpu"}
+]
 qai-ai = "^0.5.0"
-qai-core = "^0.5.0"
+qai-core = "^0.5.1"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^2.2.1"
@@ -39,10 +40,11 @@ req = "src.cli:main"
 name = "PyPI"
 priority = "primary"
 
+
 [[tool.poetry.source]]
-name = "dpypi"
-priority = "supplemental"
-url = "http://localhost:8083"
+name = "pytorch-cpu-src"
+priority = "explicit"
+url = "https://download.pytorch.org/whl/cpu"
 
 [tool.tomlsort]
 all = true
