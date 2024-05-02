@@ -4,11 +4,7 @@ from pprint import pformat
 from flask import jsonify, request
 from flask_pydantic import validate
 from pi_log import logs
-from qai.agent.agents.campaign.campaign import (
-    CampaignAgent,
-    CampaignResponse,
-    CampaignToolSpec,
-)
+from qai.agent.agents.campaign.campaign import CampaignAgent, CampaignResponse
 from qai.chat.chat import company_query
 from qai.chat.db.chroma.chroma import Chroma
 
@@ -17,9 +13,10 @@ from qai.server.config import cfg
 from qai.server.mock import mockable
 from qai.server.models import CampaignInputModel, CompanyChatbotModel
 
-app = create_app(cfg)  ## app should be created before importing other modules
+## app should be created before importing other modules that require cfg
+app = create_app(cfg) 
 
-from qai.server.tools.security import requires, token_required
+from qai.server.tools.security import token_required
 
 log = logs.getLogger(__name__)
 logs.set_app_level("debug")
@@ -36,14 +33,11 @@ def heartbeat():
 
 @app.route("/set_config", methods=["GET", "POST"])
 @token_required
-@requires(["key", "value"])
-def set_config():
+def set_config(key: str, value: str):
     """
     Set a configuration value
     """
     in_data = request.get_json()
-    key = in_data.get("key")
-    value = in_data.get("value")
     log.debug(f"serve::set_config, in_data={in_data}")
     old = app.cfg[key]
     app.cfg[key] = value
@@ -116,6 +110,7 @@ def _debug_query(in_data, guid: str, query: str, company_name: str):
 
 @app.route("/", methods=["GET", "POST"])
 @token_required
+@mockable(CompanyChatbotModel)
 @validate(body=CompanyChatbotModel)
 def company_chat():
     """
@@ -123,10 +118,8 @@ def company_chat():
     """
     model = CompanyChatbotModel(**request.get_json())
 
-    log.debug(f"serve::query, in_data={model}")
+    log.debug(f"company_chat(), in_data={model}")
 
-    if model.mock:
-        return {"response": "Mocked Response"}, 200
     try:
         response = company_query(
             query=model.query,
@@ -151,7 +144,7 @@ def campaign():
     Do a campaign query
     """
     model = CampaignInputModel(**request.get_json())
-    print(f"#### campaign : model={model}", flush=True)
+    log.debug(f"campaign() : model={model}")
     if not model.id:
         model.id = uuid.uuid4().hex
 
