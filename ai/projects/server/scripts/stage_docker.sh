@@ -1,5 +1,4 @@
-PROJECT_NAME=qai-chat
-PROJECT_DIR_NAME=qai
+QREV_AI_DIR_NAME=ai
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 PROJECT_DIR=$(python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" ${SCRIPT_DIR}/..)
@@ -9,8 +8,8 @@ QAI_ROOT_NAME=$(basename ${QAI_ROOT_DIR})
 echo "Project directory: ${PROJECT_DIR}, QAI root directory: ${QAI_ROOT_DIR}"
 
 ## Assert that the directory structure is correct. qai/projects/${PROJECT}
-if [ ${QAI_ROOT_NAME} != "qai" ] ; then
-    echo "The directory structure should be qai/projects/<project folders>" 1>&2
+if [ ${QAI_ROOT_NAME} != ${QREV_AI_DIR_NAME} ] ; then
+    echo "The directory structure should be ai/projects/<project folders>" 1>&2
     echo "Found directory ${QAI_ROOT_NAME}" 1>&2
     exit 1
 fi
