@@ -28,6 +28,9 @@ Go to the project folder
 cd qrev/ai/projects/server
 ```
 
+## Setting up the .env file and config.toml file
+For the .env file you can see the example placed in `examples/example.env`
+
 ### Build and Run with Docker
 
 Ensure that Docker is installed and running. Then, use the provided Makefile to build and run the project:
@@ -68,3 +71,4 @@ make test
 
 - `make authenticate`: Authenticate to the AWS ECR.
 - `make deploy_service`: Deploy the service to an AWS ECS cluster.
+
