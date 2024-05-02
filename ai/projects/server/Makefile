@@ -28,7 +28,7 @@ test::
 	python -m unittest discover tests
 
 ## Build the project
-.build:: 
+.build:: test
 	poetry install --with dev
 	toml-sort pyproject.toml
 	poetry build
