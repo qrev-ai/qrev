@@ -138,6 +138,7 @@ Make sure you have the right [Environment variables](https://github.com/qrev-ai/
 
 These are referenced in the [Client Code](https://github.com/qrev-ai/qrev/tree/main/client/src/config/credential.js)
 
+
 ### Setup 
 
 1. **Go to the `client` folder**
@@ -176,6 +177,9 @@ git config --global core.autocrlf true
 ```bash  
 npm start  
 ```
+
+## Getting Started with the QRev AI Code
+Please refer the [Server README](https://github.com/qrev-ai/qrev/tree/main/ai/README.md)
 
 ### Integrations
 
