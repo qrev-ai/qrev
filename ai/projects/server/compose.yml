@@ -1,0 +1,18 @@
+services:
+  chatbot:
+    platform: linux/amd64
+    build:
+      context: ../..
+      dockerfile: ./projects/server/Dockerfile
+    image: chatbot
+    container_name: chatbot
+    volumes:
+      - ./:/app/
+    networks:
+      - net
+    ports:
+      - 8081:8081
+
+networks:
+  net:
+    driver: bridge

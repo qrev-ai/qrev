@@ -1,0 +1,43 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
+[tool.poetry]
+authors = ["parnell <152523161+leeparnell@users.noreply.github.com>"]
+description = ""
+name = "qai-server"
+packages = [{from = "src", include = "qai"}]
+readme = "README.md"
+version = "0.5.2"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+beautifulsoup4 = "^4.12.2"
+dataclasses-json = "^0.6.4"
+flask = "^3.0.3"
+flask-pydantic = "^0.12.0"
+ftfy = "^6.1.1"
+gunicorn = "^22.0.0"
+html2text = "^2020.1.16"
+llama-index = "^0.10.33"
+qai-agent = "^0.5.0"
+qai-chat = "^0.5.1"
+torch = [
+  {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},
+  {platform = "darwin", source = "pypi", version = "^2.3.0"},
+  {platform = "linux", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
+  {platform = "win32", source = "pytorch-cpu-src", version = "=2.3.0+cpu"}
+]
+
+[tool.poetry.group.dev.dependencies]
+toml-sort = "^0.23.1"
+
+[[tool.poetry.source]]
+name = "pytorch-cpu-src"
+priority = "explicit"
+url = "https://download.pytorch.org/whl/cpu"
+
+[tool.tomlsort]
+all = true
+in_place = true
+overrides."tool.poetry.dependencies".first = ["python"]

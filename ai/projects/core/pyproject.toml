@@ -1,0 +1,26 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
+[tool.poetry]
+authors = ["parnell <3028114+parnell@users.noreply.github.com>"]
+description = ""
+name = "qai-core"
+packages = [{from = "src", include = "qai"}]
+readme = "README.md"
+version = "0.5.1"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<4.0"
+json-fix = "^1.0.0"
+
+[tool.poetry.group.dev.dependencies]
+toml-sort = "^0.23.1"
+
+[tool.tomlsort]
+all = true
+in_place = true
+spaces_before_inline_comment = 2  # Match Python PEP 8
+spaces_indent_inline_array = 4  # Match Python PEP 8
+trailing_comma_inline_array = true
+overrides."tool.poetry.dependencies".first = ["python"]
