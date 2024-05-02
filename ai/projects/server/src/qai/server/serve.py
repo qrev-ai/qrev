@@ -14,6 +14,7 @@ from qai.chat.db.chroma.chroma import Chroma
 
 from qai.server import VERSION, create_app
 from qai.server.config import cfg
+from qai.server.mock import mockable
 from qai.server.models import CampaignInputModel, CompanyChatbotModel
 
 app = create_app(cfg)  ## app should be created before importing other modules
@@ -142,66 +143,49 @@ def company_chat():
 
 
 @app.route("/campaign", methods=["GET", "POST"])
-@token_required
+@mockable(CampaignInputModel)
 @validate(body=CampaignInputModel)
+@token_required
 def campaign():
     """
     Do a campaign query
     """
     model = CampaignInputModel(**request.get_json())
-    log.debug(f"#### campaign : model={model}", flush=True)
+    print(f"#### campaign : model={model}", flush=True)
     if not model.id:
         model.id = uuid.uuid4().hex
-    from qai.agent.basic import BasicQuery, QueryType
 
-    from qai.server.mock_responses import (
-        campaign_response,
-        company_response,
-        people_response,
-    )
-
-    if model.mock:
-        basic_query = BasicQuery()
-        result = basic_query.query(model.query)
-        if result == QueryType.campaign:
-            return jsonify(campaign_response), 200
-        elif result == QueryType.company:
-            return jsonify(company_response), 200
-        elif result == QueryType.people:
-            return jsonify(people_response), 200
-        else:
-            return jsonify(campaign_response), 200
+    agent: CampaignAgent
+    if model.user_id in chat_session:
+        agent = chat_session[model.user_id]
     else:
-        agent : CampaignAgent 
-        if model.user_id in chat_session:
-            agent = chat_session[model.user_id]
-        else:
+        agent = CampaignAgent.create(**model.to_params())
 
-            agent = CampaignAgent.create(**model.to_params())
-            
-        if model.uploaded_data:
-            ## convert list of dict to dict of dict
-            uploaded_data = {d["name"]: d for d in model.uploaded_data}
-            agent.people = uploaded_data
-        response: CampaignResponse = agent.chat(model.query)
-        js = {}
-        js["actions"] = [
-            {
-                "action": "text",
-                "response": response.response,
-            }
-        ]
-        if response.emails:
-            emails = []
-            for em in response.emails:
+    if model.uploaded_data:
+        ## convert list of dict to dict of dict
+        uploaded_data = {d["name"]: d for d in model.uploaded_data}
+        agent.people = uploaded_data
+    response: CampaignResponse = agent.chat(model.query)
+    js = {}
+    js["actions"] = [
+        {
+            "action": "text",
+            "response": response.response,
+        }
+    ]
+    if response.emails:
+        for em in response.emails:
+            e_js = em.dict()
+            e_js.update(
+                {
+                    "type": "email_sequence_draft",
+                    "sequence_id": response.sequence_id,
+                    "title": em.subject,
+                }
+            )
+            js["actions"].append(e_js)
 
-                e_js = em.dict()
-                e_js.update(
-                    {"type": "email_sequence_draft", "sequence_id": response.sequence_id, "title": em.subject}
-                )
-                js["actions"].append(e_js)
-
-        return jsonify(js), 200
+    return jsonify(js), 200
 
 
 if __name__ == "__main__":
