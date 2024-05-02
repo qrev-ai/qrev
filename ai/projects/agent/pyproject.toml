@@ -8,7 +8,7 @@ description = "Qai Agents for the Qai AI Platform"
 name = "qai-agent"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.2.2"
+version = "0.5.2.3"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -35,7 +35,7 @@ pymongo = "^4.6.3"
 python-dateutil = "2.8.2"
 python-dotenv = "^1.0.1"
 qai-ai = "0.5.2.3"
-qai-core = "^0.5.0"
+qai-core = "^0.5.1"
 sqlalchemy = "^2.0.29"
 torch = [
     {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},

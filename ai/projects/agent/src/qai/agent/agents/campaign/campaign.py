@@ -87,6 +87,7 @@ class CampaignToolSpec(BaseToolSpec):
 class CampaignResponse(AgentChatResponse):
     completed: bool = False
     emails: List[EmailModel] = None
+    sequence_id: str = None
 
 
 class CampaignAgent(OpenAIAgent):
@@ -197,9 +198,10 @@ class CampaignAgent(OpenAIAgent):
         message += assistant_message
         response: AgentChatResponse = super().chat(message, chat_history, tool_choice)
         completed = response.sources and response.sources[0].tool_name == "create_campaign"
-        setattr(response, "completed", completed)
         emails = None
         sequence_id = str(uuid.uuid4())
+        setattr(response, "completed", completed)
+        setattr(response, "sequence_id", sequence_id)
 
         if completed:
             emails = self.email_agent.create_emails(
