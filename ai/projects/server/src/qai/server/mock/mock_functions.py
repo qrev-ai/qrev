@@ -21,3 +21,6 @@ def campaign():
         return jsonify(people_response), 200
     else:
         return jsonify(campaign_response), 200
+
+def company_chat():
+    return {"response": "Mocked Response"}, 200

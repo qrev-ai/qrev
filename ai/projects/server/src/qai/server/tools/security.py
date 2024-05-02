@@ -1,13 +1,17 @@
 import functools
+from logging import getLogger
 
 from flask import current_app as app
 from flask import request
+
+log = getLogger(__name__)
 
 
 def token_required(func):
     """
     Decorator to check for a valid token
     """
+
     @functools.wraps(func)
     def decorated_function(*args, **kwargs):
         try:
@@ -18,7 +22,6 @@ def token_required(func):
             )
 
         try:
-            # print("### server_config.allowed_tokens", server_config, flush=True)
             allowed_tokens = set(server_config.allowed_tokens)
         except AttributeError:
             raise AttributeError(
@@ -27,31 +30,11 @@ def token_required(func):
         ## Get and remove token from request, we don't want to be printing this
         token = request.get_json().pop("token", "")
         if token not in allowed_tokens:
-            print(f"Error! Invalid token <{token}> === {allowed_tokens}", flush=True)
+            log.error(f"Error! Invalid token <{token}> === {allowed_tokens}")
             raise Exception("Error! Invalid token")
         return func(*args, **kwargs)
 
     return decorated_function
-
-
-class requires:
-    """
-    Decorator to check for required variables in the request
-    """
-    def __init__(self, vars: list[str] = []):
-        self.vars = vars
-
-    def __call__(self, func):
-        @functools.wraps(func)
-        def decorated_function(*args, **kwargs):
-
-            # for arg in self.vars:
-            #     print(f"checking for {arg}", flush=True)
-            # for k, v in kwargs.items():
-            #     print(f"checking for {k}={v}", flush=True)
-            return func(*args, **kwargs)
-
-        return decorated_function
 
 
 def check_variable_exists(variables, in_data) -> bool:

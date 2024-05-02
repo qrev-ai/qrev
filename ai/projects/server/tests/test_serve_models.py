@@ -48,7 +48,7 @@ class TestServeModels(unittest.TestCase):
         # ## Test that the model can be converted and used to do a company_query
         # params = m.to_params()
         # func = create_autospec(company_query)
-        # print(func)
+        # log.debug(func)
         # func(**params)
 
 

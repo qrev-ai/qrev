@@ -1,8 +1,5 @@
-print("src/qai/chat/config.py")
-import builtins
 
-from pi_conf import Config, load_config
-from pydantic.dataclasses import dataclass
+from pi_conf import load_config
 
 cfg = load_config("qai")
 

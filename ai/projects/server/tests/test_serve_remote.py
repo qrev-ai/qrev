@@ -1,6 +1,7 @@
 import os
 import unittest
 from distutils.util import strtobool
+from logging import getLogger
 
 import chromadb
 from chromadb.config import Settings
@@ -8,9 +9,11 @@ from qai.chat.config import cfg
 
 from qai.server.serve import app
 
+log = getLogger(__name__)
+
 REMOTE_TEST = strtobool(os.getenv("TEST_REMOTE", "False"))
 if not REMOTE_TEST:
-    print("Skipping remote tests for test_server_remote.py. enable by TEST_REMOTE=True")
+    log.warn("Skipping remote tests for test_server_remote.py. enable by TEST_REMOTE=True")
 
 if "CHROMA_SERVER_AUTH_CREDENTIALS" in os.environ:
     settings = Settings(
@@ -38,7 +41,7 @@ class TestServing(unittest.TestCase):
                 port=app.cfg.chroma.port,
                 settings=settings,
             )
-            print(c.list_collections())
+            
             r = client.get(
                 "/",
                 json={
@@ -49,7 +52,7 @@ class TestServing(unittest.TestCase):
                     "company_name": "Ardvaarks R Us",
                 },
             )
-            print(f"result of test_query_with_chroma_query: {r.get_json()}")
+            log.debug(f"result of test_query_with_chroma_query: {r.get_json()}")
 
     def test_campaign(self):
         if not REMOTE_TEST:
@@ -66,7 +69,7 @@ class TestServing(unittest.TestCase):
                     "company_id": "testid1",
                 },
             )
-            print(f"result of test_campaign: {r.get_json()}")
+            log.debug(f"result of test_campaign: {r.get_json()}")
             self.assertEqual(r.status_code, 200)
 
 
