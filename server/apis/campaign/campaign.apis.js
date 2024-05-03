@@ -21,12 +21,12 @@ export async function sendCampaignApi(req, res, next) {
     let { account_id: accountId } = req.query;
     if (!accountId) throw `Missing account_id in query`;
 
-    let { sequence_id: sequenceId } = req.body;
+    let { sequence_id: sequenceId, user_timezone: userTimezone } = req.body;
     if (!sequenceId) throw `Missing sequence_id in body`;
 
     let [campCreateResp, campErr] =
         await CampaignUtils.setupSequenceProspectMessageTime(
-            { sequenceId, accountId, userId },
+            { sequenceId, accountId, userId, userTimezone },
             { txid }
         );
     if (campErr) throw campErr;

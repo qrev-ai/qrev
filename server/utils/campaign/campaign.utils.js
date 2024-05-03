@@ -407,7 +407,7 @@ const createCampaignSequenceProspectMessagesFromQAi = functionWrapper(
 );
 
 async function _setupSequenceProspectMessageTime(
-    { sequenceId, accountId, userId },
+    { sequenceId, accountId, userId, userTimezone },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -420,7 +420,10 @@ async function _setupSequenceProspectMessageTime(
     if (!sequenceDoc)
         throw `sequenceDoc is invalid for sequenceId: ${sequenceId}`;
 
-    if (sequenceDoc.status === "messages_scheduled")
+    if (
+        sequenceDoc.status === "messages_scheduled" ||
+        sequenceDoc.status === "messages_scheduling"
+    )
         throw `sequenceId: ${sequenceId} already has messages_scheduled status`;
 
     // update sequence status to "messages_scheduling"
@@ -451,6 +454,7 @@ async function _setupSequenceProspectMessageTime(
                 userId,
                 sequenceStepId,
                 prospects,
+                defaultTimezone: userTimezone,
             },
             { txid }
         );
@@ -473,7 +477,14 @@ export const setupSequenceProspectMessageTime = functionWrapper(
 );
 
 async function _scheduleTimeForCampaignProspectsFromQAi(
-    { campaignSequenceId, accountId, userId, sequenceStepId, prospects },
+    {
+        campaignSequenceId,
+        accountId,
+        userId,
+        sequenceStepId,
+        prospects,
+        defaultTimezone,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -493,6 +504,16 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
     if (senderListErr) throw senderListErr;
     if (!senderList || !senderList.length) throw `senderList is empty or null`;
 
+    let senderIdMap = {};
+    for (let i = 0; i < senderList.length; i++) {
+        let sender = senderList[i];
+        let senderId = sender.user_id;
+        senderId =
+            typeof senderId === "object" ? senderId.toString() : senderId;
+        let senderEmail = sender.email;
+        senderIdMap[senderEmail] = senderId;
+    }
+
     let { perHourLimit, perDayLimit } = getLimitConfig(
         { senderCount: senderList.length },
         { txid }
@@ -508,6 +529,7 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
             isFirstSequenceStep: true,
             sequenceStepTimeValue: { time_value: 1, time_unit: "day" },
             prospectSenderMap: {},
+            defaultTimezone,
         },
         { txid }
     );
@@ -542,6 +564,9 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
             message_scheduled_time,
             message_status,
         } = x;
+
+        let sender = senderIdMap[sender_email];
+
         return {
             updateOne: {
                 filter: {
@@ -555,6 +580,7 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
                     sender_email,
                     message_scheduled_time,
                     message_status,
+                    sender,
                 },
             },
         };
@@ -631,6 +657,7 @@ function scheduleTimeForSequenceProspects(
         isFirstSequenceStep,
         sequenceStepTimeValue,
         prospectSenderMap,
+        defaultTimezone,
     },
     { txid }
 ) {
@@ -651,7 +678,7 @@ function scheduleTimeForSequenceProspects(
     }
 
     let tzGroupedProspects = groupProspectsByTimezone(
-        { prospects, defaultTz: "Asia/Calcutta" },
+        { prospects, defaultTz: defaultTimezone || "Asia/Calcutta" },
         { txid }
     );
 
