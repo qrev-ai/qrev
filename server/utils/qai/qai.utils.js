@@ -1,13 +1,24 @@
+import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { functionWrapper } from "../../std/wrappers.js";
 import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { QaiConversation } from "../../models/qai/qai.conversations.model.js";
+import { IntermediateProspectData } from "../../models/campaign/intermediate.prospect.data.model.js";
+import * as UserUtils from "../user/user.utils.js";
 
 const fileName = "QAi Utils";
 
 async function _converse(
-    { query, accountId, userId, uploadedData },
+    {
+        query,
+        accountId,
+        userId,
+        uploadedData,
+        conversationInfo,
+        accountInfo,
+        userInfo,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -16,13 +27,22 @@ async function _converse(
     let token = process.env.AI_BOT_SERVER_TOKEN;
     let asyncUrl =
         process.env.SERVER_URL_PATH + "/api/campaign/update_sequence_messages";
+
+    conversationInfo = formatConversationInfo({ conversationInfo }, { txid });
+    let senderCompany = formatCompanyInfo({ accountInfo }, { txid });
+    let senderPerson = formatUserInfo({ userInfo }, { txid });
+
     let data = {
         query,
         company_id: accountId,
         user_id: userId,
         token,
-        "asynchronous [optional]": asyncUrl,
+        asynchronous: asyncUrl,
+        conversation: conversationInfo,
+        sender_company: senderCompany,
+        sender_person: senderPerson,
     };
+
     logg.info(`inp-data: ${JSON.stringify(data)}`);
     if (uploadedData && uploadedData.values && uploadedData.values.length > 0) {
         data.uploaded_data = uploadedData.values;
@@ -33,6 +53,19 @@ async function _converse(
     logg.info(`resp: ` + JSON.stringify(resp.data));
 
     let botOutput = resp.data;
+    if (botOutput && botOutput.actions && botOutput.actions.length) {
+        let actions = botOutput.actions;
+        for (const a of actions) {
+            if (a.type === "email_sequence_draft") {
+                if (!a.content && a.body) {
+                    // Set title to simple text to provide a intro to the draft.
+                    // Ideally this should be handled by the AI server (or bot server)
+                    a.title = "Here is the campaign draft:";
+                }
+            }
+        }
+    }
+
     logg.info(`ended`);
     return [botOutput, null];
 }
@@ -61,6 +94,131 @@ export function isCampaignCreatedInAIResponse(
 
     logg.info(`ended`);
     return sequenceId;
+}
+
+function formatConversationInfo({ conversationInfo }, { txid }) {
+    const funcName = "formatConversationInfo";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started`);
+
+    if (!conversationInfo) {
+        logg.info(`conversationInfo not found. So returning null`);
+        return null;
+    }
+
+    if (!conversationInfo._id) {
+        logg.info(`conversationInfo._id not found. So returning null`);
+        return null;
+    }
+
+    let result = {
+        conversation_id: conversationInfo._id,
+    };
+
+    let messages = [];
+
+    let conversationMessages = conversationInfo.messages || [];
+
+    for (const cm of conversationMessages) {
+        // role can be either "user" or "assistant"
+        let role = "";
+        let content = "";
+
+        if (cm.type === "user") {
+            role = "user";
+            content = cm.value;
+        } else {
+            role = "assistant";
+            let actions = cm.value && cm.value.actions ? cm.value.actions : [];
+
+            for (const a of actions) {
+                if (a.type === "text") {
+                    logg.info(`a: ${JSON.stringify(a)}`);
+                    content = a.response;
+                    break;
+                }
+            }
+        }
+
+        if (!content) {
+            continue;
+        }
+
+        let item = { role, content };
+
+        messages.push(item);
+    }
+
+    result.messages = messages;
+
+    logg.info(`ended`);
+    return result;
+}
+
+function formatCompanyInfo({ accountInfo }, { txid }) {
+    const funcName = "formatCompanyInfo";
+
+    const logg = logger.child({ txid, funcName });
+
+    logg.info(`started`);
+
+    if (!accountInfo) {
+        logg.info(`accountInfo not found. So returning null`);
+
+        return null;
+    }
+
+    let name = accountInfo && accountInfo.name ? accountInfo.name : "";
+
+    let domain = accountInfo && accountInfo.domain ? accountInfo.domain : "";
+
+    let result = { name };
+
+    if (domain) {
+        result.website_url = domain;
+    }
+
+    logg.info(`ended`);
+
+    return result;
+}
+
+function formatUserInfo({ userInfo }, { txid }) {
+    const funcName = "formatUserInfo";
+
+    const logg = logger.child({ txid, funcName });
+
+    logg.info(`started`);
+
+    if (!userInfo) {
+        logg.info(`userInfo not found. So returning null`);
+
+        return null;
+    }
+
+    let name = userInfo.name || "";
+
+    let email = userInfo.email || "";
+
+    if (!name && email) {
+        //split email to get name
+
+        let emailParts = email.split("@");
+
+        if (emailParts.length > 0) {
+            name = emailParts[0];
+        }
+    }
+
+    let result = { name };
+
+    if (email) {
+        result.email = email;
+    }
+
+    logg.info(`ended`);
+
+    return result;
 }
 
 async function _createConversation(
@@ -112,19 +270,47 @@ export const getConversations = functionWrapper(
 );
 
 async function _getConversation(
-    { accountId, userId, conversationId },
+    { accountId, userId, conversationId, getAccountAndUserInfo },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
-    let conversation = await QaiConversation.findOne({
-        _id: conversationId,
-        account: accountId,
-        owner: userId,
-    }).lean();
-    logg.info(`conversation: ${JSON.stringify(conversation)}`);
+    let queryObj = { _id: conversationId, account: accountId };
+    let conversation = null;
+    if (getAccountAndUserInfo) {
+        let conversationPromise = QaiConversation.findOne(queryObj)
+            .populate("account")
+            .lean();
 
-    logg.info(`ended`);
-    return [conversation, null];
+        let userInfoPromise = UserUtils.getUserById({ id: userId }, { txid });
+
+        let [conversationResp, userInfoResp] = await Promise.all([
+            conversationPromise,
+            userInfoPromise,
+        ]);
+        conversation = conversationResp;
+        let [userInfo, userInfoErr] = userInfoResp;
+        if (userInfoErr) {
+            throw userInfoErr;
+        }
+
+        let accountInfo = conversation.account;
+        // remove the account field from the conversation object
+        delete conversation.account;
+        let conversationInfo = conversation;
+
+        logg.info(`conversationInfo: ${JSON.stringify(conversationInfo)}`);
+        logg.info(`accountInfo: ${JSON.stringify(accountInfo)}`);
+        logg.info(`userInfo: ${JSON.stringify(userInfo)}`);
+
+        logg.info(`ended`);
+        return [{ conversationInfo, accountInfo, userInfo }, null];
+    } else {
+        conversation = await QaiConversation.findOne(queryObj).lean();
+        logg.info(`conversation: ${JSON.stringify(conversation)}`);
+
+        logg.info(`ended`);
+        return [conversation, null];
+    }
 }
 
 export const getConversation = functionWrapper(
@@ -134,13 +320,15 @@ export const getConversation = functionWrapper(
 );
 
 async function _addUserQueryToConversation(
-    { query, accountId, userId, conversationId, uploadedData },
+    { query, accountId, userId, conversationId, uploadedData, conversation },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
     let conversationQuery = { _id: conversationId, account: accountId };
-    let conversation = await QaiConversation.findOne(conversationQuery).lean();
-    logg.info(`conversation: ${JSON.stringify(conversation)}`);
+    if (!conversation) {
+        conversation = await QaiConversation.findOne(conversationQuery).lean();
+        logg.info(`conversation: ${JSON.stringify(conversation)}`);
+    }
     if (!conversation) {
         throw `Conversation not found for ${conversationId}`;
     }
@@ -164,6 +352,12 @@ async function _addUserQueryToConversation(
         updateObj.$set = { title: query };
     }
 
+    // also update the field `updated_on` in the conversation
+    if (!updateObj.$set) {
+        updateObj.$set = {};
+    }
+    updateObj.$set.updated_on = new Date();
+
     let conversationResp = await QaiConversation.updateOne(
         conversationQuery,
         updateObj
@@ -181,28 +375,56 @@ export const addUserQueryToConversation = functionWrapper(
 );
 
 async function _addQaiResponseToConversation(
-    { response, accountId, userId, conversationId },
+    { response, accountId, userId, conversationId, isError, conversation },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
     let conversationQuery = { _id: conversationId, account: accountId };
-    let conversation = await QaiConversation.findOne(conversationQuery).lean();
-    logg.info(`conversation: ${JSON.stringify(conversation)}`);
+    if (!conversation) {
+        conversation = await QaiConversation.findOne(conversationQuery).lean();
+        logg.info(`conversation: ${JSON.stringify(conversation)}`);
+    }
+
     if (!conversation) {
         throw `Conversation not found for ${conversationId}`;
     }
 
     let messageId = uuidv4();
+    let messageObj = null;
+    if (isError) {
+        messageObj = {
+            message_id: messageId,
+            type: "bot",
+            value: {
+                actions: [
+                    {
+                        action: "text",
+                        response: "Sorry, could not find any results",
+                    },
+                ],
+            },
+            created_on: new Date(),
+        };
+    } else {
+        messageObj = {
+            message_id: messageId,
+            type: "bot",
+            value: response,
+            created_on: new Date(),
+        };
+    }
     let updateObj = {
         $push: {
-            messages: {
-                message_id: messageId,
-                type: "bot",
-                value: response,
-                created_on: new Date(),
-            },
+            messages: messageObj,
         },
     };
+
+    // also update the field `updated_on` in the conversation
+    if (!updateObj.$set) {
+        updateObj.$set = {};
+    }
+    updateObj.$set.updated_on = new Date();
+
     let conversationResp = await QaiConversation.updateOne(
         conversationQuery,
         updateObj
