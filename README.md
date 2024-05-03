@@ -47,10 +47,10 @@ Open to ideas.
 ## 🚀 Tech Stack
 
 - ✅ **Framework**: [Typescript for frontend](https://www.typescriptlang.org/) & [NodeJS for backend](https://nodejs.org/en)
-- ✅ **App Server Database**: [MongoDB](https://www.mongodb.com/).
-- ✅ **Vector Database**: [ChromaDB](https://www.trychroma.com/).
-- ✅ **AI Server Database**: [SQLite](https://www.sqlite.org/).
-- ✅ **LLM Tooling**: [Langchain](https://github.com/hwchase17/langchain).
+- ✅ **App Server Database**: [MongoDB](https://www.mongodb.com/)
+- ✅ **Vector Database**: [ChromaDB](https://www.trychroma.com/)
+- ✅ **AI Server SQL Relational Database**: [SQLite](https://www.sqlite.org/) or anything that works with [SQLAlchemy](https://www.sqlalchemy.org/)
+- ✅ **LLM Tooling**: [Langchain](https://github.com/hwchase17/langchain)
 
 ## Prerequisites :point_down:
 
