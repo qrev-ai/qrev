@@ -15,7 +15,8 @@ QAI-Server is a Docker-based application designed to be a web interface for othe
 - ✅ **SQL Relational Database**: MySQL, MariaDB, SQLite3, anything that works with [SQLAlchemy](https://www.sqlalchemy.org/).
 
 
-## Prerequisites :point_down:
+## Prerequisites
+- All of the above tech stack set up.
 
 ## Code Requirements
 
@@ -38,7 +39,8 @@ cd qrev/ai/projects/server
 ```
 
 ## Setting up the .env file and config.toml file
-For the .env file you can see the example placed in `examples/example.env`
+For the .env file you can see the example placed in [`examples/example.env`](https://github.com/qrev-ai/qrev/tree/main/ai/projects/server/examples/example.env)
+The `config.toml` configuration file is placed in your application directory under the name `qai`. Linux example `~/.config/qai/config.toml`. An example [config.toml](https://github.com/qrev-ai/qrev/tree/main/ai/examples/config.toml)
 
 ### Run locally
 From the server project folder. `ai/projects/server`
