@@ -2,6 +2,9 @@
 
 Welcome to the QRev AI repository, where you'll find a collection of projects, each project is encapsulated in an API.
 
+# Setting up an agentic server
+This is through the `qai-server` project located in `projects/server`. You can find the setup in the [Server README](https://github.com/qrev-ai/qrev/tree/main/ai/projects/server/README.md)
+
 ## Projects Overview
 
 1. **agent**
@@ -41,3 +44,4 @@ Go to the project folder
 ```bash
 cd qrev/ai
 ```
+
