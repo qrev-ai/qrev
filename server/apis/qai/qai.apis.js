@@ -176,7 +176,7 @@ export async function getConversationsApi(req, res, next) {
     let { account_id: accountId } = req.query;
 
     let [conversations, conversationsErr] = await QAiBotUtils.getConversations(
-        { accountId, userId },
+        { accountId, userId, sortByLatest: true },
         { txid }
     );
     if (conversationsErr) throw conversationsErr;
