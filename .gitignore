@@ -1,4 +1,30 @@
-.env
+## Node
 node_modules
+
+## logs
 rejections.log
 exception.log
+
+## System
+.env
+
+## Installer logs
+pip-log.txt
+
+## Unit test / coverage reports
+.coverage
+.tox
+
+## lockfiles
+*.lock
+
+## caches
+cachedir
+.cache
+.pytest_cache
+
+## Mac
+.DS_Store
+
+## vscode
+.vscode

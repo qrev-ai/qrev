@@ -1,0 +1,62 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap");
+
+@font-face {
+  font-family: "Russo One";
+  src: url("../assets/fonts/RussoOne-Regular.ttf") format("truetype");
+  ascent-override: 100%;
+  descent-override: 20%;
+  line-gap-override: normal;
+  advance-override: 10;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Avenir";
+  src: url("https://dgro9eqohvolk.cloudfront.net/btx/fonts/AvenirLTStd-Book.ttf") format("truetype");
+  ascent-override: 100%;
+  descent-override: 20%;
+  line-gap-override: normal;
+  advance-override: 10;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Avenir Medium";
+  src: url("https://dgro9eqohvolk.cloudfront.net/btx/fonts/AvenirLTStd-Medium.ttf")
+    format("truetype");
+  ascent-override: 100%;
+  descent-override: 20%;
+  line-gap-override: normal;
+  advance-override: 10;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Myriad Variable Concept";
+  src: url("https://dgro9eqohvolk.cloudfront.net/btx/fonts/Concept+Medium.ttf") format("truetype");
+  ascent-override: 100%;
+  descent-override: 20%;
+  line-gap-override: normal;
+  advance-override: 10;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("https://dgro9eqohvolk.cloudfront.net/btx/fonts/Manrope-Regular.ttf") format("truetype");
+  ascent-override: 100%;
+  descent-override: 20%;
+  line-gap-override: normal;
+  advance-override: 10;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("https://dgro9eqohvolk.cloudfront.net/btx/fonts/Inter-Regular.ttf") format("truetype");
+  ascent-override: 100%;
+  descent-override: 20%;
+  line-gap-override: normal;
+  advance-override: 10;
+  font-display: swap;
+}

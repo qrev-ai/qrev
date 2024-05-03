@@ -1,0 +1,3 @@
+time,subfolder,url,is_start_url,local_file,category,depth,max_depth,type,start_urls
+20231229-055526,raw,https://testing.com,True,lorem.html,Unknown,0,-1,raw,"['https://testing.com']"
+20231229-055521,raw,https://testing.com/a,True,lorem2.html,Unknown,0,-1,raw,"['https://testing.com']"

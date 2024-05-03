@@ -1,0 +1,49 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
+[tool.poetry]
+authors = ["parnell <3028114+parnell@users.noreply.github.com>"]
+description = ""
+name = "qai"
+packages = []
+readme = "README.md"
+version = "0.5.0"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+toml-sort = "^0.23.1"
+pandas = "^2.2.1"
+llama-index = "^0.10.18"
+python-dotenv = "^1.0.1"
+vapi-python = "^0.1.8"
+
+[tool.poetry.group.main.dependencies]
+gunicorn = "^21.2.0"
+numpy = "^1.26.3"
+pytest = "^8.0.1"
+
+[tool.poetry.group.qai-ai.dependencies]
+qai-ai = {develop = true, path = "projects/ai"}
+
+[tool.poetry.group.qai-chat.dependencies]
+qai-chat = {develop = true, path = "projects/chat"}
+
+# [tool.poetry.group.qai-chroma-server.dependencies]
+# chroma-server = {develop = true, path = "projects/chroma-server"}
+
+[tool.poetry.group.qai-core.dependencies]
+qai-core = {develop = true, path = "projects/core"}
+
+[tool.poetry.group.qai-scraper.dependencies]
+qai-scraper = {develop = true, path = "projects/scraper"}
+
+[tool.poetry.group.qai-storage.dependencies]
+qai-storage = {develop = true, path = "projects/storage"}
+
+[tool.tomlsort]
+all = true
+in_place = true
+spaces_before_inline_comment = 2  # Match Python PEP 8
+spaces_indent_inline_array = 4  # Match Python PEP 8
+trailing_comma_inline_array = true
