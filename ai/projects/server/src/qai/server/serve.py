@@ -4,7 +4,7 @@ from pprint import pformat
 from flask import jsonify, request
 from flask_pydantic import validate
 from pi_log import logs
-from qai.agent.agents.campaign.campaign import CampaignAgent, CampaignResponse
+from qai.agent.agents.campaign_agent import CampaignAgent
 from qai.chat.chat import company_query
 from qai.chat.db.chroma.chroma import Chroma
 

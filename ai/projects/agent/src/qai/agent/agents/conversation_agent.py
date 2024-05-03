@@ -67,30 +67,3 @@ class ConversationToolSpec(BaseToolSpec):
         )
         return agent
 
-
-if __name__ == "__main__":
-    cfg = load_config("qai-chat")
-    cfg.to_env()
-    llm = OpenAI(**cfg.model)
-    chat_store = SimpleChatStore()
-    user_id = "1234"
-    chat_memory = ChatMemoryBuffer.from_defaults(
-        token_limit=500,
-        chat_store=chat_store,
-        chat_store_key=user_id,
-    )
-
-    conversation_spec = ConversationToolSpec(
-        user_id=user_id,
-        memory=chat_memory,
-        model_config=cfg.model,
-    )
-    agent = conversation_spec.to_agent(llm=llm, verbose=True)
-    agent.chat("Hello, how are you?")
-    agent.chat("Can you tell me more?")
-    from pprint import pprint
-
-    print("@@@@@@@@@@@@@@@@@")
-    pprint(agent.memory.chat_store.get_messages(user_id))
-    # print(conversation_tool.chat("Hello, how are you?"))
-    # print(conversation_tool.create(nametools=None, tools=None))

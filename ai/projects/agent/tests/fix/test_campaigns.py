@@ -49,7 +49,7 @@ class TestQaiBot(unittest.TestCase):
         }
 
         to_persons_dict = {d["name"]: d for d in to_persons}
-        from qai.agent.agents.campaign.campaign import CampaignAgent
+        from qai.agent.agents.campaign_agent import CampaignAgent
 
         agent: CampaignAgent = CampaignAgent.create(
             people=to_persons_dict,

@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import patch
 
 from qai.agent.utils.distribute import adistribute, distribute
+from qai.agent.utils import distribute as distribute_module
 
 global_var_for_on_complete = multiprocessing.Value(ctypes.c_bool, 0)  # (type, init value)
 
@@ -43,7 +44,8 @@ class TestMultiprocessingFunctionality(unittest.TestCase):
         """
         Test case for the multiprocessing with No parameters
         """
-        self.assertRaises(TypeError, distribute, args=(mult2,))
+        self.assertRaises(ValueError, distribute, (mult2,))
+
 
     def test_simple_distribute(self):
         """
@@ -107,11 +109,13 @@ class TestMultiprocessingFunctionality(unittest.TestCase):
         """
         ## TODO fix this test, how to test on_complete
         global_var_for_on_complete.value = False
+        distribute_module.IGNORE_ERROR_MESSAGES = True
         # Test case for the multiprocessing function execution
         params_list = [1, 2, 3, 4]  # Simple list of integers
         expected_results = [1, 3]
-
+        
         actual_results = distribute(error_on_even, params_list, on_complete=on_complete)
+        distribute_module.IGNORE_ERROR_MESSAGES = False
 
         # Check if the results are as expected
         self.assertEqual(sorted(actual_results), expected_results)

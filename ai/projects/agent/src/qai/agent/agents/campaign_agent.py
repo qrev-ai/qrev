@@ -14,8 +14,8 @@ from llama_index.core.tools.tool_spec.base import BaseToolSpec
 from llama_index.core.tools.types import BaseTool
 
 from qai.agent import cfg
-from qai.agent.agents.email import EmailAgent, EmailModel
-from qai.agent.agents.sql_query import RefineSQLQuery, StepModel
+from qai.agent.agents.email_agent import EmailAgent, EmailModel
+from qai.agent.agents.sqlquery_agent import RefineSQLQuery, StepModel
 from qai.agent.models import OutreachType
 
 

@@ -2,10 +2,8 @@ import json
 import os
 import unittest
 from pathlib import Path
-from unittest.mock import create_autospec
 
-from qai.agent.agents.campaign.campaign import CampaignAgent
-from qai.chat.chat import company_query
+from qai.agent.agents.campaign_agent import CampaignAgent
 
 from qai.server import ROOT_DIR
 from qai.server.models import CampaignInputModel, CompanyChatbotModel
