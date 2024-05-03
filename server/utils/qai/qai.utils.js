@@ -4,7 +4,6 @@ import { functionWrapper } from "../../std/wrappers.js";
 import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { QaiConversation } from "../../models/qai/qai.conversations.model.js";
-import { IntermediateProspectData } from "../../models/campaign/intermediate.prospect.data.model.js";
 import * as UserUtils from "../user/user.utils.js";
 
 const fileName = "QAi Utils";
@@ -249,14 +248,22 @@ export const createConversation = functionWrapper(
 );
 
 async function _getConversations(
-    { accountId, userId },
+    { accountId, userId, sortByLatest },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
-    let conversations = await QaiConversation.find({
+    let conversations = null;
+    let queryObj = {
         account: accountId,
-        owner: userId,
-    }).lean();
+        // owner: userId,
+    };
+    if (sortByLatest) {
+        conversations = await QaiConversation.find(queryObj)
+            .sort({ updated_on: -1 })
+            .lean();
+    } else {
+        conversations = await QaiConversation.find(queryObj).lean();
+    }
     logg.info(`conversations: ${JSON.stringify(conversations)}`);
 
     logg.info(`ended`);
