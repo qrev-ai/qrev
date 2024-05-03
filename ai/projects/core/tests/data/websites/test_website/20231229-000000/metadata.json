@@ -1,0 +1,18 @@
+{
+  "root": ".",
+  "meta_file": "{root}/metadata.json",
+  "_groups": {
+    "raw": {
+      "_uris": {
+        "lorem.html": {
+          "_uri": "lorem.html",
+          "title": "Example"
+        },
+        "lorem2.html": {
+          "_uri": "lorem2.html",
+          "title": "Example2"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,53 @@
+## Git
+.git
+
+## App
+
+## Staging Directories
+docker_staging*
+
+## System
+.env
+
+## Python
+*.py[co]
+__pycache__
+*.egg
+*.egg-info
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+dist
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+## caches
+cachedir
+.cache
+
+# Mac
+.DS_Store
+
+## temp files
+*.bk.*
+tempdb
+t.csv
+
+
+# Virtual environment
+.env
+.venv/
+venv/
+
+## vscode
+.vscode

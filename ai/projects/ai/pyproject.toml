@@ -1,0 +1,57 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
+[tool.poetry]
+authors = ["parnell <152523161+leeparnell@users.noreply.github.com>"]
+description = "Qai AI API"
+name = "qai-ai"
+packages = [{from = "src", include = "qai"}]
+readme = "README.md"
+version = "0.5.2.3"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+chromadb = "^0.4.22"
+dataclasses-json = "^0.6.4"
+langchain-community = "^0.0.34"
+llama-index = "^0.10.30"
+llama-index-embeddings-huggingface = "^0.2.0"
+llama-index-vector-stores-chroma = "^0.1.7"
+openai = "^1.23.2"
+pandas = "^2.2.1"
+pi-conf = "^0.7.7.5"
+pi-log = "^0.5.7.3"
+qai-storage = "^0.5.0"
+termcolor = "^2.4.0"
+torch = [
+    {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},
+    {platform = "darwin", source = "pypi", version = "^2.3.0"},
+    {platform = "linux", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
+    {platform = "win32", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
+]
+
+[tool.poetry.extras]
+test = ["pytest"]
+
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+
+[[tool.poetry.source]]
+name = "pytorch-gpu-src"
+priority = "explicit"
+url = "https://download.pytorch.org/whl/cu118"
+
+[[tool.poetry.source]]
+name = "pytorch-cpu-src"
+priority = "explicit"
+url = "https://download.pytorch.org/whl/cpu"
+
+[tool.tomlsort]
+all = true
+in_place = true
+spaces_before_inline_comment = 2  # Match Python PEP 8
+spaces_indent_inline_array = 4  # Match Python PEP 8
+trailing_comma_inline_array = true
+overrides."tool.poetry.dependencies".first = ["python"]

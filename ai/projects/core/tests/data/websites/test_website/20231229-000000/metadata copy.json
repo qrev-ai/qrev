@@ -1,0 +1,17 @@
+{
+  "root": ".",
+  "meta_file": "{root}/metadata.json",
+  _groups : {
+    "uris" : [
+      {
+        "uri": "http://www.example.com",
+        "title": "Example"
+      },
+      {
+        "uri": "http://www.example.com",
+        "title": "Example"
+      }
+    ]
+
+  }
+}

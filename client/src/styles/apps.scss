@@ -1,0 +1,270 @@
+.desktop-apps {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+
+  &--container {
+    width: 100%;
+    height: 100%;
+    padding: 24px 0 0;
+    position: relative;
+    box-sizing: border-box;
+
+    @media (max-width: 960px) {
+      padding: 35px 0 0;
+    }
+  }
+
+  h2 {
+    font-family: "Inter";
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 28px;
+    margin: 0;
+    padding: 0 32px;
+    box-sizing: border-box;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+
+    .apps-icon {
+      display: inline-flex;
+      width: 48px;
+      height: 48px;
+      padding: 8px;
+      justify-content: center;
+      align-items: center;
+      flex-shrink: 0;
+      border-radius: 4px;
+      border: 1px solid var(--grey-800, #303232);
+      background: var(--base-white, #fff);
+      margin-right: 12px;
+      box-sizing: border-box;
+    }
+  }
+
+  .desktop-app-search {
+    position: absolute;
+    width: 320px;
+    height: 40px;
+    right: 32px;
+    top: 28px;
+  }
+
+  &--scrollable {
+    width: 100%;
+    height: calc(100% - 72px);
+    overflow-x: hidden;
+    overflow-y: scroll;
+    background: var(--grey-50);
+    padding: 0 32px 32px;
+    box-sizing: border-box;
+
+    .desktop-label {
+      font-family: "Inter";
+      font-size: 20px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 28px; /* 140% */
+      letter-spacing: 0.6px;
+      margin: 48px 0 16px;
+    }
+
+    .desktop-grid-view {
+      width: 100%;
+      margin-bottom: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: stretch;
+
+      .desktop-app-btn {
+        width: calc(25% - 24px);
+        flex-shrink: 0;
+        margin: 0 24px 16px 0;
+        display: flex;
+        align-items: center;
+        border-radius: 8px;
+        background: var(--base-white, #fff);
+        box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+        padding: 16px 24px;
+        box-sizing: border-box;
+        position: relative;
+        min-height: 112px;
+
+        .desktop-app-logo-contents {
+          width: 48px;
+          height: 48px;
+          flex-shrink: 0;
+          border-radius: 4px;
+          border: 1px solid var(--primary-default, #2f4858);
+          background: var(--primary-default, #2f4858);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 16px;
+        }
+
+        .desktop-app-contents {
+          width: calc(100% - 62px);
+
+          & > p {
+            color: var(--text-primary-default, #303232);
+            font-family: "Inter";
+            font-size: 16px;
+            font-style: normal;
+            font-weight: 700;
+            line-height: 24px; /* 150% */
+            letter-spacing: 0.48px;
+            margin-bottom: 12px;
+          }
+
+          .desktop-app-title {
+            width: 100%;
+            padding-right: 125px;
+            box-sizing: border-box;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin: 0 0 12px 0;
+          }
+
+          .desktop-app-description {
+            color: var(--text-primary-default, #303232);
+            font-family: "Inter";
+            font-size: 14px;
+            font-style: normal;
+            font-weight: 400;
+            line-height: 20px;
+            margin: 0;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+        }
+
+        &:hover {
+          box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.3);
+        }
+      }
+
+      @media (max-width: 1650px) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 16px;
+
+        .desktop-app-btn {
+          width: 100%;
+          margin-bottom: 0;
+        }
+      }
+    }
+
+    .desktop-integrations {
+      width: 100%;
+      display: flex;
+      align-items: stretch;
+      flex-wrap: wrap;
+
+      @media (max-width: 1650px) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 16px;
+
+        .integration-each-button {
+          width: 100%;
+          margin-bottom: 0;
+        }
+      }
+    }
+  }
+
+  .integration-each-button {
+    width: calc(25% - 24px);
+    height: 110px;
+    margin: 0 24px 16px 0;
+    border-radius: 8px;
+    background: var(--base-white, #fff);
+    box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.12);
+    display: flex;
+    align-items: center;
+    padding: 0 20px 0 24px;
+    position: relative;
+    box-sizing: border-box;
+    padding-bottom: 35px;
+
+    &:hover {
+      box-shadow: 2px 4px 16px 0px rgba(48, 50, 50, 0.3);
+    }
+
+    svg {
+      margin-right: 10px;
+    }
+
+    p {
+      color: var(--text-primary-default, #303232);
+      font-family: "Inter";
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 700;
+      line-height: 24px; /* 150% */
+      letter-spacing: 0.48px;
+      margin: 0 auto 0 8px;
+    }
+
+    .card-connect-button {
+      height: 32px;
+      width: 90px;
+    }
+
+    &--description {
+      display: flex;
+      align-items: center;
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      z-index: 2;
+      width: 100%;
+      padding: 0 24px;
+      box-sizing: border-box;
+
+      p {
+        width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-primary-default, #303232);
+        font-family: "Inter";
+        font-size: 14px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 20px;
+        margin-left: 0;
+      }
+    }
+
+    img {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+      border-radius: 4px;
+    }
+
+    .merge-dev-img {
+      background: white;
+    }
+  }
+
+  .desktop-app-action-button {
+    height: 32px;
+    width: fit-content;
+    position: absolute;
+    right: 24px;
+    top: 16px;
+    z-index: 10;
+  }
+}
