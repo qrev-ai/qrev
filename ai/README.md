@@ -2,8 +2,25 @@
 
 Welcome to the QRev AI repository, where you'll find a collection of projects, each project is encapsulated in an API.
 
-# Setting up an agentic server
-This is through the `qai-server` project located in `projects/server`. You can find the setup in the [Server README](https://github.com/qrev-ai/qrev/tree/main/ai/projects/server/README.md)
+## Getting Started
+
+To get started with any of the projects, follow these steps:
+
+1. **Clone the Repository**
+
+```bash
+git clone https://github.com/qrev-ai/qrev.git
+```
+
+2. **Go to the project folder**
+
+```bash
+cd qrev/ai
+```
+
+3. Set up the agentic server
+This is through the `qai-server` project located in `projects/server`. 
+Please follow the setup in the [Server README](https://github.com/qrev-ai/qrev/tree/main/ai/projects/server/README.md)
 
 ## Projects Overview
 
@@ -27,21 +44,4 @@ This is through the `qai-server` project located in `projects/server`. You can f
 6. **server**
    - Docker-based application designed to be a web interface for other projects inside of QRev.
 
-## Getting Started
-
-To get started with any of the projects, follow these steps:
-
-## Getting Started
-
-Clone the Repository
-
-```bash
-git clone https://github.com/qrev-ai/qrev.git
-```
-
-Go to the project folder
-
-```bash
-cd qrev/ai
-```
 
