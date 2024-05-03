@@ -5,12 +5,15 @@ import traceback
 from logging import getLogger
 from queue import Queue
 from typing import Any, Callable
+from multiprocessing import Value
+from ctypes import c_bool
 
 log = getLogger(__name__)
 pool_id = 0
 
 pool_handlers: dict[int, "PoolHandler"] = {}
 
+IGNORE_ERROR_MESSAGES  = Value(c_bool, False)
 
 class Worker:
     """
@@ -46,11 +49,12 @@ class Worker:
             self.results_queue.put(result)
             return result
         except Exception as e:
+            self.error_queue.put(e)
+            if IGNORE_ERROR_MESSAGES:
+                return None
             # Send error information to the main process via error_queue
             log.error(traceback.format_exc())
             log.error(f"Worker: Error Processing {self.func} args={args} with kwargs={kwargs}")
-
-            self.error_queue.put(e)
             return None
         finally:
             # print(len(self.successes) + len(self.errors), self.nexpected_results)

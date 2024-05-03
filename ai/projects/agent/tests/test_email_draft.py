@@ -22,7 +22,7 @@ from transformers import (
 )
 
 from qai.agent import ROOT_DIR, cfg
-from qai.agent.agents.email import EmailModel, EmailToolSpec
+from qai.agent.agents.email_agent import EmailModel, EmailToolSpec
 from qai.agent.qaibot import QaiBot, QaiSession
 
 # loads BAAI/bge-small-en

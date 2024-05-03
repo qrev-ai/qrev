@@ -15,12 +15,7 @@ from sqlalchemy.schema import CreateTable
 
 from qai.agent import ROOT_DIR
 
-# Current supported fields in backend: email, name, phone_number, company_name, company_url, job_title, linkedin_url, timezone
-
 PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(ROOT_DIR)))
-
-
-# Settings.llm = OpenAI(model="gpt-4", temperature=0.0)
 
 
 class PeopleIds(BaseModel):
