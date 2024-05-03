@@ -27,19 +27,63 @@ export async function converseApi(req, res, next) {
         conversation_id: conversationId,
     } = req.body;
 
+    let [conversationDocResp, conversationDocErr] =
+        await QAiBotUtils.getConversation(
+            {
+                accountId,
+                userId,
+                conversationId,
+                getAccountAndUserInfo: true,
+            },
+            { txid }
+        );
+    if (conversationDocErr) throw conversationDocErr;
+    if (!conversationDocResp) throw `Conversation not found`;
+    let { conversationInfo, accountInfo, userInfo } = conversationDocResp;
+    if (!conversationInfo) throw `Conversation not found`;
+    if (!accountInfo) throw `Account not found`;
+    if (!userInfo) throw `User not found`;
+
     let [conversationResp, conversationErr] =
         await QAiBotUtils.addUserQueryToConversation(
-            { query, accountId, userId, conversationId, uploadedData },
+            {
+                query,
+                accountId,
+                userId,
+                conversationId,
+                uploadedData,
+                conversation: conversationInfo,
+            },
             { txid }
         );
     if (conversationErr) throw conversationErr;
 
     let [botResp, botErr] = await QAiBotUtils.converse(
-        { query, accountId, userId, uploadedData },
+        {
+            query,
+            accountId,
+            userId,
+            uploadedData,
+            conversationInfo,
+            accountInfo,
+            userInfo,
+        },
         { txid }
     );
 
-    if (botErr) throw botErr;
+    if (botErr) {
+        // add default error bot response to conversation
+        await QAiBotUtils.addQaiResponseToConversation(
+            {
+                accountId,
+                conversationId,
+                isError: true,
+                conversation: conversationInfo,
+            },
+            { txid, sendErrorMsg: true }
+        );
+        throw botErr;
+    }
 
     let campaignSequenceId = QAiBotUtils.isCampaignCreatedInAIResponse(
         { botResp, accountId, userId },
@@ -69,7 +113,12 @@ export async function converseApi(req, res, next) {
 
     let [qaiConversationResp, qaiConversationErr] =
         await QAiBotUtils.addQaiResponseToConversation(
-            { response: botResp, accountId, conversationId },
+            {
+                response: botResp,
+                accountId,
+                conversationId,
+                conversation: conversationInfo,
+            },
             { txid }
         );
     if (qaiConversationErr) throw qaiConversationErr;
