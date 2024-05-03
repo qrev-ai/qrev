@@ -32,6 +32,7 @@ torch = [
 
 [tool.poetry.group.dev.dependencies]
 toml-sort = "^0.23.1"
+ecs-deploy = "^1.14.0"
 
 [[tool.poetry.source]]
 name = "pytorch-cpu-src"
