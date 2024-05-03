@@ -8,7 +8,16 @@ QAI-Server is a Docker-based application designed to be a web interface for othe
 - Campaign management
 - Provides RESTful API endpoints for various tasks
 
-## Requirements
+## 🚀 Tech Stack
+
+- ✅ **Connection to the App Server Database**: [MongoDB](https://www.mongodb.com/).
+- ✅ **Vector Database**: [ChromaDB](https://www.trychroma.com/).
+- ✅ **SQL Relational Database**: MySQL, MariaDB, SQLite3, anything that works with [SQLAlchemy](https://www.sqlalchemy.org/).
+
+
+## Prerequisites :point_down:
+
+## Code Requirements
 
 - Python 3.11
 - Docker
