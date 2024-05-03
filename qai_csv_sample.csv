@@ -1,2 +1,2 @@
-first_name,last_name,email,company_name,company_url,job_title,linkedin_url,timezone
-John,Doe,johdoe@gmail.com,ExComp,www.excomp.com,CEO,https://www.linkedin.com/in/johndoe,Asia/Calcutta
+name,email,company_name,company_url,job_title,linkedin_url,timezone
+John Doe,johdoe@gmail.com,ExComp,www.excomp.com,CEO,https://www.linkedin.com/in/johndoe,Asia/Calcutta
