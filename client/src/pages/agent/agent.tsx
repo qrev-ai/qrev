@@ -22,9 +22,12 @@ const AgentBot: React.FC = () => {
   const fetchConversations = async () => {
     const res = await getAllQaiConverse(accountId);
     if (res?.conversations) {
-      setQueryList(res.conversations);
+      const queryList = res.conversations?.sort((a: any, b: any) =>
+        a.updated_on > b.updated_on ? -1 : 1,
+      );
+      setQueryList(queryList);
       if (!activeQuery) {
-        setActiveQuery(res.conversations?.[0]?._id);
+        setActiveQuery(queryList?.[0]?._id);
       }
     }
   };
@@ -32,7 +35,9 @@ const AgentBot: React.FC = () => {
   const onAddQuery = async () => {
     const res = await createQaiConverse(accountId);
     if (res?.conversation_id) {
-      const newQuery = [...queryList, res?.conversation_id];
+      const newQuery = [res?.conversation_id, ...queryList]?.sort((a, b) =>
+        a.updated_on > b.updated_on ? -1 : 1,
+      );
       setQueryList(newQuery);
       setActiveQuery(res?.conversation_id?._id);
     }
