@@ -80,7 +80,7 @@ const PeopleTable = ({ peoples }: { peoples: any }) => {
   }, []);
 
   useEffect(() => {
-    if (peoples) {
+    if (peoples?.[0]) {
       const headers = Object.keys(peoples?.[0]);
       const columnDefs = headers?.map((i: string) => ({ headerName: i, field: i.toLowerCase() }));
       setColumnDefs(columnDefs);
