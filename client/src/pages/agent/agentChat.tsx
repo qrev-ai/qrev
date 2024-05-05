@@ -114,18 +114,17 @@ const AgentChat = ({
 
     const res = await qaiConverse(accountId, request);
     if (res) {
-      setChatText('');
-      scrollToBottom();
-      resetFile();
-      fetchConversation();
-      fetchConversations();
-
       const campaign = res?.result?.actions?.find((item: any) => item.type === 'list');
       if (campaign) {
         await localStorage.setItem('qrev-campaign', JSON.stringify(campaign));
       }
     }
     setChatLoading(false);
+    setChatText('');
+    scrollToBottom();
+    resetFile();
+    fetchConversation();
+    fetchConversations();
   };
 
   const onKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
@@ -345,6 +344,8 @@ const AgentChat = ({
                             </div>
                           </div>
                         </div>
+                      ) : item.action === 'text' ? (
+                        <p>{item.response}</p>
                       ) : (
                         <div />
                       ),
