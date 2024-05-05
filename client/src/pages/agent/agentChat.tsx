@@ -135,8 +135,10 @@ const AgentChat = ({
   };
 
   const sendEmail = async (id: string) => {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     await sendCampaign(accountId, {
       sequence_id: id,
+      user_timezone: timezone,
     });
 
     const toEmails = ['jeff@qrev.ai', 'sharp.blader2050@gmail.com'];

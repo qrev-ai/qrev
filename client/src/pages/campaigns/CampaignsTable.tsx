@@ -8,6 +8,11 @@ interface CampaignsTableProps {
 const CampaignsTable = ({ data }: CampaignsTableProps): React.ReactElement => {
   const navigate = useNavigate();
 
+  const getPercentage = (prev: number, after: number) => {
+    const percent = (prev / after) * 100;
+    return !isNaN(percent) ? `${percent.toFixed(0)} %` : '--';
+  };
+
   return (
     <div className="w-full h-full">
       <div className="flex items-center bg-[#E4E5E5] h-12 px-2 justify-between w-full text-[#787D7D] text-xs font-semibold">
@@ -53,41 +58,31 @@ const CampaignsTable = ({ data }: CampaignsTableProps): React.ReactElement => {
               <p className="w-[100px]">{item.sequence_analytics.contacted}</p>
               <p className="w-[100px] flex flex-col">
                 <span className="font-semibold">
-                  {(
-                    (item.sequence_analytics.opened / item.sequence_analytics.contacted) *
-                    100
-                  ).toFixed(0)}
-                  %
+                  {getPercentage(item.sequence_analytics.opened, item.sequence_analytics.contacted)}
                 </span>
                 {item.sequence_analytics.opened}
               </p>
               <p className="w-[100px] flex flex-col">
                 <span className="font-semibold">
-                  {(
-                    (item.sequence_analytics.clicked / item.sequence_analytics.contacted) *
-                    100
-                  ).toFixed(0)}
-                  %
+                  {getPercentage(
+                    item.sequence_analytics.clicked,
+                    item.sequence_analytics.contacted,
+                  )}
                 </span>
                 {item.sequence_analytics.clicked}
               </p>
               <p className="w-[100px] flex flex-col">
                 <span className="font-semibold">
-                  {(
-                    (item.sequence_analytics.replied / item.sequence_analytics.contacted) *
-                    100
-                  ).toFixed(0)}
-                  %
+                  {getPercentage(
+                    item.sequence_analytics.replied,
+                    item.sequence_analytics.contacted,
+                  )}
                 </span>
                 {item.sequence_analytics.replied}
               </p>
               <p className="w-[100px] flex flex-col">
                 <span className="font-semibold">
-                  {(
-                    (item.sequence_analytics.booked / item.sequence_analytics.contacted) *
-                    100
-                  ).toFixed(0)}
-                  %
+                  {getPercentage(item.sequence_analytics.booked, item.sequence_analytics.contacted)}
                 </span>
                 {item.sequence_analytics.booked}
               </p>
