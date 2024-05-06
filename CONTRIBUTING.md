@@ -21,7 +21,7 @@ In general, we follow the "fork-and-pull" Git workflow.
 3. Make your changes 
 4. Create a new branch for your changes.
 5. Commit your changes and push them to your forked repository
-5. Create a pull request from your forked repository to the main repository.
+6. Create a pull request from your forked repository to the main repository.
 
 > NOTE: Be sure to merge the latest from "upstream" before making a pull request!.
 
