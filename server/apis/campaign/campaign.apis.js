@@ -210,6 +210,44 @@ export async function getSequenceProspectsApi(req, res, next) {
     });
 }
 
+/*
+* Created on 4th May 2024
+* Q: What does this API do?
+* - This API is used to get all the email messages that are currently being sent across all sequences
+* Q: Why?
+* - Since AI generates personalized messages for each prospect in all sequences, we need to provide a UI for QRev user to see the messages being sent.
+
+* Q: Where is this API used?
+* - This API is used in the QRev Frontend, under the "Emails" tab in the "Campaign" app.
+*/
+export async function getAllSequenceEmailsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getAllSequenceEmailsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId, page_num: pageNum, limit } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+
+    let [result, resultErr] = await CampaignUtils.getAllSequenceEmails(
+        { accountId, pageNum, limit },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
 export async function setSenderListForCampaignApi(req, res, next) {
     const txid = req.id;
     const funcName = "setSenderListForCampaignApi";
