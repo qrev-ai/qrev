@@ -17,10 +17,10 @@ Please see below how to contribute to the project, also refer to the contributin
 
 In general, we follow the "fork-and-pull" Git workflow.
 1. Fork the QRev repository [https://github.com/qrev-ai/qrev](https://github.com/qrev-ai/qrev)
-2. Clone your forked repository
-3. Make your changes 
+2. Clone your forked repository.
+3. Make your changes.
 4. Create a new branch for your changes.
-5. Commit your changes and push them to your forked repository
+5. Commit your changes and push them to your forked repository.
 6. Create a pull request from your forked repository to the main repository.
 
 > NOTE: Be sure to merge the latest from "upstream" before making a pull request!.
