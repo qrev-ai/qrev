@@ -20,6 +20,7 @@ from pymongo import MongoClient
 
 from qai.agent import ROOT_DIR, cfg
 from qai.agent.utils.distribute import adistribute
+from qai.agent.utils.schema_utils import get_name
 
 log = getLogger(__name__)
 PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(ROOT_DIR)))
@@ -105,8 +106,8 @@ class EmailToolSpec(BaseToolSpec):
             to_company (dict): The company receiving the email.
 
         """
-        from_name = self.get_name(from_person)
-        to_name = self.get_name(to_person)
+        from_name = get_name(from_person)
+        to_name = get_name(to_person)
 
         from_company_name = self.get_cname(from_company)
         to_company_name = self.get_cname(to_company)
@@ -156,22 +157,6 @@ class EmailToolSpec(BaseToolSpec):
         if not cname:
             raise ValueError(f"Company must have a name. values={company}")
         return cname
-
-    def get_name(self, person: dict) -> str:
-        """
-        Get the name from the person dict.
-        """
-        name = person.get("name")
-        if not name:
-            first_name = person.get("first_name")
-            last_name = person.get("last_name")
-            if first_name and last_name:
-                name = f"{first_name} {last_name}"
-            else:
-                name = first_name or last_name
-        if not name:
-            raise ValueError(f"Person must have a name. values={person}")
-        return name
 
     def draft_email(
         self,
