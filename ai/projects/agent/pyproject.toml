@@ -8,7 +8,7 @@ description = "Qai Agents for the Qai AI Platform"
 name = "qai-agent"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.2.4"
+version = "0.5.2.5"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"

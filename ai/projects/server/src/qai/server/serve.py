@@ -156,7 +156,7 @@ def campaign():
 
     if model.uploaded_data:
         ## convert list of dict to dict of dict
-        uploaded_data = {d["name"]: d for d in model.uploaded_data}
+        uploaded_data = {d.get("id", uuid.uuid4()): d for d in model.uploaded_data}
         agent.people = uploaded_data
     response: CampaignResponse = agent.chat(model.query)
     js = {}
