@@ -30,4 +30,9 @@ router.get(
     apiWrapper(CampaignApis.getSenderListForCampaignApi)
 );
 
+router.get(
+    "/sequence/all/emails",
+    apiWrapper(CampaignApis.getAllSequenceEmailsApi)
+);
+
 export default router;

@@ -1894,3 +1894,146 @@ export const getSequenceProspects = functionWrapper(
     "getSequenceProspects",
     _getSequenceProspects
 );
+
+async function _getAllSequenceEmails(
+    { accountId, pageNum = 1, limit = 20 },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+
+    const headers = {
+        _id: {
+            label: "ID",
+            type: "string",
+            hidden: true,
+            order: 0,
+        },
+        prospect_name: {
+            label: "Prospect Name",
+            type: "string",
+            order: 1,
+        },
+        prospect_email: {
+            label: "Prospect Email",
+            type: "string",
+            order: 2,
+        },
+        prospect_phone_number: {
+            label: "Prospect Phone Number",
+            type: "string",
+            order: 3,
+        },
+        message: {
+            label: "Message",
+            type: "draft",
+            order: 4,
+        },
+        status: {
+            label: "Status",
+            type: "chip",
+            values: ["pending", "sent", "bounced"],
+            order: 5,
+        },
+        sender_email: {
+            label: "Sender Email",
+            type: "string",
+            order: 6,
+        },
+        scheduled_time: {
+            label: "Scheduled Time",
+            type: "datetime_millis",
+            order: 7,
+        },
+        created_on: {
+            label: "Created On",
+            type: "datetime_millis",
+            order: 8,
+        },
+    };
+
+    let spmsDocsPromise = SequenceProspectMessageSchedule.find({
+        account: accountId,
+    })
+        .sort("-created_on")
+        .skip((pageNum - 1) * limit)
+        .limit(limit)
+        .populate("contact")
+        .lean();
+
+    let numOfPagesPromise = SequenceProspectMessageSchedule.countDocuments({
+        account: accountId,
+    });
+
+    let [spmsDocs, numOfDocs] = await Promise.all([
+        spmsDocsPromise,
+        numOfPagesPromise,
+    ]);
+    logg.info(`spmsDocs.length: ${spmsDocs.length}`);
+    if (spmsDocs.length < 10) {
+        logg.info(`spmsDocs: ${JSON.stringify(spmsDocs)}`);
+    }
+    logg.info(`numOfDocs: ${numOfDocs}`);
+
+    let numOfPages = Math.ceil(numOfDocs / limit);
+    logg.info(`numOfPages: ${numOfPages}`);
+
+    if (!spmsDocs.length) {
+        logg.info(`no spmsDocs found`);
+        return [{ numOfPages, data: [], headers }, null];
+    }
+
+    let data = [];
+    let userIdSet = new Set();
+    for (let i = 0; i < spmsDocs.length; i++) {
+        let spmsDoc = spmsDocs[i];
+        let contact = spmsDoc.contact || {};
+        let toName = contact.first_name || "";
+        if (contact.last_name) toName += " " + contact.last_name;
+
+        let senderUserId = spmsDoc.sender.toString();
+        let item = {
+            _id: spmsDoc._id,
+            prospect_name: toName || contact.email || "",
+            prospect_email: contact.email || "",
+            prospect_phone_number: contact.phone_number || "",
+            message: {
+                subject: spmsDoc.message_subject || "",
+                body: spmsDoc.message_body || "",
+            },
+            status: spmsDoc.message_status,
+            scheduled_time: new Date(spmsDoc.message_scheduled_time).getTime(),
+            created_on: new Date(spmsDoc.created_on).getTime(),
+            sender_id: senderUserId,
+        };
+
+        userIdSet.add(senderUserId);
+
+        data.push(item);
+    }
+
+    let userIds = Array.from(userIdSet);
+    let [userObjMap, userErr] = await UserUtils.getUsersInfoByIds(
+        { userIds },
+        { txid }
+    );
+    if (userErr) throw userErr;
+
+    for (let i = 0; i < data.length; i++) {
+        let item = data[i];
+        let senderUserId = item.sender_id;
+        let userObj = userObjMap[senderUserId];
+        item.sender_email = userObj && userObj.email;
+        // remove sender_id from item
+        delete item.sender_id;
+    }
+
+    logg.info(`ended`);
+    return [{ numOfPages, data, headers }, null];
+}
+
+export const getAllSequenceEmails = functionWrapper(
+    fileName,
+    "getAllSequenceEmails",
+    _getAllSequenceEmails
+);
