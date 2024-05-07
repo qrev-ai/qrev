@@ -6,16 +6,22 @@ import loadable from '@loadable/component';
 
 import { StoreParams } from '../../models/store';
 import { setStoreLoading } from '../../store/actions';
-import { getCampaignsMeetings, getCampaignsOverview } from '../../utils/api-campaign';
+import {
+  getAllCampaignsProspects,
+  getCampaignsMeetings,
+  getCampaignsOverview,
+} from '../../utils/api-campaign';
 import {
   CampaignDetailsResponseParams,
   CampaignDetailsParams,
   CampaignOverviewResponse,
+  CampaignProspectsResponse,
 } from '../../models/campaigns';
 import CustomTabPanel, { a11yProps } from '../../components/CustomTabPanel';
 import { trackError } from '../../utils/analytics';
 import '../../styles/insights.scss';
 import Overview from './Overview';
+import ProspectsTable from './Prospects';
 
 const CampaignsIcon = loadable(() => import('../../icons/CampaignsIcon'));
 // const MeetingsTable = loadable(() => import('./Meetings'));
@@ -29,10 +35,11 @@ const CampaignDetails = (): React.ReactElement => {
   const queryParams = new URLSearchParams(location.search);
   const sequenceId = queryParams.get('id');
   const sequenceName = queryParams.get('name');
-
-  const accountId = useSelector((state: StoreParams) => state.user.workspace?.cnt_account_id || '');
   const [data, setTableData] = useState<CampaignDetailsParams[]>([]);
   const [overviewData, setOverview] = useState<CampaignOverviewResponse>();
+  const [prospectsData, setProspects] = useState<CampaignProspectsResponse>();
+
+  const accountId = useSelector((state: StoreParams) => state.user.workspace?.cnt_account_id || '');
 
   useEffect(() => {
     if (initCallRef.current) return;
@@ -85,6 +92,23 @@ const CampaignDetails = (): React.ReactElement => {
         setLoading(false);
         initCallRef.current = true;
       });
+
+    getAllCampaignsProspects(accountId, sequenceId)
+      .then((res: any) => {
+        if (res.success) {
+          setProspects(cloneDeep(res.result));
+        }
+      })
+      .catch((err) => {
+        trackError(err, {
+          page: 'Campaigns Details',
+          type: 'view_Campaigns_Details',
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+        initCallRef.current = true;
+      });
   };
 
   const handleTapParentChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -118,7 +142,7 @@ const CampaignDetails = (): React.ReactElement => {
             }}
           >
             <Tab label="Overview" sx={{ width: 150 }} {...a11yProps(0)} />
-            {/* <Tab label="Prospects" sx={{ width: 150 }} {...a11yProps(1)} /> */}
+            <Tab label="Prospects" sx={{ width: 150 }} {...a11yProps(1)} />
             {/* <Tab label="Meetings" sx={{ width: 150 }} {...a11yProps(2)} /> */}
           </Tabs>
         </div>
@@ -126,10 +150,10 @@ const CampaignDetails = (): React.ReactElement => {
           <CustomTabPanel value={tabParentValue} index={0}>
             <Overview data={overviewData} />
           </CustomTabPanel>
-          {/* <CustomTabPanel value={tabParentValue} index={1}>
-            Prospects
+          <CustomTabPanel value={tabParentValue} index={1}>
+            <ProspectsTable data={prospectsData} />
           </CustomTabPanel>
-          <CustomTabPanel value={tabParentValue} index={2}>
+          {/* <CustomTabPanel value={tabParentValue} index={2}>
             <MeetingsTable data={data} />
           </CustomTabPanel> */}
         </div>

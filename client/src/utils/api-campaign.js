@@ -48,6 +48,23 @@ export const getCampaignsMeetings = async (accountId, sequenceId) => {
   }
 };
 
+export const getAllCampaignsProspects = async (accountId, sequenceId) => {
+  try {
+    const response = await api.get(
+      `/api/campaign/sequence/prospects?account_id=${accountId}&sequence_id=${sequenceId}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    return Promise.resolve(response.data);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
+
 export const campaignSenderList = async (accountId, payload) => {
   try {
     const response = await api.post(
