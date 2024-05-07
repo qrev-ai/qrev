@@ -8,7 +8,7 @@ description = ""
 name = "qai-server"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.4"
+version = "0.5.4.1"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
