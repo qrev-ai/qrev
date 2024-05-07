@@ -47,3 +47,21 @@ export const getCampaignsMeetings = async (accountId, sequenceId) => {
     return Promise.reject(err);
   }
 };
+
+export const campaignSenderList = async (accountId, payload) => {
+  try {
+    const response = await api.post(
+      `/api/campaign/config/senders?account_id=${accountId}`,
+      payload,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    return Promise.resolve(response.data);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};
