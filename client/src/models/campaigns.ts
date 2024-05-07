@@ -85,6 +85,65 @@ export interface CampaignOverviewResponse {
   ];
 }
 
+export interface CampaignProspectsResponse {
+  headers: {
+    _id: {
+      label: string;
+      type: string;
+      hidden?: boolean;
+      order: number;
+    };
+    email: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    name: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    phone_number: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    company_name: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    linkedin_url: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    status: {
+      label: string;
+      type: string;
+      values: string[];
+      order: number;
+      hidden?: boolean;
+    };
+  };
+  data: [
+    {
+      _id: string;
+      email: string;
+      name: string;
+      phone_number: string;
+      company_name: string;
+      linkedin_url: string;
+      status: string;
+    }[],
+  ];
+}
+
 export interface SelectParams {
   label: string;
   value: string;
