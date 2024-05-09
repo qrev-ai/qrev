@@ -13,6 +13,7 @@
     "@hassanmojab/react-modern-calendar-datepicker": "^3.1.7",
     "@loadable/component": "^5.15.3",
     "@mui/material": "^5.14.9",
+    "@mui/x-data-grid": "^7.3.2",
     "@testing-library/jest-dom": "^5.17.0",
     "@types/react": "^18.2.21",
     "@types/react-dom": "^18.2.7",
