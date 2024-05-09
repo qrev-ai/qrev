@@ -82,3 +82,20 @@ export const campaignSenderList = async (accountId, payload) => {
     return Promise.reject(err);
   }
 };
+
+export const getAllCampaignSequencesEmails = async (accountId, pageNum = 1, limit = 20) => {
+  try {
+    const response = await api.get(
+      `/api/campaign/sequence/all/emails?account_id=${accountId}&page_num=${pageNum}&limit=${limit}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    return Promise.resolve(response.data);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+};

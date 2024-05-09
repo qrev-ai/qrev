@@ -163,3 +163,83 @@ export interface RobinTeamMemberParams {
   member_user_id?: string;
   member_max_bookings_per_day: string;
 }
+
+export interface CampaignEmailsType {
+  numOfPages: 1;
+  data: {
+    _id: string;
+    prospect_name: string;
+    prospect_email: string;
+    prospect_phone_number: string;
+    message: {
+      subject: string;
+      body: string;
+    };
+    status: string;
+    scheduled_time: number;
+    created_on: number;
+    sender_email: string;
+  }[];
+  headers: {
+    _id: {
+      label: string;
+      type: string;
+      hidden?: boolean;
+      order: number;
+    };
+    prospect_name: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    prospect_email: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    prospect_phone_number: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    message: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    status: {
+      label: string;
+      type: string;
+      values: string[];
+      order: number;
+      hidden?: boolean;
+    };
+    sender_email: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    scheduled_time: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+    created_on: {
+      label: string;
+      type: string;
+      order: number;
+      hidden?: boolean;
+    };
+  };
+}
+export interface CampaignEmailsResponse {
+  success: boolean;
+  message: string;
+  result: CampaignEmailsType;
+}

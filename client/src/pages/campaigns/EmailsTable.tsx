@@ -1,14 +1,15 @@
 'use strict';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { CampaignProspectsResponse } from '../../models/campaigns';
+import moment from 'moment';
+import { CampaignEmailsType } from '../../models/campaigns';
 
 import { AgGridReact } from '@ag-grid-community/react';
 import '@ag-grid-community/styles/ag-grid.css';
 import '@ag-grid-community/styles/ag-theme-alpine.css';
 import { ColDef } from '@ag-grid-community/core';
-
 import { ModuleRegistry } from '@ag-grid-community/core';
+
 import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
 import { ExcelExportModule } from '@ag-grid-enterprise/excel-export';
 ModuleRegistry.registerModules([ClientSideRowModelModule, ExcelExportModule]);
@@ -18,13 +19,12 @@ const ChipComponent = ({ value }: { value: string }) => (
 );
 const RenderComponent = ({ value }: { value: string }) => <span>{value}</span>;
 
-interface ProspectsTableProps {
-  data?: CampaignProspectsResponse;
+interface EmailsTableProps {
+  data?: CampaignEmailsType;
 }
 
-const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
+const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
   const gridRef = useRef<AgGridReact>(null);
-  const csvRef = useRef<any>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
   const [rowData, setRowData] = useState<any[]>();
   const [columnDefs, setColumnDefs] = useState<ColDef[]>();
@@ -60,12 +60,17 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
     }
 
     if (data?.data) {
-      setRowData(data.data);
+      const rowData = data.data?.map((item) => ({
+        ...item,
+        created_on: moment(new Date(item.created_on)).format('DD/MM/YYYY, h:mm a'),
+        scheduled_time: moment(new Date(item.scheduled_time)).format('DD/MM/YYYY, h:mm a'),
+      }));
+      setRowData(rowData);
     }
   }, [data]);
 
   const exportCSV = () => {
-    gridRef?.current?.api?.exportDataAsExcel({ fileName: 'Campaign Details Prospects' });
+    gridRef?.current?.api?.exportDataAsExcel({ fileName: 'Campaign Sequences Emails' });
   };
 
   return (
@@ -90,4 +95,4 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
   );
 };
 
-export default ProspectsTable;
+export default EmailsTable;
