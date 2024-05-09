@@ -1,23 +1,23 @@
 'use strict';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
-import { CampaignProspectsResponse } from '../../models/campaigns';
+import moment from 'moment';
+import { CampaignEmailsType } from '../../models/campaigns';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 
 const ChipComponent = ({ value }: { value: string }) => (
   <span className="rounded-full px-2 py-1 bg-[#e8e0e8] text-xs">{value}</span>
 );
 const RenderComponent = ({ value }: { value: string }) => <span>{value}</span>;
 
-interface ProspectsTableProps {
-  data?: CampaignProspectsResponse;
+interface EmailsTableProps {
+  data?: CampaignEmailsType;
 }
 
-const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
+const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
   const gridRef = useRef<HTMLDivElement>(null);
-  const csvRef = useRef<any>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
-  const [rowData, setRowData] = useState<GridRowsProp[]>([]);
+  const [rowData, setRowData] = useState<any[]>([]);
   const [columnDefs, setColumnDefs] = useState<GridColDef[]>([]);
 
   useEffect(() => {
@@ -41,19 +41,25 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
     }
 
     if (data?.data) {
-      setRowData(data.data);
+      const rowData = data.data?.map((item) => ({
+        ...item,
+        created_on: moment(new Date(item.created_on)).format('DD/MM/YYYY, h:mm a'),
+        scheduled_time: moment(new Date(item.scheduled_time)).format('DD/MM/YYYY, h:mm a'),
+      }));
+      setRowData(rowData);
     }
   }, [data]);
 
   const exportCSV = () => {
-    const csvData = rowData.map((row) => {
-      return columnDefs.map((colDef: GridColDef<any>) => {
-        const value = row[colDef.field as unknown as number];
-        return value ? value.toString() : '';
-      });
-    });
+    const csvData =
+      rowData?.map((row) => {
+        return columnDefs?.map((colDef: GridColDef<any>) => {
+          const value = row[colDef.field as unknown as number];
+          return value ? value.toString() : '';
+        });
+      }) ?? [];
 
-    const csvContent = [columnDefs.map((colDef) => colDef.headerName), ...csvData]
+    const csvContent = [columnDefs?.map((colDef) => colDef.headerName), ...csvData]
       .map((row) => row.join(','))
       .join('\n');
 
@@ -62,7 +68,7 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', 'Campaign Details Prospects.csv');
+      link.setAttribute('download', 'Campaign Details Emails.csv');
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -81,15 +87,18 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
         <DataGrid
           ref={gridRef}
           rows={rowData}
+          columns={columnDefs}
           editMode={'row'}
-          columns={columnDefs} // Ensure columnDefs is always defined and of type 'GridColDef<any>[]'
           checkboxSelection
           disableRowSelectionOnClick
           pagination
+          getRowId={getRowId}
         />
       </div>
     </div>
   );
 };
 
-export default ProspectsTable;
+const getRowId = (rowData: { _id: string }) => rowData._id;
+
+export default EmailsTable;
