@@ -1,24 +1,15 @@
 'use strict';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AgGridReact } from '@ag-grid-community/react';
-import '@ag-grid-community/styles/ag-grid.css';
-import '@ag-grid-community/styles/ag-theme-alpine.css';
-import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
-import {
-  CellValueChangedEvent,
-  ColDef,
-  ModuleRegistry,
-  RowValueChangedEvent,
-} from '@ag-grid-community/core';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { GridCellEditStartParams } from '@mui/x-data-grid';
 import CSVReader from 'react-csv-reader';
-
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
 
 function getRowData() {
   const rowData = [];
   for (let i = 0; i < 10; i++) {
     rowData.push({
+      id: i,
       name: `Qrev - ${i}`,
       website: `example-${i}.com`,
       location: `USA - ${i}`,
@@ -46,21 +37,11 @@ const initialColumns = [
 ];
 
 const CompaniesTable = ({ campaign }: { campaign?: any }) => {
-  const gridRef = useRef<AgGridReact>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const csvRef = useRef<any>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
   const [rowData, setRowData] = useState<any[]>(getRowData());
-  const [columnDefs, setColumnDefs] = useState<ColDef[]>(initialColumns);
-  const defaultColDef = useMemo<ColDef>(() => {
-    return {
-      flex: 1,
-      editable: true,
-      cellDataType: false,
-      sortable: true,
-      filter: true,
-      resizable: true,
-    };
-  }, []);
+  const [columnDefs, setColumnDefs] = useState<GridColDef[]>(initialColumns);
 
   useEffect(() => {
     if (campaign) {
@@ -71,14 +52,14 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
     }
   }, [campaign]);
 
-  const onCellValueChanged = useCallback((event: CellValueChangedEvent) => {
-    console.log('onCellValueChanged: ' + event.colDef.field + ' = ' + event.newValue);
-  }, []);
+  // const onCellValueChanged = useCallback((event: CellValueChangedEvent) => {
+  //   console.log('onCellValueChanged: ' + event.colDef.field + ' = ' + event.newValue);
+  // }, []);
 
-  const onRowValueChanged = useCallback((event: RowValueChangedEvent) => {
-    const data = event.data;
-    console.log(data);
-  }, []);
+  // const onRowValueChanged = useCallback((event: RowValueChangedEvent) => {
+  //   const data = event.data;
+  //   console.log(data);
+  // }, []);
 
   const handleFileLoaded = (data: any) => {
     if (data?.length <= 1) return;
@@ -110,7 +91,7 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
         </button>
       </div>
       <div style={gridStyle} className={'ag-theme-alpine'}>
-        <AgGridReact
+        {/* <AgGridReact
           ref={gridRef}
           animateRows
           deltaSort
@@ -120,6 +101,20 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
           editType={'fullRow'}
           onCellValueChanged={onCellValueChanged}
           onRowValueChanged={onRowValueChanged}
+        /> */}
+
+        <DataGrid
+          ref={gridRef}
+          sortingOrder={['desc', 'asc']}
+          rows={rowData}
+          columns={columnDefs}
+          editMode={'row'}
+          checkboxSelection
+          disableRowSelectionOnClick
+          pagination
+          // TODO onCellEdit
+          // onCellEditStart={(event: GridCellEditStartParams<any, any, any>) => onCellValueChanged(event)}
+          // TODO onRowEdit
         />
       </div>
     </div>

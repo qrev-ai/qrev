@@ -10,41 +10,26 @@ import copy from 'copy-to-clipboard';
 import { onSendMail } from '../../utils/api-sendEmail';
 
 import CSVReader from 'react-csv-reader';
-import { ColDef, ModuleRegistry } from '@ag-grid-community/core';
-import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
+import { DataGrid } from '@mui/x-data-grid';
 import { RxPlus } from 'react-icons/rx';
-import { AgGridReact } from '@ag-grid-community/react';
-import '@ag-grid-community/styles/ag-grid.css';
-import '@ag-grid-community/styles/ag-theme-alpine.css';
 import { BsFiletypeCsv } from 'react-icons/bs';
 import { IoCloseOutline } from 'react-icons/io5';
 import { getQaiConverseById, qaiConverse, sendCampaign } from '../../utils/api-qai-converse';
 import { useSelector } from 'react-redux';
 import { StoreParams } from '../../models/store';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
-
 const SendIcon = loadable(() => import('../../icons/SendIcon'));
 const ChatPeopleIcon = loadable(() => import('../../icons/ChatPeopleIcon'));
 const ChatLoader = loadable(() => import('../../components/ChatLoader'));
 
 const CsvTable = ({ rowData, columnDefs }: any) => {
-  const gridRef = useRef<AgGridReact>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
-  const defaultColDef = useMemo<ColDef>(() => {
-    return {
-      editable: true,
-      cellDataType: false,
-      sortable: true,
-      filter: true,
-      resizable: true,
-    };
-  }, []);
 
   return (
     <div className="flex flex-col w-[70vw] h-[50vh] bg-white pt-4 pr-0">
       <div style={gridStyle} className={'ag-theme-alpine'}>
-        <AgGridReact
+        {/* <AgGridReact
           ref={gridRef}
           animateRows
           deltaSort
@@ -52,11 +37,23 @@ const CsvTable = ({ rowData, columnDefs }: any) => {
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           editType={'fullRow'}
+        /> */}
+        <DataGrid
+          ref={gridRef}
+          sortingOrder={['desc', 'asc']}
+          editMode={rowData}
+          rows={rowData}
+          columns={columnDefs}
+          checkboxSelection
+          disableRowSelectionOnClick
+          getRowId={getRowId}
         />
       </div>
     </div>
   );
 };
+
+const getRowId = (rowData: { name: string }) => rowData.name;
 
 const AgentChat = ({
   conversationId,
