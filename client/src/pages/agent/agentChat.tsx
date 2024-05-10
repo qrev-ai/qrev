@@ -7,10 +7,11 @@ import MsgRefreshIcon from '../../icons/MsgRefreshIcon';
 import MsgCopyIcon from '../../icons/MsgCopyIcon';
 import MsgSendIcon from '../../icons/MsgSendIcon';
 import copy from 'copy-to-clipboard';
+import { alpha, styled } from '@mui/material/styles';
 import { onSendMail } from '../../utils/api-sendEmail';
 
 import CSVReader from 'react-csv-reader';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
 import { RxPlus } from 'react-icons/rx';
 import { BsFiletypeCsv } from 'react-icons/bs';
 import { IoCloseOutline } from 'react-icons/io5';
@@ -21,6 +22,39 @@ import { StoreParams } from '../../models/store';
 const SendIcon = loadable(() => import('../../icons/SendIcon'));
 const ChatPeopleIcon = loadable(() => import('../../icons/ChatPeopleIcon'));
 const ChatLoader = loadable(() => import('../../components/ChatLoader'));
+
+const ODD_OPACITY = 0.2;
+
+const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
+  [`& .${gridClasses.row}.even`]: {
+    backgroundColor: theme.palette.grey[200],
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, ODD_OPACITY),
+      '@media (hover: none)': {
+        backgroundColor: 'transparent',
+      },
+    },
+    '&.Mui-selected': {
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        ODD_OPACITY + theme.palette.action.selectedOpacity,
+      ),
+      '&:hover': {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          ODD_OPACITY + theme.palette.action.selectedOpacity + theme.palette.action.hoverOpacity,
+        ),
+        // Reset on touch devices, it doesn't add specificity
+        '@media (hover: none)': {
+          backgroundColor: alpha(
+            theme.palette.primary.main,
+            ODD_OPACITY + theme.palette.action.selectedOpacity,
+          ),
+        },
+      },
+    },
+  },
+}));
 
 const CsvTable = ({ rowData, columnDefs }: any) => {
   const gridRef = useRef<HTMLDivElement>(null);
@@ -38,7 +72,7 @@ const CsvTable = ({ rowData, columnDefs }: any) => {
           defaultColDef={defaultColDef}
           editType={'fullRow'}
         /> */}
-        <DataGrid
+        <StripedDataGrid
           ref={gridRef}
           sortingOrder={['desc', 'asc']}
           editMode={rowData}
@@ -47,13 +81,16 @@ const CsvTable = ({ rowData, columnDefs }: any) => {
           checkboxSelection
           disableRowSelectionOnClick
           getRowId={getRowId}
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+          }
         />
       </div>
     </div>
   );
 };
 
-const getRowId = (rowData: { name: string }) => rowData.name;
+const getRowId = (rowData: GridValidRowModel) => rowData.name;
 
 const AgentChat = ({
   conversationId,
