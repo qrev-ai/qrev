@@ -1,9 +1,43 @@
 'use strict';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { alpha, styled } from '@mui/material/styles';
 import moment from 'moment';
 import { CampaignEmailsType } from '../../models/campaigns';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
+
+const ODD_OPACITY = 0.2;
+
+const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
+  [`& .${gridClasses.row}.even`]: {
+    backgroundColor: theme.palette.grey[200],
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, ODD_OPACITY),
+      '@media (hover: none)': {
+        backgroundColor: 'transparent',
+      },
+    },
+    '&.Mui-selected': {
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        ODD_OPACITY + theme.palette.action.selectedOpacity,
+      ),
+      '&:hover': {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          ODD_OPACITY + theme.palette.action.selectedOpacity + theme.palette.action.hoverOpacity,
+        ),
+        // Reset on touch devices, it doesn't add specificity
+        '@media (hover: none)': {
+          backgroundColor: alpha(
+            theme.palette.primary.main,
+            ODD_OPACITY + theme.palette.action.selectedOpacity,
+          ),
+        },
+      },
+    },
+  },
+}));
 
 const ChipComponent = ({ value }: { value: string }) => (
   <span className="rounded-full px-2 py-1 bg-[#e8e0e8] text-xs">{value}</span>
@@ -104,7 +138,7 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
         </button>
       </div>
       <div style={gridStyle} className={'ag-theme-alpine'}>
-        <DataGrid
+        <StripedDataGrid
           ref={gridRef}
           rows={rowData}
           columns={columnDefs}
@@ -113,12 +147,15 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
           disableRowSelectionOnClick
           pagination
           getRowId={getRowId}
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+          }
         />
       </div>
     </div>
   );
 };
 
-const getRowId = (rowData: { _id: string }) => rowData._id;
+const getRowId = (rowData: GridValidRowModel) => rowData._id;
 
 export default EmailsTable;

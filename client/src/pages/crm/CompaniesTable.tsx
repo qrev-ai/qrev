@@ -1,9 +1,42 @@
 'use strict';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { GridCellEditStartParams } from '@mui/x-data-grid';
+import { alpha, styled } from '@mui/material/styles';
+import { DataGrid, GridColDef, gridClasses } from '@mui/x-data-grid';
 import CSVReader from 'react-csv-reader';
+
+const ODD_OPACITY = 0.2;
+
+const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
+  [`& .${gridClasses.row}.even`]: {
+    backgroundColor: theme.palette.grey[200],
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, ODD_OPACITY),
+      '@media (hover: none)': {
+        backgroundColor: 'transparent',
+      },
+    },
+    '&.Mui-selected': {
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        ODD_OPACITY + theme.palette.action.selectedOpacity,
+      ),
+      '&:hover': {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          ODD_OPACITY + theme.palette.action.selectedOpacity + theme.palette.action.hoverOpacity,
+        ),
+        // Reset on touch devices, it doesn't add specificity
+        '@media (hover: none)': {
+          backgroundColor: alpha(
+            theme.palette.primary.main,
+            ODD_OPACITY + theme.palette.action.selectedOpacity,
+          ),
+        },
+      },
+    },
+  },
+}));
 
 function getRowData() {
   const rowData = [];
@@ -103,7 +136,7 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
           onRowValueChanged={onRowValueChanged}
         /> */}
 
-        <DataGrid
+        <StripedDataGrid
           ref={gridRef}
           sortingOrder={['desc', 'asc']}
           rows={rowData}
@@ -115,6 +148,9 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
           // TODO onCellEdit
           // onCellEditStart={(event: GridCellEditStartParams<any, any, any>) => onCellValueChanged(event)}
           // TODO onRowEdit
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+          }
         />
       </div>
     </div>

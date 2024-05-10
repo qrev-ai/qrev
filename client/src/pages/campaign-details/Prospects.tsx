@@ -1,8 +1,42 @@
 'use strict';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
+import { alpha, styled } from '@mui/material/styles';
+import { DataGrid, GridRowsProp, GridColDef, gridClasses } from '@mui/x-data-grid';
 import { CampaignProspectsResponse } from '../../models/campaigns';
+
+const ODD_OPACITY = 0.2;
+
+const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
+  [`& .${gridClasses.row}.even`]: {
+    backgroundColor: theme.palette.grey[200],
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, ODD_OPACITY),
+      '@media (hover: none)': {
+        backgroundColor: 'transparent',
+      },
+    },
+    '&.Mui-selected': {
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        ODD_OPACITY + theme.palette.action.selectedOpacity,
+      ),
+      '&:hover': {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          ODD_OPACITY + theme.palette.action.selectedOpacity + theme.palette.action.hoverOpacity,
+        ),
+        // Reset on touch devices, it doesn't add specificity
+        '@media (hover: none)': {
+          backgroundColor: alpha(
+            theme.palette.primary.main,
+            ODD_OPACITY + theme.palette.action.selectedOpacity,
+          ),
+        },
+      },
+    },
+  },
+}));
 
 const ChipComponent = ({ value }: { value: string }) => (
   <span className="rounded-full px-2 py-1 bg-[#e8e0e8] text-xs">{value}</span>
@@ -15,7 +49,6 @@ interface ProspectsTableProps {
 
 const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
   const gridRef = useRef<HTMLDivElement>(null);
-  const csvRef = useRef<any>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
   const [rowData, setRowData] = useState<GridRowsProp[]>([]);
   const [columnDefs, setColumnDefs] = useState<GridColDef[]>([]);
@@ -78,7 +111,7 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
         </button>
       </div>
       <div style={gridStyle} className={'ag-theme-alpine'}>
-        <DataGrid
+        <StripedDataGrid
           ref={gridRef}
           rows={rowData}
           editMode={'row'}
@@ -86,6 +119,9 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
           checkboxSelection
           disableRowSelectionOnClick
           pagination
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+          }
         />
       </div>
     </div>
