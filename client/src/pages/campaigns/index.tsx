@@ -69,6 +69,7 @@ const Campaigns = (): React.ReactElement => {
     setEmailData(emailsMockData.result as CampaignEmailsType);
     // getAllCampaignSequencesEmails(accountId)
     //   .then((res: CampaignEmailsResponse) => {
+    //     // console.log('--res--', res);
     //     if (res.success) {
     //       setEmailData(cloneDeep(res.result));
     //     }
