@@ -14,6 +14,20 @@ interface EmailsTableProps {
   data?: CampaignEmailsType;
 }
 
+const DetailCellRenderer = (props: any) => {
+  const id = props?.data?._id;
+  const data: any = emailsMockData?.result?.data?.find((item) => item._id === id);
+
+  if (!data) return <div className="flex items-center justify-center">No details</div>;
+
+  return (
+    <div className="p-8">
+      <p className="font-bold text-base mb-4">{data?.message?.subject}</p>
+      <p dangerouslySetInnerHTML={{ __html: data.message?.body }} />
+    </div>
+  );
+};
+
 const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
   const gridRef = useRef<HTMLDivElement>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
@@ -22,30 +36,36 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
 
   useEffect(() => {
     if (data?.headers) {
-      const keys = Object.keys(data.headers);
-      const values = Object.values(data.headers);
+      const keys = Object.keys(data.headers)?.filter((item) => item !== 'message');
+      const values = Object.values(data.headers)?.filter((item) => item.type !== 'draft');
       const columnDefs = values
         ?.sort((a, b) => (a.order > b.order ? 1 : -1))
         ?.map((item, index) => ({
           field: keys[index],
           headerName: item.label,
           hide: item.hidden,
-          cellRenderer: (params: { data: any }) =>
-            item.type === 'chip' ? (
-              <ChipComponent value={params?.data?.[keys[index]]} />
-            ) : (
-              <RenderComponent value={params?.data?.[keys[index]]} />
-            ),
+          cellRenderer:
+            index === 1
+              ? 'agGroupCellRenderer'
+              : (params: { data: any }) =>
+                  item.type === 'chip' ? (
+                    <ChipComponent value={params?.data?.[keys[index]]} />
+                  ) : (
+                    <RenderComponent value={params?.data?.[keys[index]]} />
+                  ),
         }));
       setColumnDefs(columnDefs);
     }
 
     if (data?.data) {
-      const rowData = data.data?.map((item) => ({
-        ...item,
-        created_on: moment(new Date(item.created_on)).format('DD/MM/YYYY, h:mm a'),
-        scheduled_time: moment(new Date(item.scheduled_time)).format('DD/MM/YYYY, h:mm a'),
-      }));
+      const rowData = data.data?.map((item) => {
+        const { message, ...rest } = item;
+        return {
+          ...rest,
+          created_on: moment(new Date(item.created_on)).format('DD/MM/YYYY, h:mm a'),
+          scheduled_time: moment(new Date(item.scheduled_time)).format('DD/MM/YYYY, h:mm a'),
+        };
+      });
       setRowData(rowData);
     }
   }, [data]);
