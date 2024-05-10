@@ -5,6 +5,8 @@ import { alpha, styled } from '@mui/material/styles';
 import moment from 'moment';
 import { CampaignEmailsType } from '../../models/campaigns';
 import { DataGrid, GridColDef, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
+import React from 'react';
+import { emailsMockData } from './dummy';
 
 const ODD_OPACITY = 0.2;
 
