@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { alpha, styled } from '@mui/material/styles';
 import { DataGrid, GridRowsProp, GridColDef, gridClasses } from '@mui/x-data-grid';
 import { CampaignProspectsResponse } from '../../models/campaigns';
+import React from 'react';
 
 const ODD_OPACITY = 0.2;
 
