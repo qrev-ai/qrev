@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { alpha, styled } from '@mui/material/styles';
-import { DataGrid, GridRowsProp, GridColDef, gridClasses } from '@mui/x-data-grid';
-import { CampaignProspectsResponse } from '../../models/campaigns';
+import moment from 'moment';
+import { CampaignEmailsType } from '../../models/campaigns';
+import { DataGrid, GridColDef, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
 import React from 'react';
+import { emailsMockData } from './dummy';
 
 const ODD_OPACITY = 0.2;
 
@@ -44,50 +46,76 @@ const ChipComponent = ({ value }: { value: string }) => (
 );
 const RenderComponent = ({ value }: { value: string }) => <span>{value}</span>;
 
-interface ProspectsTableProps {
-  data?: CampaignProspectsResponse;
+interface EmailsTableProps {
+  data?: CampaignEmailsType;
 }
 
-const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
+const DetailCellRenderer = (props: any) => {
+  const id = props?.data?._id;
+  const data: any = emailsMockData?.result?.data?.find((item) => item._id === id);
+
+  if (!data) return <div className="flex items-center justify-center">No details</div>;
+
+  return (
+    <div className="p-8">
+      <p className="font-bold text-base mb-4">{data?.message?.subject}</p>
+      <p dangerouslySetInnerHTML={{ __html: data.message?.body }} />
+    </div>
+  );
+};
+
+const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
   const gridRef = useRef<HTMLDivElement>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
-  const [rowData, setRowData] = useState<GridRowsProp[]>([]);
+  const [rowData, setRowData] = useState<any[]>([]);
   const [columnDefs, setColumnDefs] = useState<GridColDef[]>([]);
 
   useEffect(() => {
     if (data?.headers) {
-      const keys = Object.keys(data.headers);
-      const values = Object.values(data.headers);
+      const keys = Object.keys(data.headers)?.filter((item) => item !== 'message');
+      const values = Object.values(data.headers)?.filter((item) => item.type !== 'draft');
       const columnDefs = values
         ?.sort((a, b) => (a.order > b.order ? 1 : -1))
         ?.map((item, index) => ({
           field: keys[index],
           headerName: item.label,
           hide: item.hidden,
-          cellRenderer: (params: { data: any }) =>
-            item.type === 'chip' ? (
-              <ChipComponent value={params?.data?.[keys[index]]} />
-            ) : (
-              <RenderComponent value={params?.data?.[keys[index]]} />
-            ),
+          cellRenderer:
+            index === 1
+              ? 'agGroupCellRenderer'
+              : (params: { data: any }) =>
+                  item.type === 'chip' ? (
+                    <ChipComponent value={params?.data?.[keys[index]]} />
+                  ) : (
+                    <RenderComponent value={params?.data?.[keys[index]]} />
+                  ),
         }));
       setColumnDefs(columnDefs);
     }
 
     if (data?.data) {
-      setRowData(data.data);
+      const rowData = data.data?.map((item) => {
+        const { message, ...rest } = item;
+        return {
+          ...rest,
+          created_on: moment(new Date(item.created_on)).format('DD/MM/YYYY, h:mm a'),
+          scheduled_time: moment(new Date(item.scheduled_time)).format('DD/MM/YYYY, h:mm a'),
+        };
+      });
+      setRowData(rowData);
     }
   }, [data]);
 
   const exportCSV = () => {
-    const csvData = rowData.map((row) => {
-      return columnDefs.map((colDef: GridColDef<any>) => {
-        const value = row[colDef.field as unknown as number];
-        return value ? value.toString() : '';
-      });
-    });
+    const csvData =
+      rowData?.map((row) => {
+        return columnDefs?.map((colDef: GridColDef<any>) => {
+          const value = row[colDef.field as unknown as number];
+          return value ? value.toString() : '';
+        });
+      }) ?? [];
 
-    const csvContent = [columnDefs.map((colDef) => colDef.headerName), ...csvData]
+    const csvContent = [columnDefs?.map((colDef) => colDef.headerName), ...csvData]
       .map((row) => row.join(','))
       .join('\n');
 
@@ -96,7 +124,7 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
     if (link.download !== undefined) {
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', 'Campaign Details Prospects.csv');
+      link.setAttribute('download', 'Campaign Details Emails.csv');
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -115,11 +143,12 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
         <StripedDataGrid
           ref={gridRef}
           rows={rowData}
+          columns={columnDefs}
           editMode={'row'}
-          columns={columnDefs} // Ensure columnDefs is always defined and of type 'GridColDef<any>[]'
           checkboxSelection
           disableRowSelectionOnClick
           pagination
+          getRowId={getRowId}
           getRowClassName={(params) =>
             params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
           }
@@ -129,4 +158,6 @@ const ProspectsTable = ({ data }: ProspectsTableProps): React.ReactElement => {
   );
 };
 
-export default ProspectsTable;
+const getRowId = (rowData: GridValidRowModel) => rowData._id;
+
+export default EmailsTable;
