@@ -1,24 +1,48 @@
 'use strict';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AgGridReact } from '@ag-grid-community/react';
-import '@ag-grid-community/styles/ag-grid.css';
-import '@ag-grid-community/styles/ag-theme-alpine.css';
-import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
-import {
-  CellValueChangedEvent,
-  ColDef,
-  ModuleRegistry,
-  RowValueChangedEvent,
-} from '@ag-grid-community/core';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { alpha, styled } from '@mui/material/styles';
+import { DataGrid, GridColDef, gridClasses } from '@mui/x-data-grid';
 import CSVReader from 'react-csv-reader';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
+const ODD_OPACITY = 0.2;
+
+const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
+  [`& .${gridClasses.row}.even`]: {
+    backgroundColor: theme.palette.grey[200],
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, ODD_OPACITY),
+      '@media (hover: none)': {
+        backgroundColor: 'transparent',
+      },
+    },
+    '&.Mui-selected': {
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        ODD_OPACITY + theme.palette.action.selectedOpacity,
+      ),
+      '&:hover': {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          ODD_OPACITY + theme.palette.action.selectedOpacity + theme.palette.action.hoverOpacity,
+        ),
+        // Reset on touch devices, it doesn't add specificity
+        '@media (hover: none)': {
+          backgroundColor: alpha(
+            theme.palette.primary.main,
+            ODD_OPACITY + theme.palette.action.selectedOpacity,
+          ),
+        },
+      },
+    },
+  },
+}));
 
 function getRowData() {
   const rowData = [];
   for (let i = 0; i < 10; i++) {
     rowData.push({
+      id: i,
       name: `Qrev - ${i}`,
       website: `example-${i}.com`,
       location: `USA - ${i}`,
@@ -46,21 +70,11 @@ const initialColumns = [
 ];
 
 const CompaniesTable = ({ campaign }: { campaign?: any }) => {
-  const gridRef = useRef<AgGridReact>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const csvRef = useRef<any>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
   const [rowData, setRowData] = useState<any[]>(getRowData());
-  const [columnDefs, setColumnDefs] = useState<ColDef[]>(initialColumns);
-  const defaultColDef = useMemo<ColDef>(() => {
-    return {
-      flex: 1,
-      editable: true,
-      cellDataType: false,
-      sortable: true,
-      filter: true,
-      resizable: true,
-    };
-  }, []);
+  const [columnDefs, setColumnDefs] = useState<GridColDef[]>(initialColumns);
 
   useEffect(() => {
     if (campaign) {
@@ -71,14 +85,14 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
     }
   }, [campaign]);
 
-  const onCellValueChanged = useCallback((event: CellValueChangedEvent) => {
-    console.log('onCellValueChanged: ' + event.colDef.field + ' = ' + event.newValue);
-  }, []);
+  // const onCellValueChanged = useCallback((event: CellValueChangedEvent) => {
+  //   console.log('onCellValueChanged: ' + event.colDef.field + ' = ' + event.newValue);
+  // }, []);
 
-  const onRowValueChanged = useCallback((event: RowValueChangedEvent) => {
-    const data = event.data;
-    console.log(data);
-  }, []);
+  // const onRowValueChanged = useCallback((event: RowValueChangedEvent) => {
+  //   const data = event.data;
+  //   console.log(data);
+  // }, []);
 
   const handleFileLoaded = (data: any) => {
     if (data?.length <= 1) return;
@@ -110,7 +124,7 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
         </button>
       </div>
       <div style={gridStyle} className={'ag-theme-alpine'}>
-        <AgGridReact
+        {/* <AgGridReact
           ref={gridRef}
           animateRows
           deltaSort
@@ -120,6 +134,23 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
           editType={'fullRow'}
           onCellValueChanged={onCellValueChanged}
           onRowValueChanged={onRowValueChanged}
+        /> */}
+
+        <StripedDataGrid
+          ref={gridRef}
+          sortingOrder={['desc', 'asc']}
+          rows={rowData}
+          columns={columnDefs}
+          editMode={'row'}
+          checkboxSelection
+          disableRowSelectionOnClick
+          pagination
+          // TODO onCellEdit
+          // onCellEditStart={(event: GridCellEditStartParams<any, any, any>) => onCellValueChanged(event)}
+          // TODO onRowEdit
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+          }
         />
       </div>
     </div>

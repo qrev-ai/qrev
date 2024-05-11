@@ -3,11 +3,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { cloneDeep } from 'lodash';
 import { StoreParams } from '../../models/store';
 import { setStoreLoading } from '../../store/actions';
-import { getAllCampaignSequencesEmails, getVisitorCampaignsViews } from '../../utils/api-campaign';
+import {
+  //getAllCampaignSequencesEmails,
+  getVisitorCampaignsViews,
+} from '../../utils/api-campaign';
 import {
   ViewCampaignsResponseParams,
   CampaignTableRowParams,
-  CampaignEmailsResponse,
+  // CampaignEmailsResponse,
   CampaignEmailsType,
 } from '../../models/campaigns';
 import loadable from '@loadable/component';
@@ -69,6 +72,7 @@ const Campaigns = (): React.ReactElement => {
     setEmailData(emailsMockData.result as CampaignEmailsType);
     // getAllCampaignSequencesEmails(accountId)
     //   .then((res: CampaignEmailsResponse) => {
+    //     // console.log('--res--', res);
     //     if (res.success) {
     //       setEmailData(cloneDeep(res.result));
     //     }
