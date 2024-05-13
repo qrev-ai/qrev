@@ -158,6 +158,6 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
   );
 };
 
-const getRowId = (rowData: GridValidRowModel) => rowData._id;
+const getRowId = (rowData: GridValidRowModel) => rowData.prospect_name;
 
 export default EmailsTable;
