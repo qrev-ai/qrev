@@ -7,6 +7,7 @@ import { CampaignEmailsType } from '../../models/campaigns';
 import { DataGrid, GridColDef, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
 import React from 'react';
 import { emailsMockData } from './dummy';
+import { v4 as uuidv4 } from 'uuid';
 
 const ODD_OPACITY = 0.2;
 
@@ -158,6 +159,6 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
   );
 };
 
-const getRowId = (rowData: GridValidRowModel) => rowData._id;
+const getRowId = () => uuidv4();
 
 export default EmailsTable;
