@@ -180,6 +180,6 @@ const PeopleTable = ({ peoples }: { peoples: any }) => {
   );
 };
 
-const getRowId = (rowData: GridValidRowModel) => rowData._id;
+const getRowId = (rowData: GridValidRowModel) => rowData.name;
 
 export default PeopleTable;
