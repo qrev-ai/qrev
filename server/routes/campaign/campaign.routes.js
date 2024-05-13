@@ -35,4 +35,9 @@ router.get(
     apiWrapper(CampaignApis.getAllSequenceEmailsApi)
 );
 
+router.post(
+    "/sequence/prospect/bounce_webhook",
+    apiWrapper(CampaignApis.campaignProspectBounceWebhookApi)
+);
+
 export default router;

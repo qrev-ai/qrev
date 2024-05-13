@@ -224,3 +224,39 @@ export const getContactById = functionWrapper(
     "getContactById",
     _getContactById
 );
+
+async function _getContactByEmails(
+    { emails, accountId, addFullName },
+    { txid, funcName, logg }
+) {
+    logg.info(`started`);
+
+    if (!emails || !emails.length) throw `contactEmails is required`;
+    if (!accountId) throw `accountId is required`;
+
+    let contacts = await Contact.find({
+        account: accountId,
+        email: { $in: emails },
+    }).lean();
+
+    if (addFullName) {
+        contacts = contacts.map((c) => {
+            let name = c.first_name || "";
+            if (c.last_name) {
+                name += ` ${c.last_name}`;
+            }
+            name = name.trim();
+            c.name = name;
+            return c;
+        });
+    }
+
+    logg.info(`ended`);
+    return [contacts, null];
+}
+
+export const getContactByEmails = functionWrapper(
+    fileName,
+    "getContactByEmails",
+    _getContactByEmails
+);

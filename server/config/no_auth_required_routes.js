@@ -9,6 +9,7 @@ export const FreeRoutes = [
     "/api/zoom/deauthorize",
     "/api/campaign/update_sequence_messages",
     "/api/campaign/email_open",
+    "/api/campaign/sequence/prospect/bounce_webhook",
 ];
 
 export const isFreeRoute = (path) => {

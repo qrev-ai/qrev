@@ -15,6 +15,7 @@ import * as SlotGen_utils from "../slot/open_link_free_slots_1.js";
 import { SequenceProspectMessageSchedule } from "../../models/campaign/sequence.prospect.message_schedule.model.js";
 import { CampaignConfig } from "../../models/campaign/campaign.config.model.js";
 import * as AnalyticUtils from "../analytic/analytic.utils.js";
+import * as ProspectVerifyUtils from "../prospect_verify/prospect.verify.utils.js";
 
 const fileName = "Campaign Utils";
 
@@ -271,6 +272,51 @@ async function _createCampaignSequenceProspectsFromQAi(
             `prospectsCount is 0 for campaignSequenceId: ${campaignSequenceId}`
         );
         throw `prospectsCount is 0 for campaignSequenceId: ${campaignSequenceId}`;
+    }
+
+    /*
+     * Added below code on 8th May 2024
+     * This code is added to verify the prospect emails using third party service like "zerobounce"
+     * This is to ensure that the emails are valid and deliverable
+     * We need this because we cannot try to send email and then check if it bounced. This will affect the QRev user's email reputation
+     */
+    let verifyProspectService = process.env.VERIFY_PROSPECT_EMAIL_BY_SERVICE;
+    if (!verifyProspectService || verifyProspectService === "none") {
+        let [pvResult, verifyErr] =
+            await ProspectVerifyUtils.verifyProspectsEmails(
+                {
+                    prospects,
+                    serviceName: verifyProspectService,
+                    campaignSequenceId,
+                    accountId,
+                },
+                { txid }
+            );
+        if (verifyErr) throw verifyErr;
+        let { resultProspects: verifiedProspects, prospectVerifyFileId } =
+            pvResult;
+        if (!verifiedProspects || !verifiedProspects.length) {
+            throw `verifiedProspects is empty`;
+        }
+        prospects = verifiedProspects;
+
+        if (prospectVerifyFileId) {
+            let sequenceDocUpdateResp = await SequenceModel.updateOne(
+                { _id: campaignSequenceId },
+                {
+                    prospect_verify_data: {
+                        file_id: prospectVerifyFileId,
+                        status: "async_processing",
+                        service_name: verifyProspectService,
+                    },
+                }
+            );
+            logg.info(
+                `sequenceDocUpdateResp: ${JSON.stringify(
+                    sequenceDocUpdateResp
+                )}`
+            );
+        }
     }
 
     let source = "qai";
@@ -2036,4 +2082,123 @@ export const getAllSequenceEmails = functionWrapper(
     fileName,
     "getAllSequenceEmails",
     _getAllSequenceEmails
+);
+
+async function _campaignProspectBounceWebhook(
+    { campaignSequenceId, serviceName, secretId, accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!campaignSequenceId) throw `campaignSequenceId is invalid`;
+    if (!serviceName) throw `serviceName is invalid`;
+
+    let queryObj = { _id: campaignSequenceId, account: accountId };
+    let campaignSequence = await SequenceModel.findOne(queryObj).lean();
+    logg.info(`campaignSequence: ${JSON.stringify(campaignSequence)}`);
+    if (!campaignSequence) {
+        throw `failed to find campaignSequence for campaignSequenceId: ${campaignSequenceId}`;
+    }
+
+    let prospectVerifyData =
+        campaignSequence && campaignSequence.prospect_verify_data;
+
+    let prospectVerifyFileId = prospectVerifyData && prospectVerifyData.file_id;
+
+    let [result, err] = await ProspectVerifyUtils.prospectBounceWebhook(
+        { serviceName, secretId, prospectVerifyFileId, accountId },
+        { txid }
+    );
+
+    let { validProspectEmails, invalidProspectEmails } = result;
+
+    invalidProspectEmails = invalidProspectEmails || [];
+
+    if (invalidProspectEmails.length) {
+        let [removeResp, removeErr] = await removeInvalidProspectsFromCampaign(
+            { campaignSequenceId, invalidProspectEmails },
+            { txid }
+        );
+        if (removeErr) throw removeErr;
+    }
+
+    if (prospectVerifyData) {
+        prospectVerifyData.status = "completed";
+    }
+
+    let seqUpdateResp = await SequenceModel.updateOne(queryObj, {
+        $set: { prospect_verify_data: prospectVerifyData },
+    });
+    logg.info(`seqUpdateResp: ${JSON.stringify(seqUpdateResp)}`);
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const campaignProspectBounceWebhook = functionWrapper(
+    fileName,
+    "campaignProspectBounceWebhook",
+    _campaignProspectBounceWebhook
+);
+
+async function _removeInvalidProspectsFromCampaign(
+    { campaignSequenceId, invalidProspectEmails, accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!campaignSequenceId) throw `campaignSequenceId is invalid`;
+    if (!invalidProspectEmails || !invalidProspectEmails.length) {
+        logg.info(`invalidProspectEmails is empty`);
+        return [true, null];
+    }
+
+    // get contactIds for invalidProspectEmails
+    // then remove the docs from the SequenceProspect collection
+    // then remove the docs from the SequenceProspectMessageSchedule collection
+
+    let [contacts, contactsErr] = await CrmContactUtils.getContactByEmails(
+        { emails: invalidProspectEmails, accountId },
+        { txid }
+    );
+    if (contactsErr) throw contactsErr;
+
+    let contactIds = contacts.map((x) => {
+        let id = x._id;
+        id = typeof id === "object" ? id.toString() : id;
+        return id;
+    });
+
+    let seqProspectQueryObj = {
+        account: accountId,
+        contact: { $in: contactIds },
+    };
+    let seqProspects = await SequenceProspect.find(seqProspectQueryObj).lean();
+    logg.info(`seqProspects.length: ${seqProspects.length}`);
+
+    let seqProspectIds = seqProspects.map((x) => x._id);
+    let seqProspectRemoveResp = await SequenceProspect.deleteMany({
+        _id: { $in: seqProspectIds },
+    });
+
+    logg.info(
+        `seqProspectRemoveResp: ${JSON.stringify(seqProspectRemoveResp)}`
+    );
+
+    let spmsQueryObj = {
+        account: accountId,
+        sequence_prospect: { $in: seqProspectIds },
+    };
+
+    let spmsRemoveResp = await SequenceProspectMessageSchedule.deleteMany(
+        spmsQueryObj
+    );
+    logg.info(`spmsRemoveResp: ${JSON.stringify(spmsRemoveResp)}`);
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+const removeInvalidProspectsFromCampaign = functionWrapper(
+    fileName,
+    "removeInvalidProspectsFromCampaign",
+    _removeInvalidProspectsFromCampaign
 );
