@@ -28,3 +28,6 @@ cachedir
 
 ## vscode
 .vscode
+
+# Ignore server/data/temp folder because it is used for storing temporary files on server
+server/data/temp/
