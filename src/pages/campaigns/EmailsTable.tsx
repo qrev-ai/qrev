@@ -7,7 +7,6 @@ import { CampaignEmailsType } from '../../models/campaigns';
 import { DataGrid, GridColDef, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
 import React from 'react';
 import { emailsMockData } from './dummy';
-import { v4 as uuidv4 } from 'uuid';
 
 const ODD_OPACITY = 0.2;
 
@@ -149,7 +148,6 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
           checkboxSelection
           disableRowSelectionOnClick
           pagination
-          getRowId={getRowId}
           getRowClassName={(params) =>
             params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
           }
@@ -158,7 +156,5 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
     </div>
   );
 };
-
-const getRowId = () => uuidv4();
 
 export default EmailsTable;
