@@ -90,7 +90,7 @@ const CsvTable = ({ rowData, columnDefs }: any) => {
   );
 };
 
-const getRowId = (rowData: GridValidRowModel) => rowData.id;
+const getRowId = (rowData: GridValidRowModel) => rowData.name;
 
 const AgentChat = ({
   conversationId,
