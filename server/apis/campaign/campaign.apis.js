@@ -303,3 +303,46 @@ export async function getSenderListForCampaignApi(req, res, next) {
         result,
     });
 }
+
+/*
+ * Created on 11th May 2024
+ * Q: What does this API do?
+ * - This API is used for webhook so that 3rd party email verifier services (like ZeroBounce)
+ * - to notify that all emails in a campaign sequence have been processed and gives list of valid emails and invalid emails
+ * - Note: Currently only ZeroBounce is supported
+ * - Note: If you don't have ZeroBounce subscription, you can set "VERIFY_PROSPECT_EMAIL_BY_SERVICE" to "none" in .env file
+ * - Note: If you have ZeroBounce subscription, then set below keys in .env file:
+ *   - set "VERIFY_PROSPECT_EMAIL_BY_SERVICE" to "zerobounce"
+ *   - set "ZERO_BOUNCE_API_KEY" to your ZeroBounce API key
+ *   - set "QREV_ZEROBOUNCE_SECRET_ID" to a randomly generated secret id so that zerobounce webhook can be verified
+ */
+export async function campaignProspectBounceWebhookApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "campaignProspectBounceWebhookApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let {
+        cs_id: campaignSequenceId,
+        service_name: serviceName,
+        secret_id: secretId,
+        account_id: accountId,
+    } = req.query;
+
+    if (!campaignSequenceId) throw `Missing cs_id in query`;
+    if (!serviceName) throw `Missing service_name in query`;
+    if (!secretId) throw `Missing secret_id in query`;
+
+    let [resp, err] = await CampaignUtils.campaignProspectBounceWebhook(
+        { campaignSequenceId, serviceName, secretId, accountId },
+        { txid }
+    );
+    if (err) throw err;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+    });
+}
