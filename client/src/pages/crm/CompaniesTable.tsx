@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { alpha, styled } from '@mui/material/styles';
-import { DataGrid, GridColDef, gridClasses } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
 import CSVReader from 'react-csv-reader';
 
 const ODD_OPACITY = 0.2;
@@ -145,6 +145,7 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
           checkboxSelection
           disableRowSelectionOnClick
           pagination
+          getRowId={getRowId}
           // TODO onCellEdit
           // onCellEditStart={(event: GridCellEditStartParams<any, any, any>) => onCellValueChanged(event)}
           // TODO onRowEdit
@@ -156,5 +157,7 @@ const CompaniesTable = ({ campaign }: { campaign?: any }) => {
     </div>
   );
 };
+
+const getRowId = (rowData: GridValidRowModel) => rowData.name;
 
 export default CompaniesTable;
