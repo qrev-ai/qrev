@@ -148,6 +148,7 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
           checkboxSelection
           disableRowSelectionOnClick
           pagination
+          getRowId={getRowId}
           getRowClassName={(params) =>
             params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
           }
@@ -156,5 +157,7 @@ const EmailsTable = ({ data }: EmailsTableProps): React.ReactElement => {
     </div>
   );
 };
+
+const getRowId = (rowData: GridValidRowModel) => rowData._id;
 
 export default EmailsTable;
