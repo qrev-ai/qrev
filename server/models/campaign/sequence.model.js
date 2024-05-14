@@ -13,6 +13,8 @@ const SequenceSchema = new Schema({
 
     status: String,
 
+    prospect_verify_data: {},
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });
