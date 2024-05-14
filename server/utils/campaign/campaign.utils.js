@@ -2140,6 +2140,103 @@ export const campaignProspectBounceWebhook = functionWrapper(
     _campaignProspectBounceWebhook
 );
 
+async function _getProspectActivityTimeline(
+    { accountId, sequenceId, sequenceProspectId, userTimezone },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!sequenceProspectId) throw `sequenceProspectId is invalid`;
+
+    // let seqProspectQueryObj = {
+    //     _id: sequenceProspectId,
+    //     account: accountId,
+    // };
+    // let seqProspectDc = await SequenceProspect.findOne(
+    //     seqProspectQueryObj
+    // ).lean();
+    // logg.info(`seqProspectDc: ${JSON.stringify(seqProspectDc)}`);
+
+    // if (!seqProspectDc) {
+    //     throw `failed to find seqProspectDc for sequenceProspectId: ${sequenceProspectId}`;
+    // }
+
+    // let spmsQueryObj = {
+    //     account: accountId,
+    //     sequence: sequenceId,
+    //     sequence_prospect: sequenceProspectId,
+    // };
+
+    // let spmsDocs = await SequenceProspectMessageSchedule.find(spmsQueryObj)
+    //     .sort("created_on")
+    //     .lean();
+    // logg.info(`spmsDocs: ${JSON.stringify(spmsDocs)}`);
+
+    // if (!spmsDocs.length) {
+    //     logg.info(`no spmsDocs found`);
+    //     return [[], null];
+    // }
+
+    let [anayticsInfo, anayticsErr] =
+        await AnalyticUtils.getSequenceProspectAnalytics(
+            { accountId, sequenceProspectId, formatInfo: true },
+            { txid }
+        );
+    if (anayticsErr) throw anayticsErr;
+
+    let result = [];
+    if (!anayticsInfo) {
+        logg.info(`no anayticsInfo found`);
+        anayticsInfo = [];
+    }
+
+    for (let i = 0; i < anayticsInfo.length; i++) {
+        let item = anayticsInfo[i];
+        /*
+        item format: {
+                date_time, // in milliseconds
+                action_type, // "sent", "sent_bounced", "opened", "replied"
+            }
+        */
+        let dateTime = item.date_time;
+        let actionType = item.action_type;
+        let messageType = "email";
+
+        let str = "";
+        // using dateTime, actionType and messageType, format into human readable string and store in str and then add it to result field
+
+        // if userTimezone is not provided, then use UTC timezone
+        if (!userTimezone) userTimezone = "UTC";
+
+        // format to date time string like "2 April 2024, 10:30 AM"
+        let formatStr = "D MMMM YYYY, h:mm A";
+        let dateTimeStr = momenttz(dateTime).tz(userTimezone).format(formatStr);
+
+        if (actionType === "sent") {
+            str = `${messageType} sent at ${dateTimeStr}`;
+        } else if (actionType === "sent_bounced") {
+            str = `${messageType} sent but bounced at ${dateTimeStr}`;
+        } else if (actionType === "opened") {
+            str = `${messageType} opened at ${dateTimeStr}`;
+        } else if (actionType === "replied") {
+            str = `${messageType} replied at ${dateTimeStr}`;
+        }
+
+        result.push(str);
+    }
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getProspectActivityTimeline = functionWrapper(
+    fileName,
+    "getProspectActivityTimeline",
+    _getProspectActivityTimeline
+);
+
 async function _removeInvalidProspectsFromCampaign(
     { campaignSequenceId, invalidProspectEmails, accountId },
     { txid, logg, funcName }
