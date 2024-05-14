@@ -34,7 +34,7 @@ function getTimeRangeQueryObj({ timeRange }, { txid }) {
 }
 
 async function _getAnalyticsFromDb(
-    { accountId, type, timeRange, data, sequenceIds },
+    { accountId, type, timeRange, data, sequenceIds, sequenceProspectId },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -49,7 +49,15 @@ async function _getAnalyticsFromDb(
                 sequence: { $in: sequenceIds },
             };
         }
+    } else if (type === "sequence_prospect") {
+        if (sequenceProspectId) {
+            queryObj = {
+                ...queryObj,
+                sequence_prospect: sequenceProspectId,
+            };
+        }
     }
+
     logg.info(`queryObj: ${JSON.stringify(queryObj)}`);
     let analytics = null;
 
@@ -211,4 +219,60 @@ export const getCampaignMessageAnalytics = functionWrapper(
     fileName,
     "getCampaignMessageAnalytics",
     _getCampaignMessageAnalytics
+);
+
+async function _getSequenceProspectAnalytics(
+    { accountId, sequenceProspectId, formatInfo },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId not found`;
+
+    let [analytics, analyticsErr] = await getAnalyticsFromDb(
+        { accountId, sequenceProspectId, type: "sequence_prospect" },
+        { txid }
+    );
+    if (analyticsErr) throw analyticsErr;
+
+    let result = [];
+    if (!formatInfo) {
+        result = analytics;
+    } else {
+        for (const analytic of analytics) {
+            let actionType = analytic.action_type;
+            let messageStatus =
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.message_status;
+            if (actionType === AnalyticActionTypes.campaign_message_send) {
+                if (messageStatus === "bounced") {
+                    actionType = "sent_bounced";
+                } else {
+                    actionType = "sent";
+                }
+            } else if (
+                actionType === AnalyticActionTypes.campaign_message_open
+            ) {
+                actionType = "opened";
+            } else if (
+                actionType === AnalyticActionTypes.campaign_message_reply
+            ) {
+                actionType = "replied";
+            }
+            let item = {
+                date_time: new Date(analytic.created_on).getTime(),
+                action_type: actionType,
+            };
+            result.push(item);
+        }
+    }
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getSequenceProspectAnalytics = functionWrapper(
+    fileName,
+    "getSequenceProspectAnalytics",
+    _getSequenceProspectAnalytics
 );

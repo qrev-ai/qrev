@@ -248,6 +248,44 @@ export async function getAllSequenceEmailsApi(req, res, next) {
     });
 }
 
+/*
+ * Created on 10th May 2024
+ * Q: What does this API do?
+ * - For a prospect in a sequence, this API is used to get the timeline of all activities done by the prospect
+ * - These will be activities like email sent, email opened, email replied etc.
+ */
+export async function getSequenceProspectActivityTimelineApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceProspectActivityTimelineApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let {
+        account_id: accountId,
+        sequence_id: sequenceId,
+        sequence_prospect_id: sequenceProspectId,
+        user_timezone: userTimezone,
+    } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+    if (!sequenceProspectId) throw `Missing sequence_prospect_id`;
+
+    let [result, resultErr] = await CampaignUtils.getProspectActivityTimeline(
+        { accountId, sequenceId, sequenceProspectId, userTimezone },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
 export async function setSenderListForCampaignApi(req, res, next) {
     const txid = req.id;
     const funcName = "setSenderListForCampaignApi";

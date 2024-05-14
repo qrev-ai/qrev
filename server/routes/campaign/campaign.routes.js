@@ -35,6 +35,11 @@ router.get(
     apiWrapper(CampaignApis.getAllSequenceEmailsApi)
 );
 
+router.get(
+    "/sequence/prospect/timeline",
+    apiWrapper(CampaignApis.getSequenceProspectActivityTimelineApi)
+);
+
 router.post(
     "/sequence/prospect/bounce_webhook",
     apiWrapper(CampaignApis.campaignProspectBounceWebhookApi)
