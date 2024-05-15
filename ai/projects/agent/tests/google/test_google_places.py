@@ -59,9 +59,8 @@ class TestGooglePlaces(unittest.TestCase):
         expected = ["id", "name", "details", "all"]
         self.assertEqual(result, expected)
 
-
 if __name__ == "__main__":
-    testmethod = ""
+    testmethod = "test_t"
 
     if testmethod:
         suite = unittest.TestSuite()

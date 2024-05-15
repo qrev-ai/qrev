@@ -324,10 +324,12 @@ class PlaceType(Enum):
     subpremise = ("additional", "subpremise")
     town_square = ("additional", "town_square")
 
+    @property
     def category(self):
         return self.value[0]
 
-    def type(self):
+    @property
+    def name(self):
         return self.value[1]
 
 
@@ -647,6 +649,15 @@ class GooglePlaces:
         maxResultCount: int = 20,
         **kwargs,
     ) -> dict:
+        """
+        Search for places by text query
+        Args:
+            text_query: Text query to search for
+            fields: Fields to include in the response
+            maxResultCount: Maximum number of results to return
+        Returns:
+            dict: Response from Google Places API
+        """
         if isinstance(fields, TextSearchField):
             fields = GooglePlaces.get_text_search_fields(fields)
         headers = GooglePlaces.default_headers.copy()
@@ -670,20 +681,31 @@ class GooglePlaces:
         maxResultCount: int = 20,
         **kwargs,
     ):
+        """
+        Search for places near a location
+        Args:
+            included_types: List of place types to include
+            circle: Circle object with the center and radius (in meters)
+            fields: Fields to include in the response
+            maxResultCount: Maximum number of results to return
+        Returns:
+            dict: Response from Google Places API
+        """
         if not included_types:
             raise ValueError("included_types must be a non-empty list")
         types = []
         for t in included_types:
-            types.append(t.type() if isinstance(t, PlaceType) else t)
+            types.append(t.name if isinstance(t, PlaceType) else t)
 
         if isinstance(fields, SearchNearbyField):
             fields = GooglePlaces.get_nearby_search_fields(fields)
 
         headers = GooglePlaces.default_headers.copy()
         headers["X-Goog-FieldMask"] = ",".join(fields)
+
         restriction_params = circle.to_location_restriction()
         json_data = {
-            "includedTypes": included_types,
+            "includedTypes": types,
             "maxResultCount": maxResultCount,
         }
         json_data.update(restriction_params)
@@ -696,6 +718,14 @@ class GooglePlaces:
         )
 
     def get_place(self, place_id: str, fields: PlaceField | list[PlaceType | str], **kwargs):
+        """
+        Get place details by place id
+        Args:
+            place_id: Place id to get details for
+            fields: Fields to include in the response
+        Returns:
+            dict: Response from Google Places API
+        """
         if isinstance(fields, PlaceField):
             fields = GooglePlaces.get_place_fields(fields)
         headers = GooglePlaces.default_headers.copy()
