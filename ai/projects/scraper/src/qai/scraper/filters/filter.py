@@ -1,22 +1,23 @@
 import glob
 import os
 import re
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, ClassVar
-import traceback
+
 from bs4 import BeautifulSoup
 from pi_conf import Config
 from pi_log import getLogger
-
 from qai.core import Meta
+
 from qai.scraper.processors.processor_factory import get_processor
 from qai.scraper.processors.processors import Processor
 from qai.scraper.scrapers.meta import WebObj
 from qai.scraper.utils.bs_utils import make_soup as bs_util_make_soup
 from qai.scraper.utils.bs_utils import make_soup_from_file
 
-from .meta import InstanceInfo, DirectoryInfo
+from .meta import DirectoryInfo, InstanceInfo
 
 log = getLogger(__name__)
 
@@ -139,9 +140,6 @@ class Filter:
                 _uri=bn, id=0, scrape_time=0, source_uri=file_info, local_file=file_info
             )
         for typ in ["source_uri", "_uri"]:
-            from pprint import pprint
-
-            # pprint(file_info)
             to_match = getattr(file_info, typ)
             typp = {"source_uri": "url", "_uri": "file"}[typ]
 
@@ -175,12 +173,12 @@ class Filter:
 
         if in_group is None and in_folder:
             for f in glob.glob(f"{in_folder}/**"):
-                print(f"Filter:Processing {str(f)}")
+                log.debug(f"Filter:Processing {str(f)}")
                 self.process_file(f, directory_info=directory_info)
         else:
             directory_info.in_folder = in_folder
             for f in self.meta.get_files_meta(group=in_group, cls=WebObj):
-                print(f"Filter:Processing {str(f._uri)}")
+                log.debug(f"Filter:Processing {str(f._uri)}")
                 self.process_file(f, directory_info=directory_info)
                     
 
@@ -225,7 +223,7 @@ class Filter:
             base_config.update(pconfig)
             proc = get_processor(name=proc_name, config=base_config, meta=self.meta)
             pipeline.append(proc)
-            print(f"Adding processor {proc.name}")
+            log.debug(f"Adding processor {proc.name}")
         return pipeline
 
     def _make_processors(self, config: dict[str, Any]) -> list[Processor]:
@@ -268,10 +266,8 @@ class Filter:
         if tags and self.meta:
             if isinstance(tags, str):
                 tags = [tags]
-            # self.meta.add_tag(tags, uri=instance_info.web_file._uri)
         for i, p in enumerate(procs):
             log.debug(f"    {i}, {p.name} nodes={len(soup())}")
-            print(f"    {i}, {p.name} nodes={len(soup())}")
             soup = p.process(soup, instance_info=instance_info)
 
         return soup

@@ -57,7 +57,6 @@ class Worker:
             log.error(f"Worker: Error Processing {self.func} args={args} with kwargs={kwargs}")
             return None
         finally:
-            # print(len(self.successes) + len(self.errors), self.nexpected_results)
             if self.on_complete:
                 ncompleted = self.results_queue.qsize() + self.error_queue.qsize()
 

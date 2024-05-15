@@ -8,7 +8,7 @@ description = "QAI Web Scraper"
 name = "qai-scraper"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.2"
+version = "0.5.2.1"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -22,12 +22,14 @@ langchain = "^0.1.0"
 markdownify = "^0.11.6"
 pandas = "^2.1.0"
 pi-conf = "^0.7.6.6"
-pi-log = "^0.5.7"
+pi-log = "^0.5.8.1"
 qai-core = {version = "^0.5"}
 selenium = "^4.15.2"
 spacy = "^3.7.2"
 undetected-chromedriver = "^3.5.5"
 validators = "^0.21.2"
+lxml = "^5.2.1"
+lxml-html-clean = "^0.1.1"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^2.2.1"

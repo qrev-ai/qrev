@@ -1,10 +1,13 @@
 import os
+from logging import getLogger
 
 from llama_index.core.llms.llm import LLM
 from llama_index.core.tools.tool_spec.base import BaseToolSpec
 
 from qai.agent import ROOT_DIR
 from qai.agent.models import OutreachType
+
+log = getLogger(__name__)
 
 PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(ROOT_DIR)))
 
@@ -33,5 +36,5 @@ class OutreachToolSpec(BaseToolSpec):
             outreach_types = outreach_types["outreach_types"]
         outreach_types = [OutreachType(**outreach_type) for outreach_type in outreach_types]
         outreach_types = self._refine_step_queries(outreach_types)
-        print(f"Returning types = {outreach_types}")
+        log.debug(f"Returning types = {outreach_types}")
         return outreach_types

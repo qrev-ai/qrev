@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Optional, TypeVar
 
 from llama_index.agent.openai import OpenAIAgent
@@ -12,9 +13,10 @@ from llama_index.core.storage.chat_store import SimpleChatStore
 from llama_index.core.tools.tool_spec.base import BaseToolSpec
 from llama_index.llms.openai import OpenAI
 from pi_conf import load_config
-
 from qai.ai import MessageRole
 from qai.ai.frameworks.openai.llm import OpenAILLM
+
+log = getLogger(__name__)
 
 T = TypeVar("T", AgentRunner)
 
@@ -35,7 +37,7 @@ class ConversationToolSpec(BaseToolSpec):
         self.model_config = model_config
 
     def converse(self, query: str) -> str:
-        print(f"Conversing... user_id: {self.user_id}, query: {query}")
+        log.debug(f"Conversing... user_id: {self.user_id}, query: {query}")
         self.memory.chat_store.add_message(
             key=self.user_id,
             message=ChatMessage(
@@ -45,7 +47,7 @@ class ConversationToolSpec(BaseToolSpec):
         )
         msgs = self.memory.chat_store.get_messages(self.user_id)
         msgs = [{"role": msg.role, "content": msg.content} for msg in msgs]
-        print("Conversing...", msgs)
+        log.debug(f"Conversing... {msgs}")
         llm = OpenAILLM(config=self.model_config)
         qr = llm.query(query, messages=msgs)
 
@@ -66,4 +68,3 @@ class ConversationToolSpec(BaseToolSpec):
             verbose=verbose,
         )
         return agent
-
