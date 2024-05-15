@@ -7,44 +7,63 @@ import MsgRefreshIcon from '../../icons/MsgRefreshIcon';
 import MsgCopyIcon from '../../icons/MsgCopyIcon';
 import MsgSendIcon from '../../icons/MsgSendIcon';
 import copy from 'copy-to-clipboard';
+import { alpha, styled } from '@mui/material/styles';
 import { onSendMail } from '../../utils/api-sendEmail';
 
 import CSVReader from 'react-csv-reader';
-import { ColDef, ModuleRegistry } from '@ag-grid-community/core';
-import { ClientSideRowModelModule } from '@ag-grid-community/client-side-row-model';
+import { DataGrid, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
 import { RxPlus } from 'react-icons/rx';
-import { AgGridReact } from '@ag-grid-community/react';
-import '@ag-grid-community/styles/ag-grid.css';
-import '@ag-grid-community/styles/ag-theme-alpine.css';
 import { BsFiletypeCsv } from 'react-icons/bs';
 import { IoCloseOutline } from 'react-icons/io5';
 import { getQaiConverseById, qaiConverse, sendCampaign } from '../../utils/api-qai-converse';
 import { useSelector } from 'react-redux';
 import { StoreParams } from '../../models/store';
 
-ModuleRegistry.registerModules([ClientSideRowModelModule]);
-
 const SendIcon = loadable(() => import('../../icons/SendIcon'));
 const ChatPeopleIcon = loadable(() => import('../../icons/ChatPeopleIcon'));
 const ChatLoader = loadable(() => import('../../components/ChatLoader'));
 
+const ODD_OPACITY = 0.2;
+
+const StripedDataGrid = styled(DataGrid)(({ theme }) => ({
+  [`& .${gridClasses.row}.even`]: {
+    backgroundColor: theme.palette.grey[200],
+    '&:hover': {
+      backgroundColor: alpha(theme.palette.primary.main, ODD_OPACITY),
+      '@media (hover: none)': {
+        backgroundColor: 'transparent',
+      },
+    },
+    '&.Mui-selected': {
+      backgroundColor: alpha(
+        theme.palette.primary.main,
+        ODD_OPACITY + theme.palette.action.selectedOpacity,
+      ),
+      '&:hover': {
+        backgroundColor: alpha(
+          theme.palette.primary.main,
+          ODD_OPACITY + theme.palette.action.selectedOpacity + theme.palette.action.hoverOpacity,
+        ),
+        // Reset on touch devices, it doesn't add specificity
+        '@media (hover: none)': {
+          backgroundColor: alpha(
+            theme.palette.primary.main,
+            ODD_OPACITY + theme.palette.action.selectedOpacity,
+          ),
+        },
+      },
+    },
+  },
+}));
+
 const CsvTable = ({ rowData, columnDefs }: any) => {
-  const gridRef = useRef<AgGridReact>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
   const gridStyle = useMemo(() => ({ height: '100%', width: '100%' }), []);
-  const defaultColDef = useMemo<ColDef>(() => {
-    return {
-      editable: true,
-      cellDataType: false,
-      sortable: true,
-      filter: true,
-      resizable: true,
-    };
-  }, []);
 
   return (
     <div className="flex flex-col w-[70vw] h-[50vh] bg-white pt-4 pr-0">
       <div style={gridStyle} className={'ag-theme-alpine'}>
-        <AgGridReact
+        {/* <AgGridReact
           ref={gridRef}
           animateRows
           deltaSort
@@ -52,11 +71,26 @@ const CsvTable = ({ rowData, columnDefs }: any) => {
           columnDefs={columnDefs}
           defaultColDef={defaultColDef}
           editType={'fullRow'}
+        /> */}
+        <StripedDataGrid
+          ref={gridRef}
+          sortingOrder={['desc', 'asc']}
+          editMode={rowData}
+          rows={rowData}
+          columns={columnDefs}
+          checkboxSelection
+          disableRowSelectionOnClick
+          getRowId={getRowId}
+          getRowClassName={(params) =>
+            params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
+          }
         />
       </div>
     </div>
   );
 };
+
+const getRowId = (rowData: GridValidRowModel) => rowData.id;
 
 const AgentChat = ({
   conversationId,
