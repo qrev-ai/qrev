@@ -14,6 +14,7 @@ const MyProfile = loadable(() => import('./MyProfile'));
 const Account = loadable(() => import('./Account'));
 const MyConfiguration = loadable(() => import('./MyConfiguration'));
 const UsersTeams = loadable(() => import('./UsersTeams'));
+const SettingsCampaign = loadable(() => import('./Campaign'));
 
 const Settings = (): React.ReactElement => {
   const [tabParentValue, setTabParentValue] = useState(0);
@@ -109,6 +110,7 @@ const Settings = (): React.ReactElement => {
               >
                 <Tab label="Users" {...a11yProps(0)} />
                 <Tab label="Teams" {...a11yProps(1)} />
+                <Tab label="Campaign" {...a11yProps(2)} />
               </Tabs>
             </Box>
 
@@ -119,6 +121,10 @@ const Settings = (): React.ReactElement => {
 
               <CustomTabPanel value={tabValue} index={1}>
                 <UsersTeams type="team" />
+              </CustomTabPanel>
+
+              <CustomTabPanel value={tabValue} index={2}>
+                <SettingsCampaign />
               </CustomTabPanel>
             </div>
           </div>
