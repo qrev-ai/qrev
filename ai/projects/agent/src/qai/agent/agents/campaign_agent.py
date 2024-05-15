@@ -1,5 +1,6 @@
 import uuid
 from dataclasses import dataclass
+from logging import getLogger
 from typing import Any, Dict, List, Optional, Self, Union
 
 from llama_index.agent.openai import OpenAIAgent
@@ -17,6 +18,8 @@ from qai.agent import cfg
 from qai.agent.agents.email_agent import EmailAgent, EmailModel
 from qai.agent.agents.sqlquery_agent import RefineSQLQuery, StepModel
 from qai.agent.models import OutreachType
+
+log = getLogger(__name__)
 
 
 class PersonID(BaseModel):
@@ -56,7 +59,7 @@ class CampaignToolSpec(BaseToolSpec):
         Returns:
             A list of OutreachType objects.
         """
-        print(f"Converting outreach types: {outreach_types}")
+        log.debug(f"Converting outreach types: {outreach_types}")
         return outreach_types
 
     def create_campaign(
@@ -74,11 +77,11 @@ class CampaignToolSpec(BaseToolSpec):
             A string indicating the campaign was created.
         """
         # people = self.people
-        print(
+        log.debug(
             f"Creating campaign for # people: {len(people)}  # outreach_types: {len(outreach_types)}, people={people}"
         )
         for p in people:
-            print(f"Person: {p} Outreach: {outreach_types}")
+            log.debug(f"Person: {p} Outreach: {outreach_types}")
 
         return "Campaign is starting to be created, it can be found in the campaign tab."
 
@@ -90,12 +93,23 @@ class CampaignResponse(AgentChatResponse):
     sequence_id: str = None
 
 
+class CampaignOptions(BaseModel):
+    allow_enrichment: bool = Field(
+        description="Allow enrichment of the people and companies data.", default=False
+    )
+    allow_expansion: bool = Field(
+        description="Allow expansion of the people and companies data.", default=False
+    )
+
+
 class CampaignAgent(OpenAIAgent):
     """
     An agent that generates a campaign for a list of people and companies.
     """
 
-    def __init__(self, tools: List[BaseTool], **kwargs: Any) -> None:
+    def __init__(
+        self, tools: List[BaseTool], options: CampaignOptions = None, **kwargs: Any
+    ) -> None:
         """Init params."""
         super().__init__(
             tools=tools,
@@ -116,13 +130,15 @@ class CampaignAgent(OpenAIAgent):
 
         self.email_agent: EmailAgent = None
 
+        self.options: CampaignOptions = options or CampaignOptions()
+
     @staticmethod
     def _email_on_complete(url: str = None) -> None:
-        print(f"Call sent to {url}")
+        log.debug(f"Call sent to {url}")
 
     def _initialize_state(self, task: Task, **kwargs: Any) -> Dict[str, Any]:
         """Initialize state."""
-        print(f"Initializing state for task {task} with kwargs {kwargs}")
+        log.debug(f"Initializing state for task {task} with kwargs {kwargs}")
         return {"count": 0, "current_reasoning": []}
 
     def chat(
@@ -134,8 +150,8 @@ class CampaignAgent(OpenAIAgent):
         """
         Chat with the agent.
         """
-        print(f"Chatting with message {message} and tool_choice {tool_choice}")
-        print(
+        log.debug(f"Chatting with message {message} and tool_choice {tool_choice}")
+        log.debug(
             f"  People IDs: {len(self.people)}, company IDs: {len(self.companies)}, "
             f"outreach types: {len(self.outreach_types)}"
         )
@@ -151,8 +167,12 @@ class CampaignAgent(OpenAIAgent):
         if r.sources and r.sources[0].tool_name == "find_steps":
             tool = r.sources[0]
             steps: list[StepModel] = tool.raw_output
-            print(f"  Tool output: ")
+            log.debug(f"Tool output: ")
             for step in steps:
+                if not self.options.allow_expansion:
+                    log.debug(f"  Skipping expansion of data for step: {step}")
+                    continue
+                log.debug(f"  Step: {step}")
                 try:
                     if step.category == "people":
                         result = refine_tools.load_people(step.sentence)
@@ -160,21 +180,21 @@ class CampaignAgent(OpenAIAgent):
                         if result:
                             result = {r["id"]: r for r in result}
                         self.people.update(result)
-                        print(f"  Added People: {len(result)}")
+                        log.debug(f"  Added People: {len(result)}")
                     elif step.category == "company":
                         result = refine_tools.load_companies(step.sentence)
                         ## result is a list of dict, change to dict
                         if result:
                             result = {r["id"]: r for r in result}
                         self.companies.update(result)
-                        print(f"  Added Companies: {len(result)}")
+                        log.debug(f"  Added Companies: {len(result)}")
 
                     else:
                         result = "No Result"
                 except Exception as e:
-                    print(f"Error: {e}\nStep={step}\nResult: {result}")
+                    log.error(f"Error: {e}\nStep={step}\nResult: {result}")
                     raise
-                print(f"  Result: {result}")
+                log.debug(f"  Result: {result}")
         npeople = len(self.people) > 0
         ncompanies = len(self.companies) > 0
         noutreach = len(self.outreach_types) > 0
@@ -208,12 +228,14 @@ class CampaignAgent(OpenAIAgent):
                 sequence_id, self.from_person, self.from_company, self.people, self.companies
             )
         setattr(response, "emails", emails)
-        print(f"campaignagent::Chat completed={completed}  response: {response} emails: {emails}")
+        log.debug(
+            f"campaignagent::Chat completed={completed}  response: {response} emails: {emails}"
+        )
         return response
 
     def _finalize_task(self, task: Task, **kwargs: Any) -> None:
         """Finalize task."""
-        print(f"Finalizing task with state {task} and kwargs {kwargs}")
+        log.debug(f"Finalizing task with state {task} and kwargs {kwargs}")
         # nothing to finalize here
 
     @staticmethod
@@ -229,8 +251,9 @@ class CampaignAgent(OpenAIAgent):
         model_config: dict = None,
         system_prompt: str = None,
         email_agent: EmailAgent = None,
+        options: CampaignOptions = None,
         **kwargs,
-    ) -> Self:
+    ) -> "CampaignAgent":
         campaign_tool = CampaignToolSpec()
         tools = tools or campaign_tool.to_tool_list()
         system_prompt = system_prompt or (
@@ -252,4 +275,5 @@ class CampaignAgent(OpenAIAgent):
             agent.from_person,
             agent.from_company,
         )
+        agent.options = options or CampaignOptions()
         return agent

@@ -1,17 +1,14 @@
+from logging import getLogger
 
-from llama_index.core import Settings
 from llama_index.core.bridge.pydantic import BaseModel, Field
-from llama_index.core.settings import Settings
 from llama_index.core.tools import FunctionTool
 from llama_index.core.tools.tool_spec.base import BaseToolSpec
 from llama_index.core.tools.types import ToolMetadata, ToolOutput
-from llama_index.llms.openai import OpenAI
-from pi_conf import load_config
 
 from qai.agent.agents.find_agent import AgentType
 from qai.agent.tools.types import StringEnum
 
-Settings.llm = OpenAI(model="gpt-3.5-turbo", temperature=0.1)
+log = getLogger(__name__)
 
 
 class QueryType(StringEnum):
@@ -35,7 +32,7 @@ def find_query_type(sentence: str, query_type: QueryType) -> AgentType:
     Returns:
         The query type.
     """
-    print(f"Found find_query_type sentence: {sentence} agent_type: {query_type}")
+    log.debug(f"Found find_query_type sentence: {sentence} agent_type: {query_type}")
     if isinstance(query_type, dict):
         query_type = query_type["query_type"]
     return query_type
@@ -83,11 +80,3 @@ class BasicQuery(BaseToolSpec):
             return QueryType.people
         else:
             return QueryType.campaign
-
-
-if __name__ == "__main__":
-    cfg = load_config("qai")
-    basic_query = BasicQuery()
-    query = "What is the best way to reach out to people?"
-    r = basic_query.query(query)
-    print(type(r))

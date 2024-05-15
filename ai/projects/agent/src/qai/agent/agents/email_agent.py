@@ -2,7 +2,7 @@ import os
 import time
 from functools import partial
 from logging import getLogger
-from typing import Callable, List, Optional, Self, Union
+from typing import Callable, List, Optional, Self, Type, Union
 
 import requests
 from llama_index.agent.openai import OpenAIAgent
@@ -17,6 +17,7 @@ from llama_index.core.tools.tool_spec.base import BaseToolSpec
 from llama_index.core.tools.types import BaseTool
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
+from uuid import UUID, uuid4
 
 from qai.agent import ROOT_DIR, cfg
 from qai.agent.utils.distribute import adistribute
@@ -58,10 +59,11 @@ class EmailModel(BaseModel):
     body_list: list[str] = Field(
         description="The body of the email as a list of str. There can be empty lines in the list."
     )
-    # body: str = Field(description="The properly formatted body of the email.")
-    email: Optional[str] = Field(description="The email address of the person.")
-    name: Optional[str] = Field(description="The name of the person.")
-    phone: Optional[str] = Field(description="The phone number of the person.")
+
+    email: Optional[str] = Field(description="The email address of the person.", default=None)
+    name: Optional[str] = Field(description="The name of the person.", default=None)
+    phone: Optional[str] = Field(description="The phone number of the person.", default=None)
+    id: Optional[UUID] = Field(description="Id of the email for tracking", default_factory=uuid4)
 
     @property
     def body(self) -> str:
@@ -162,8 +164,8 @@ class EmailToolSpec(BaseToolSpec):
         self,
         to_person: dict,
         to_company: dict,
-        prompt: Optional[str] = None,
-        callback: Optional[Callable] = None,
+        prompt: str | None = None,
+        callback: Callable | None = None,
     ) -> EmailModel:
         """
         Draft an email for a person.
@@ -197,9 +199,12 @@ class EmailToolSpec(BaseToolSpec):
         to_company: dict,
         template: Optional[str] = None,
         email_callback: Optional[Callable] = None,
+        email_tool_spec_cls: Type["EmailToolSpec"] = None,
     ) -> EmailModel:
         log.debug(f"Creating email from {from_person} to {to_person}")
         log.debug(f"  From Company: {from_company} To Company: {to_company}")
+        if email_tool_spec_cls is None:
+            email_tool_spec_cls = EmailToolSpec
         company_email = to_person.get("email")
         if company_email:
             company_email = company_email.split("@")[1]
@@ -208,7 +213,7 @@ class EmailToolSpec(BaseToolSpec):
         }
         if not to_company:
             raise ValueError(f"Company not found for person {to_person}")
-        draft_tool = EmailToolSpec(from_person=from_person, from_company=from_company)
+        draft_tool = email_tool_spec_cls(from_person=from_person, from_company=from_company)
         email = draft_tool.draft_email(
             to_person=to_person,
             to_company=to_company,
@@ -222,24 +227,37 @@ class EmailToolSpec(BaseToolSpec):
         kwargs_list: list[dict],
         on_complete: Optional[Callable] = None,
         asynchronous: bool = True,
-    ) -> None:
+        email_tool_spec_cls: Self = Self,
+    ) -> None | List[EmailModel]:
         if asynchronous:
             adistribute(
-                EmailToolSpec._create_email,
+                email_tool_spec_cls._create_email,
                 kwargs_list=kwargs_list,
                 on_complete=on_complete,
                 nprocs=4,
             )
         else:
+            emails = []
+            successes = 0
+            errors = 0
             for kwargs in kwargs_list:
-                EmailToolSpec._create_email(**kwargs)
+                kwargs["email_tool_spec_cls"] = email_tool_spec_cls
+                try:
+                    emails.append(email_tool_spec_cls._create_email(**kwargs))
+                    successes += 1
+                except Exception as e:
+                    log.exception(f"Error creating email: {e}")
+                    errors += 1
             if on_complete:
-                on_complete()
+                on_complete(successes, errors)
+            return emails
 
 
 class EmailAgent(OpenAIAgent):
-    def __init__(self, *args, **kwargs):
+
+    def __init__(self, email_tool_spec_cls: EmailToolSpec = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.email_tool_spec_cls = email_tool_spec_cls or EmailToolSpec
 
     def chat(
         self,
@@ -251,7 +269,7 @@ class EmailAgent(OpenAIAgent):
 
     @staticmethod
     def on_email_complete(sequence_id, email: EmailModel) -> None:
-        print(f"Email completed: {sequence_id} {email}")
+        log.debug(f"Email completed: {sequence_id} {email}")
         mongo = cfg.mongo
         client = MongoClient(mongo.uri)
         db = client[mongo.db]
@@ -266,20 +284,20 @@ class EmailAgent(OpenAIAgent):
             "message_body": email.body,
             "is_message_generation_complete": True,
         }
-        print(f"Inserting into collection: {mongo.uri} {db} {collection.name} ")
+        log.debug(f"Inserting into collection: {mongo.uri} {db} {collection.name} ")
         result = collection.insert_one(js)
-        print(f"Insert Result: {result}")
+        log.debug(f"Insert Result: {result}")
 
     @staticmethod
     def on_all_emails_complete(sequence_id: str, successes: int, errors: int) -> None:
-        print(f"All Email completed: {successes} success, {errors} errors.")
+        log.debug(f"All Email completed: {successes} success, {errors} errors.")
         url = cfg.email.on_complete_emails_url
-        print(f"Sending call to {url}  sequence_id={sequence_id}")
+        log.debug(f"Sending call to {url}  sequence_id={sequence_id}")
         delay = cfg.email.get("delay_complete_request", 0)
         if delay:
             time.sleep(delay)
         r = requests.post(url, json={"sequence_id": sequence_id})
-        print(r.json())
+        log.debug(r.json())
 
     def create_emails(
         self,
@@ -302,6 +320,7 @@ class EmailAgent(OpenAIAgent):
             to_companies = {}
         email_params = []
         async_emails_params = []
+
         ### Resolve the company for each person
 
         for i, person_id in enumerate(to_people.keys()):
@@ -324,38 +343,49 @@ class EmailAgent(OpenAIAgent):
             log.debug(
                 f"Creating email for {to_person} to {to_company} from {from_person} {from_company}"
             )
+            f = partial(self.on_email_complete, sequence_id)
+            params["email_callback"] = f
 
-            if i < use_async_on:
+            if use_async_on is None or i < use_async_on:
                 email_params.append(params)
             else:
-                f = partial(EmailAgent.on_email_complete, sequence_id)
-                params["email_callback"] = f
                 async_emails_params.append(params)
         if async_emails_params:
-            f = partial(EmailAgent.on_all_emails_complete, sequence_id)
+            f = partial(self.on_all_emails_complete, sequence_id)
             ## TODO resolve potential issue of async completing before
             # all sync emails are generated. and sending message before
-            EmailToolSpec._create_emails(
+            self.email_tool_spec_cls._create_emails(
                 kwargs_list=async_emails_params,
                 on_complete=f,
                 asynchronous=True,
+                email_tool_spec_cls=self.email_tool_spec_cls,
             )
         emails = []
-        for ep in email_params:
-            email = EmailToolSpec._create_email(**ep)
-            EmailAgent.on_email_complete(sequence_id, email)
-            emails.append(email)
+        if email_params:
+            f = None
             if not async_emails_params:
-                EmailAgent.on_all_emails_complete(sequence_id, 1, 0)
+                f = partial(self.on_all_emails_complete, sequence_id)
+            emails = self.email_tool_spec_cls._create_emails(
+                kwargs_list=email_params,
+                on_complete=f,
+                asynchronous=False,
+                email_tool_spec_cls=self.email_tool_spec_cls,
+            )
         return emails
 
-    @staticmethod
+    @classmethod
     def create(
-        from_person: dict,
+        cls,
+        from_person: dict = None,
         from_company: dict = None,
         tools: List[BaseTool] = None,
+        email_tool_spec_cls: EmailToolSpec = EmailToolSpec,
     ) -> Self:
-        email_tool = EmailToolSpec(from_person, from_company)
-        tools = tools or email_tool.to_tool_list()
-        agent = EmailAgent.from_tools(tools)
+        if not tools:
+            if not from_person:
+                raise ValueError("from_person must be provided.")
+            spec = email_tool_spec_cls(from_person, from_company)
+            tools = spec.to_tool_list()
+        agent = cls.from_tools(tools)
+        agent.email_tool_spec_cls = email_tool_spec_cls
         return agent

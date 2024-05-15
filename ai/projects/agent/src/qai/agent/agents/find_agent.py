@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Any, Callable, Dict, List, Optional, Sequence, Type
 
 from llama_index.agent.openai import OpenAIAgent
@@ -16,6 +17,8 @@ from llama_index.llms.openai.utils import OpenAIToolCall
 
 from qai.agent.tools.types import StringEnum
 
+log = getLogger(__name__)
+
 
 class AgentType(StringEnum):
     campaign = "campaign"
@@ -32,7 +35,7 @@ class FindAgentModel(BaseModel):
 
 
 def find_agent(sentence: str, agent_type: AgentType) -> AgentType:
-    print(f"Found agent for sentence: {sentence} agent_type: {agent_type}")
+    log.debug(f"Found agent for sentence: {sentence} agent_type: {agent_type}")
 
     # return {"sentence": sentence, "agent_type": agent_type}
     return agent_type
