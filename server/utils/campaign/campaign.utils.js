@@ -1020,6 +1020,19 @@ function satisfyLimitCondition(
     return true;
 }
 
+/*
+WHAT DOES THIS FUNCTION DO?
+* This function provides Multithreading support.
+* Multithreading support essentially means ability to send a message to multiple prospects of same company. These prospects should receive the message at a different time so that they don't feel spammed.
+* This function is to check if the prospect is scheduled for the same time as another prospect from the same domain
+
+
+IMPLEMENTATION:
+* If the prospect's domain is some generic domain like gmail.com, outlook.com, yahoo.com etc then return false
+* If the prospect is scheduled for the same time as another prospect from the same domain, then return true
+* If the prospect is scheduled within "daysBuffer" days from another prospect from the same domain, then return true
+* NOTE: The "daysBuffer" is set to 2 days by default. Ideally, this should be configurable by the QRev user in the campaign setup
+*/
 function isSameDomainProspectScheduledForTime(
     { domainScheduledTimes, startTime, prospectDomain, daysBuffer = 2 },
     { txid }
