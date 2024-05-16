@@ -1021,7 +1021,7 @@ function satisfyLimitCondition(
 }
 
 function isSameDomainProspectScheduledForTime(
-    { domainScheduledTimes, startTime, prospectDomain },
+    { domainScheduledTimes, startTime, prospectDomain, daysBuffer = 2 },
     { txid }
 ) {
     const funcName = "isSameDomainProspectScheduledForTime";
@@ -1048,6 +1048,30 @@ function isSameDomainProspectScheduledForTime(
         );
         return true;
     }
+
+    /*
+     * Added buffer days support on 14th May 2024
+     * This is to avoid sending emails to prospects who work in the same company within a few days of each other.
+     * Currently, the buffer days is set to 3 days. But ideally we want QRev users to set this buffer days in the campaign setup.
+     */
+    // check if any of the scheduled times are within "daysBuffer" days from startTime
+    let bufferMillis = daysBuffer * 24 * 60 * 60 * 1000;
+    let startTimeDateMillisPlusBuffer = startTime + bufferMillis;
+    let startTimeDateMillisMinusBuffer = startTime - bufferMillis;
+
+    for (let i = 0; i < domainScheduledTimes.length; i++) {
+        let scheduledTime = domainScheduledTimes[i];
+        if (
+            scheduledTime >= startTimeDateMillisMinusBuffer &&
+            scheduledTime <= startTimeDateMillisPlusBuffer
+        ) {
+            logg.info(
+                `ended with true since scheduledTime is within buffer days`
+            );
+            return true;
+        }
+    }
+
     logg.info(`ended with false`);
     return false;
 }
