@@ -281,7 +281,7 @@ async function _createCampaignSequenceProspectsFromQAi(
      * We need this because we cannot try to send email and then check if it bounced. This will affect the QRev user's email reputation
      */
     let verifyProspectService = process.env.VERIFY_PROSPECT_EMAIL_BY_SERVICE;
-    if (!verifyProspectService || verifyProspectService === "none") {
+    if (verifyProspectService && verifyProspectService !== "none") {
         let [pvResult, verifyErr] =
             await ProspectVerifyUtils.verifyProspectsEmails(
                 {
