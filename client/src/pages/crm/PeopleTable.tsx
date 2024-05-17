@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { alpha, styled } from '@mui/material/styles';
-import { DataGrid, GridColDef, gridClasses } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridValidRowModel, gridClasses } from '@mui/x-data-grid';
 import CSVReader from 'react-csv-reader';
 
 const ODD_OPACITY = 0.2;
@@ -170,6 +170,7 @@ const PeopleTable = ({ peoples }: { peoples: any }) => {
           checkboxSelection
           disableRowSelectionOnClick
           pagination
+          getRowId={getRowId}
           getRowClassName={(params) =>
             params.indexRelativeToCurrentPage % 2 === 0 ? 'even' : 'odd'
           }
@@ -178,5 +179,7 @@ const PeopleTable = ({ peoples }: { peoples: any }) => {
     </div>
   );
 };
+
+const getRowId = (rowData: GridValidRowModel) => rowData.name;
 
 export default PeopleTable;

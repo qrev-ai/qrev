@@ -196,7 +196,7 @@ class Scraper:
     def scrape(
         self,
         urls: Union[str, list[str]],
-        dest_dir: str = None,
+        dest_dir: str,
         current_depth: int = 0,
         max_depth: int = 4,
         overwrite: bool = False,
