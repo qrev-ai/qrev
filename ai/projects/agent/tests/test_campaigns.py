@@ -1,21 +1,27 @@
-import inspect
 import os
 import unittest
 
 from mock_email_tool import MockEmailAgent, MockEmailToolSpec, sequence_dict
 from pi_log import getLogger
-
+import inspect
 from qai.agent import ROOT_DIR
+from qai.agent.agents.campaign_agent import CampaignOptions, CampaignAgent
 
 log = getLogger(__name__, level="INFO", init_basic_config=True)
+getLogger("qai.agent", level="DEBUG")
+class TestCampaigns(unittest.TestCase):
+    def setUp(self) -> None:
+        return super().setUp()
 
-PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(ROOT_DIR)))
-
-
-class TestEmail(unittest.TestCase):
-
-    def test_emailagent(self):
+    def tearDown(self) -> None:
+        return super().tearDown()
+    
+    def test_campaign(self):
         sequence_id = f"seq_{inspect.stack()[0][3]}"
+        co = CampaignOptions(
+            allow_expansion=False,
+            allow_replacement=False,
+        )
         from_person = {
             "name": "Maya",
             "email": "jane.doe@example.com",
@@ -33,32 +39,30 @@ class TestEmail(unittest.TestCase):
                 "title": "Software Engineer",
             }
         ]
+        ## convert list of dict to dict of dict
+        to_people = {to_person["name"]: to_person for to_person in to_persons}
 
+        
         ets = MockEmailToolSpec(from_person, from_company)
         ea: MockEmailAgent = MockEmailAgent.create(
             tools=ets.to_tool_list(), email_tool_spec_cls=MockEmailToolSpec
         )
-        ## convert list of dict to dict of dict
-        to_people = {to_person["name"]: to_person for to_person in to_persons}
-        emails = ea.create_emails(
-            sequence_id=sequence_id,
+
+        ca = CampaignAgent.create(
             from_person=from_person,
             from_company=from_company,
-            to_people=to_people,
-            use_async_on=None,
-        )
-        log.debug(f"emails = {emails}")
-        self.assertEqual(len(emails), 1)
-        self.assertTrue(sequence_id in sequence_dict)
-        self.assertTrue("on_email_complete" in sequence_dict[sequence_id])
-        self.assertTrue("on_all_emails_complete" in sequence_dict[sequence_id])
-
+            people=to_people, 
+            email_agent=ea, 
+            campaign_options=co)
+        response = ca.chat("Make me a campaign from these people")
+        self.assertEqual(len(response.emails), 1)
 
 if __name__ == "__main__":
-    testmethod = ""
+    testmethod = "test_campaign"
+
     if testmethod:
         suite = unittest.TestSuite()
-        suite.addTest(TestEmail(testmethod))
+        suite.addTest(TestCampaigns(testmethod))
         runner = unittest.TextTestRunner().run(suite)
     else:
         unittest.main()

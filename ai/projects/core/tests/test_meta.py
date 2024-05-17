@@ -1,11 +1,12 @@
 import json
 import os
 import tempfile
+import time
 import unittest
 from dataclasses import dataclass
 from pathlib import Path
 
-from qai.core import Meta, MetaObj, MetaOptions, MetaUri
+from qai.core import Meta, MetaObj, MetaUri
 
 test_dir = Path(__file__).parent
 data_dir = (test_dir / "data").resolve()
@@ -318,6 +319,18 @@ class TestMeta(unittest.TestCase):
             self.assertEqual(len(files), 1)
             f = files[0]
             self.assertEqual(f._uri, expected_uri)
+
+    def test_get_within_seconds(self):
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            meta = Meta.create_most_recent(tmpdirname)
+            time.sleep(1)
+            ## Test that metadata is created and not loaded
+            meta2 = Meta.from_within_seconds(tmpdirname, 0.5)
+            self.assertNotEqual(meta.root, meta2.root)
+
+            ## Test that metadata is loaded
+            meta2 = Meta.from_within_seconds(tmpdirname, 2)
+            self.assertEqual(meta.root, meta2.root)
 
 
 if __name__ == "__main__":

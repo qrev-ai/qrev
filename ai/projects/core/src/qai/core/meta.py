@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Tuple, Type, TypeVar
 from urllib.parse import urlsplit
@@ -148,7 +148,6 @@ class Meta(dict):
         self,
         initial_dict: dict = None,
         options: MetaOptions = None,
-        use_timed_group: bool = False,
         *args,
         **kwargs,
     ):
@@ -156,31 +155,20 @@ class Meta(dict):
         kwargs.update(initial_dict or {})
         super().__init__(*args, **kwargs)
         self.__dict__ = self
-        self._init(use_timed_group, *args, **kwargs)
+        self._init(*args, **kwargs)
 
     def __post_init__(self):
         self._init()
 
-    def _init(self, use_timed_group: bool = False, *args, **kwargs):
-        # if self.root and self.meta_file is None:
-        #     self.meta_file = Path(os.path.join(self.root, default_meta_file))
-        # if isinstance(self.root, str):
-        #     self.root = Path(self.root)
-
-        # print("here", self.root)
-        # print("meta_file", self.meta_file)
+    def _init(self, *args, **kwargs):
         if self.meta_file:
             if os.path.exists(self.meta_file):
                 self.load()
             elif self.options.create_root:
                 os.makedirs(self.root, exist_ok=True)
-                # self.save(indent=2)
 
         if isinstance(self._root, Path):
             self._root = str(self._root.absolute())
-
-        # print("here2", self.root)
-        # print("INIT", self.root, self.meta_file, self.created_at)
 
     def __del__(self):
         if self.is_root_temp:
@@ -203,14 +191,11 @@ class Meta(dict):
         return None if self._meta_file is None else Path(self._meta_file)
 
     def __json__(self):
-        # print("__json__ here!!")
         obj: Meta = self.copy()
         ## convert Path to string for any members that are Paths
         for k, v in obj.items():
             if isinstance(v, Path):
                 obj[k] = str(v)
-        # obj["root"] = str(obj["root"])
-        # obj["meta_file"] = str(obj["meta_file"])
         return obj
 
     def abs(self, s: str):
@@ -223,7 +208,7 @@ class Meta(dict):
     @staticmethod
     def create_most_recent(dir_path: str) -> "Meta":
         dir_path = os.path.expanduser(dir_path)
-        now = datetime.utcnow().strftime(timeformat)
+        now = datetime.now(UTC).strftime(timeformat)
         time_path = os.path.join(dir_path, now)
         return Meta.from_directory(time_path, create=True)
 
@@ -273,6 +258,27 @@ class Meta(dict):
         except IndexError:
             raise IndexError(f"Could not find a folder with the correct format in {dir_path}")
 
+    @staticmethod 
+    def from_within_seconds(dir_path: str | Path, time: float) -> "Meta":
+        """
+        Get the most recent folder within time seconds in dir_path or create a new one
+        """
+        if isinstance(dir_path, str) and dir_path.startswith("~"):
+            dir_path = os.path.expanduser(dir_path)
+        files = glob.glob(f"{dir_path}/*")
+        files = sorted(files)
+        files = [f for f in files if re.search(r"[0-9]{8,8}-[0-9]{6,6}", f) is not None]
+        now = datetime.now(UTC)
+        for f in files:
+            timestr = f[-15:]
+            t = datetime.strptime(timestr, timeformat)
+            ## make t UTC 
+            t = t.replace(tzinfo=UTC)
+            if (now - t).seconds < time:
+                return Meta.from_directory(f)
+        else:
+            return Meta.create_most_recent(dir_path)
+    
     @staticmethod
     def from_most_recent(dir_path: str | Path, create: bool = False) -> "Meta":
         if isinstance(dir_path, str) and dir_path.startswith("~"):
@@ -325,16 +331,6 @@ class Meta(dict):
             json.dump(self, f, indent=indent, **kwargs)
             os.rename(f.name, self.meta_file)
 
-    # def _members_to_path(self):
-    #     for k in ["root", "meta_file"]:
-    #         try:
-    #             if self[k] is None:
-    #                 continue
-    #         except:
-    #             continue
-    #         if isinstance(self[k], str):
-    #             self[k] = Path(self[k])
-
     def load(self, file_name: str = None):
         if not file_name and not self.root:
             raise ValueError("No file_name or root directory to load the metadata")
@@ -342,18 +338,11 @@ class Meta(dict):
         with open(file_name, "r") as f:
             self.update(json.load(f))
 
-    # def get_file(self, file_name: str, group=None, cls: Type["MetaObj"] = None) -> "MetaObj":
-    # def get_file(self, file_name: str, group=None, cls: Type["MetaObj"] = None) -> __qualname__:
     def get_file_meta(
         self, file_name: str, group: str = None, cls: Type[C] = MetaUri, create: bool = False
     ) -> C:
         group = group or ROOT_GROUP
 
-        # print("GET FILE", file_name, group, cls)
-        # if group is None:
-        #     if not "/" in file_name:
-        #         group = ROOT_GROUP
-        #     group, file_name = file_name.split("/", maxsplit=1)[0]
         group_path = self.get_group(group)
         urimeta = self.get_uri_meta(group)
         path = Path(self._path_join(group, file_name)).absolute()
@@ -407,7 +396,6 @@ class Meta(dict):
                 if not os.path.exists(full_path):
                     raise FileNotFoundError(f"Could not find file {full_path}")
                 return full_path
-                # raise ValueError(f"group must be a valid path")
             group, file_name = file_name.split("/", maxsplit=1)[0]
         full_path = self._path_join(group, file_name)
         if not os.path.exists(full_path):
@@ -494,7 +482,14 @@ class Meta(dict):
             return os.path.join(self.root, *args)
         return os.path.join(self.root, group, *args)
 
-    def has_directory(self, group: str = None):
+    def has_directory(self, group: str = None) -> bool:
+        """
+        Check if the directory exists
+        Args:
+            group: the group to check
+        Returns:
+            True if the directory exists, False otherwise
+        """
         if group is None:
             return os.path.exists(self.root)
         return os.path.exists(self._path_join(group))

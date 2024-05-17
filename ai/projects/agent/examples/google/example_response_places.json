@@ -1,0 +1,3571 @@
+{
+  "places": [
+    {
+      "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y",
+      "id": "ChIJ2cuEqGaAhYARgibFWP_990Y",
+      "types": ["accounting", "consultant", "finance", "point_of_interest", "establishment"],
+      "nationalPhoneNumber": "(415) 397-7900",
+      "internationalPhoneNumber": "+1 415-397-7900",
+      "formattedAddress": "One Bush Plaza, 1 Bush St #1800, San Francisco, CA 94104, USA",
+      "addressComponents": [
+        {
+          "longText": "1800",
+          "shortText": "1800",
+          "types": ["subpremise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "One Bush Plaza",
+          "shortText": "One Bush Plaza",
+          "types": ["premise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "1",
+          "shortText": "1",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Bush Street",
+          "shortText": "Bush St",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94104",
+          "shortText": "94104",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQHRX+CX",
+        "compoundCode": "QHRX+CX Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.7910468,
+        "longitude": -122.40004739999999
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.789806519708506,
+          "longitude": -122.40141438029148
+        },
+        "high": {
+          "latitude": 37.792504480291505,
+          "longitude": -122.39871641970849
+        }
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=5113835175050290818",
+      "websiteUri": "https://www.bdo.com/locations/bdo-san-francisco-office?utm_source=google&utm_medium=organic&utm_content=san_francisco_ca&utm_campaign=gmb",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 5:30 PM",
+          "Tuesday: 8:30 AM – 5:30 PM",
+          "Wednesday: 8:30 AM – 5:30 PM",
+          "Thursday: 8:30 AM – 5:30 PM",
+          "Friday: 8:30 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"extended-address\"\u003eOne Bush Plaza\u003c/span\u003e, \u003cspan class=\"street-address\"\u003e1 Bush St #1800\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94104\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "BDO",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Accounting",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 5:30 PM",
+          "Tuesday: 8:30 AM – 5:30 PM",
+          "Wednesday: 8:30 AM – 5:30 PM",
+          "Thursday: 8:30 AM – 5:30 PM",
+          "Friday: 8:30 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "accounting",
+      "shortFormattedAddress": "One Bush Plaza, 1 Bush St #1800, San Francisco",
+      "photos": [
+        {
+          "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y/photos/AUGGfZksN6qtzoGJzUPrj1i5DRPG9L4t5konqQ44IXS0UpDnQu24T9OQ_zA5VjlqZhBZlOeFaQq8amI9k6-0SX2jhjEYzOC4EVI1RRH48APp3N2EGhZa-D3AX0UNQnunOzCRtn_64XdeXe-BBk0Ag6G1UxWQ9zeh5QWirqSU",
+          "widthPx": 720,
+          "heightPx": 720,
+          "authorAttributions": [
+            {
+              "displayName": "BDO",
+              "uri": "//maps.google.com/maps/contrib/113284808325783236922",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjX2dxALlHe7Q65QQkZ7xzA7QfAne0IzBoTrIyZZlzbsyQRh3iM=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y/photos/AUGGfZklMhr642ZVIigql_eoDIJSg9GxfLAv57DYO5ib4-mMArMdTEwUfbns1gwgUvyM0Ry4jaAhrwHuYOXK4o9jISez0ztTXBok7dw8pNKKPTAG1ZJuf6qRHrzNk-UhdR-p5_yZhF2aDGPUV3_UakyTF4qCaSHBMR2p5kka",
+          "widthPx": 720,
+          "heightPx": 720,
+          "authorAttributions": [
+            {
+              "displayName": "BDO",
+              "uri": "//maps.google.com/maps/contrib/113284808325783236922",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjX2dxALlHe7Q65QQkZ7xzA7QfAne0IzBoTrIyZZlzbsyQRh3iM=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y/photos/AUGGfZmdGMOY7MGdFZBA2vzF9kIx47hchAvoj-ZpA6XpmociXoTRo4xpjzcG8WmTraRmPxmwAXQ7PY1WZfCG0QS0ZhUlhrxd7ZmAHH0ptcx06Q7zkgnGUFE1LhVCJo7fYQvamuQAWLKknu08bo5Rq5618ZILsHL0W1c_CJkH",
+          "widthPx": 720,
+          "heightPx": 720,
+          "authorAttributions": [
+            {
+              "displayName": "BDO",
+              "uri": "//maps.google.com/maps/contrib/113284808325783236922",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjX2dxALlHe7Q65QQkZ7xzA7QfAne0IzBoTrIyZZlzbsyQRh3iM=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y/photos/AUGGfZlhtcwoMzS3gi9gKq7BV0CjnansoZROv5Cp5cUh7nWa1-AaN6yd-owKZnZ7kHMj3E2l_x3n9I1F1EmGOZ3R-04jxoUm8BZQufEZvjD6JI_F5AFVCV39lIg4TPcywM8ojDbsOWhL8VAqziVf65MSevKr0WScSGlKVZew",
+          "widthPx": 720,
+          "heightPx": 720,
+          "authorAttributions": [
+            {
+              "displayName": "BDO",
+              "uri": "//maps.google.com/maps/contrib/113284808325783236922",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjX2dxALlHe7Q65QQkZ7xzA7QfAne0IzBoTrIyZZlzbsyQRh3iM=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y/photos/AUGGfZkpTB3SeHpZMJyNmT_uoHkhdJgVLOIo6EXZV1BAUtFDXa_aHrMbmPIW50mk2Ym7XmKfz5gv_3-j_HZFzGbgrUIMMILn02lqE-XXnCLKXsHG_O5kpSheOFaPGJPOC5hInbHSPqQAQhuPhFFM4SoLRNKUDIeP7N4OMS-A",
+          "widthPx": 720,
+          "heightPx": 720,
+          "authorAttributions": [
+            {
+              "displayName": "BDO",
+              "uri": "//maps.google.com/maps/contrib/113284808325783236922",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjX2dxALlHe7Q65QQkZ7xzA7QfAne0IzBoTrIyZZlzbsyQRh3iM=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y/photos/AUGGfZk1_vaaDGNost50rb50vNdw7QAwJiFI20ShfEkHWhscHkmnMivWzdumrdl8in2LfZW-SPIrNn3QkGCDizibaqHcC0s5Vh5ZHpZXEzvhboNbqM3VriJjGNq0FIU41n6I1ER-KtDw0CKrM393oRfwEuSW9PbR4c8Dym-j",
+          "widthPx": 776,
+          "heightPx": 776,
+          "authorAttributions": [
+            {
+              "displayName": "BDO",
+              "uri": "//maps.google.com/maps/contrib/113284808325783236922",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjX2dxALlHe7Q65QQkZ7xzA7QfAne0IzBoTrIyZZlzbsyQRh3iM=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJ2cuEqGaAhYARgibFWP_990Y/photos/AUGGfZkyw3WBAdKRJHq473cJcKhbbslerx66pD35rnFuugFXYeLH4vKDUMlqDTxRDz4UpWU1K2do5ciclc5iY5rPH-Vh8M7xQZrmV7Mg5zVO30IBgZiUePxD799eR77PlEWA9UkNKc-H4CdxxVw0Lu4Ww_MV7yZeUEoqHmSM",
+          "widthPx": 720,
+          "heightPx": 720,
+          "authorAttributions": [
+            {
+              "displayName": "BDO",
+              "uri": "//maps.google.com/maps/contrib/113284808325783236922",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjX2dxALlHe7Q65QQkZ7xzA7QfAne0IzBoTrIyZZlzbsyQRh3iM=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "restroom": true,
+      "accessibilityOptions": {
+        "wheelchairAccessibleParking": true,
+        "wheelchairAccessibleEntrance": true
+      }
+    },
+    {
+      "name": "places/ChIJO8CPF2GAhYARHQKep4R_3ak",
+      "id": "ChIJO8CPF2GAhYARHQKep4R_3ak",
+      "types": ["lawyer", "accounting", "consultant", "finance", "point_of_interest", "establishment"],
+      "nationalPhoneNumber": "(415) 733-6000",
+      "internationalPhoneNumber": "+1 415-733-6000",
+      "formattedAddress": "Three Embarcadero Center 28th floor, San Francisco, CA 94111, USA",
+      "addressComponents": [
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94111",
+          "shortText": "94111",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJV3+W3",
+        "compoundCode": "QJV3+W3 Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.7948167,
+        "longitude": -122.397348
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.7933130697085,
+          "longitude": -122.39865408029149
+        },
+        "high": {
+          "latitude": 37.7960110302915,
+          "longitude": -122.3959561197085
+        }
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=12240079569987437085",
+      "websiteUri": "http://www.goodwinlaw.com/locations/san-francisco?utm_source=google_gmb&utm_medium=organic",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 6,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 6,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 6,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 6,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 21,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 6,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 21,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 6:00 AM – 9:00 PM",
+          "Tuesday: 6:00 AM – 9:00 PM",
+          "Wednesday: 6:00 AM – 9:00 PM",
+          "Thursday: 6:00 AM – 9:00 PM",
+          "Friday: 6:00 AM – 9:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "Three Embarcadero Center 28th floor, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94111\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "Goodwin Procter San Francisco",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Consultant",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 6,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 21,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 6,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 21,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 6,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 21,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 6,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 21,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 6,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 21,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 6:00 AM – 9:00 PM",
+          "Tuesday: 6:00 AM – 9:00 PM",
+          "Wednesday: 6:00 AM – 9:00 PM",
+          "Thursday: 6:00 AM – 9:00 PM",
+          "Friday: 6:00 AM – 9:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "consultant",
+      "shortFormattedAddress": "Three Embarcadero Center 28th floor, San Francisco",
+      "photos": [
+        {
+          "name": "places/ChIJO8CPF2GAhYARHQKep4R_3ak/photos/AUGGfZlfIDqVt0py-NvjCIB89ObTTyMMvnjO3ZcBv7TwMgS0SQryJOxxyJhFG6a874oQO3xMXJ_tSAEZ7qx6JFn80YKSltca-kORAEdGMg4QWLRSWSUmT84LrgTnYI4wwa829YE6eFUsqoqr4dkdO3KMXiWl6KkyFKwThpcj",
+          "widthPx": 1400,
+          "heightPx": 540,
+          "authorAttributions": [
+            {
+              "displayName": "Goodwin Procter San Francisco",
+              "uri": "//maps.google.com/maps/contrib/107451857631557383276",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWrqIUq3HIWkmnBk8dSzHdyFKA1vJwjjEKcjsIjBOK9VHqAgVk=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJO8CPF2GAhYARHQKep4R_3ak/photos/AUGGfZlwrx9STF0XnJSpfpyY-9UmfetnMkCajwCYwewMSsfH34fqtdPvatG8_g3QzyyizsZ04UdseoaM6jLFx3nnnMEgvkgD9mt-wZgv9i5mMfBvNaqtfUCnRY3RzmrnFWTiULjQKfPpLMIboPkQo86ZIztEasd3nM6NVpv_",
+          "widthPx": 1080,
+          "heightPx": 608,
+          "authorAttributions": [
+            {
+              "displayName": "Goodwin Procter San Francisco",
+              "uri": "//maps.google.com/maps/contrib/107451857631557383276",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWrqIUq3HIWkmnBk8dSzHdyFKA1vJwjjEKcjsIjBOK9VHqAgVk=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "restroom": false,
+      "accessibilityOptions": {
+        "wheelchairAccessibleParking": true,
+        "wheelchairAccessibleEntrance": true,
+        "wheelchairAccessibleRestroom": true,
+        "wheelchairAccessibleSeating": true
+      }
+    },
+    {
+      "name": "places/ChIJYY1YUmCAhYARvHgIG_pWWkE",
+      "id": "ChIJYY1YUmCAhYARvHgIG_pWWkE",
+      "types": ["accounting", "consultant", "finance", "point_of_interest", "establishment"],
+      "nationalPhoneNumber": "(415) 439-1144",
+      "internationalPhoneNumber": "+1 415-439-1144",
+      "formattedAddress": "1 Embarcadero Ctr Suite 2410, San Francisco, CA 94111, USA",
+      "addressComponents": [
+        {
+          "longText": "Suite 2410",
+          "shortText": "Suite 2410",
+          "types": ["subpremise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "1",
+          "shortText": "1",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Embarcadero Center",
+          "shortText": "Embarcadero Ctr",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94111",
+          "shortText": "94111",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJV2+Q4",
+        "compoundCode": "QJV2+Q4 Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.794416,
+        "longitude": -122.39963799999998
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.7929613697085,
+          "longitude": -122.40104678029149
+        },
+        "high": {
+          "latitude": 37.7956593302915,
+          "longitude": -122.3983488197085
+        }
+      },
+      "rating": 5,
+      "googleMapsUri": "https://maps.google.com/?cid=4709171992564627644",
+      "websiteUri": "http://www.frankrimerman.com/",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 5:30 PM",
+          "Tuesday: 8:30 AM – 5:30 PM",
+          "Wednesday: 8:30 AM – 5:30 PM",
+          "Thursday: 8:30 AM – 5:30 PM",
+          "Friday: 8:30 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"street-address\"\u003e1 Embarcadero Ctr Suite 2410\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94111\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 2,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "Frank Rimerman & Co",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Consultant",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 5:30 PM",
+          "Tuesday: 8:30 AM – 5:30 PM",
+          "Wednesday: 8:30 AM – 5:30 PM",
+          "Thursday: 8:30 AM – 5:30 PM",
+          "Friday: 8:30 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "consultant",
+      "shortFormattedAddress": "One Embarcadero Center, 1 Embarcadero Ctr Suite 2410, San Francisco",
+      "reviews": [
+        {
+          "name": "places/ChIJYY1YUmCAhYARvHgIG_pWWkE/reviews/ChdDSUhNMG9nS0VJQ0FnSURrbFpuYThRRRAB",
+          "relativePublishTimeDescription": "4 years ago",
+          "rating": 5,
+          "text": {
+            "text": "I've worked with FR & Co for 6+ years now. Found them to be one of the most impressive firms in the Bay. Everyone treats me with the greatest of respect and all the auditors I've placed have gone on to have fantastic careers. Both inside and outside of FR.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I've worked with FR & Co for 6+ years now. Found them to be one of the most impressive firms in the Bay. Everyone treats me with the greatest of respect and all the auditors I've placed have gone on to have fantastic careers. Both inside and outside of FR.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Andrew Bell",
+            "uri": "https://www.google.com/maps/contrib/109620462855357084827/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjUzn3eUD6l1Kkd-TJNgu64rI5ZYPjlYOBRp3-W89PpDJuqG2co=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2019-07-02T17:30:28Z"
+        },
+        {
+          "name": "places/ChIJYY1YUmCAhYARvHgIG_pWWkE/reviews/ChdDSUhNMG9nS0VJQ0FnSUQwekl6NnpnRRAB",
+          "relativePublishTimeDescription": "4 years ago",
+          "rating": 5,
+          "text": {
+            "text": "Amazing firm, with amazing people, offering the very best in accounting services.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Amazing firm, with amazing people, offering the very best in accounting services.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Lucas Larson",
+            "uri": "https://www.google.com/maps/contrib/117652465272449470740/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjX_q3TAXu2RUCRnV4bUJF3w9TIrNCSqbJ9Xlai_vFQSjML5Xeui=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2019-10-25T20:54:22Z"
+        }
+      ],
+      "photos": [
+        {
+          "name": "places/ChIJYY1YUmCAhYARvHgIG_pWWkE/photos/AUGGfZl2-Tn0A-Dq7BoyWzj6V0jNGDbv5sS3vEBEmAghlZ3mWldOsQjPZW-dfjTtSlHjOY9d6HqMYoxHn2zQIPeGYumc1xm536W-zWOFny0BOMc4JPx_vOwmXZT-tS3SEQPGpo2ylLi0TmhQDfl3MS7eZVpziS08JEXSK0hT",
+          "widthPx": 480,
+          "heightPx": 480,
+          "authorAttributions": [
+            {
+              "displayName": "Frank Rimerman & Co",
+              "uri": "//maps.google.com/maps/contrib/105022885229587389385",
+              "photoUri": "//lh3.googleusercontent.com/a/ACg8ocLKmd5u5Ps1wLrbfLTQl9vLkagjQA4Zgzw9cDw-G2zerMIdsA=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "restroom": true,
+      "accessibilityOptions": {
+        "wheelchairAccessibleParking": true,
+        "wheelchairAccessibleEntrance": true,
+        "wheelchairAccessibleRestroom": true
+      }
+    },
+    {
+      "name": "places/ChIJbchhBkT3MhURZXuX6ne0qXI",
+      "id": "ChIJbchhBkT3MhURZXuX6ne0qXI",
+      "types": ["accounting", "finance", "point_of_interest", "establishment"],
+      "nationalPhoneNumber": "(415) 986-3900",
+      "internationalPhoneNumber": "+1 415-986-3900",
+      "formattedAddress": "101 California St, San Francisco, CA 94111, USA",
+      "addressComponents": [
+        {
+          "longText": "101",
+          "shortText": "101",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "California Street",
+          "shortText": "California St",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94111",
+          "shortText": "94111",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "5476",
+          "shortText": "5476",
+          "types": ["postal_code_suffix"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJV2+4R",
+        "compoundCode": "QJV2+4R Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.792863000000004,
+        "longitude": -122.39790839999998
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.7918177697085,
+          "longitude": -122.39931763029151
+        },
+        "high": {
+          "latitude": 37.7945157302915,
+          "longitude": -122.39661966970851
+        }
+      },
+      "rating": 5,
+      "googleMapsUri": "https://maps.google.com/?cid=8262333418517789541",
+      "websiteUri": "https://www.grantthornton.com/offices/california/san-francisco",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:30 PM",
+          "Tuesday: 8:00 AM – 5:30 PM",
+          "Wednesday: 8:00 AM – 5:30 PM",
+          "Thursday: 8:00 AM – 5:30 PM",
+          "Friday: 8:00 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"street-address\"\u003e101 California St\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94111-5476\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 1,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "Grant Thornton",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Accounting",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:30 PM",
+          "Tuesday: 8:00 AM – 5:30 PM",
+          "Wednesday: 8:00 AM – 5:30 PM",
+          "Thursday: 8:00 AM – 5:30 PM",
+          "Friday: 8:00 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "accounting",
+      "shortFormattedAddress": "101 California St, San Francisco",
+      "reviews": [
+        {
+          "name": "places/ChIJbchhBkT3MhURZXuX6ne0qXI/reviews/ChdDSUhNMG9nS0VJQ0FnSURKLUlIM3FRRRAB",
+          "relativePublishTimeDescription": "10 months ago",
+          "rating": 5,
+          "authorAttribution": {
+            "displayName": "Areeb Khanzada",
+            "uri": "https://www.google.com/maps/contrib/109266189406891860159/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocJIacgwljVOk5AMpAUyLZGe55wD75SeSZOtBUeFt0nPfq3C6g=s128-c0x00000000-cc-rp-mo-ba2"
+          },
+          "publishTime": "2023-07-10T18:41:40Z"
+        }
+      ],
+      "accessibilityOptions": {
+        "wheelchairAccessibleEntrance": true
+      }
+    },
+    {
+      "name": "places/ChIJx76VamSAhYARec6UyHbP7X0",
+      "id": "ChIJx76VamSAhYARec6UyHbP7X0",
+      "types": ["dentist", "dental_clinic", "point_of_interest", "health", "establishment"],
+      "nationalPhoneNumber": "(415) 222-9600",
+      "internationalPhoneNumber": "+1 415-222-9600",
+      "formattedAddress": "1 Market Plaza Suite 140, San Francisco, CA 94105, USA",
+      "addressComponents": [
+        {
+          "longText": "Suite 140",
+          "shortText": "Suite 140",
+          "types": ["subpremise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "1",
+          "shortText": "1",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Market Plaza",
+          "shortText": "Market Plaza",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94105",
+          "shortText": "94105",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJV3+HW",
+        "compoundCode": "QJV3+HW Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.793999,
+        "longitude": -122.39515
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.792681269708496,
+          "longitude": -122.39659263029149
+        },
+        "high": {
+          "latitude": 37.795379230291495,
+          "longitude": -122.3938946697085
+        }
+      },
+      "rating": 4.5,
+      "googleMapsUri": "https://maps.google.com/?cid=9074136933299703417",
+      "websiteUri": "http://onemarketdental.com/",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:00 PM",
+          "Tuesday: 8:00 AM – 5:00 PM",
+          "Wednesday: 8:00 AM – 5:00 PM",
+          "Thursday: 8:00 AM – 5:00 PM",
+          "Friday: 8:00 AM – 5:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"street-address\"\u003e1 Market Plaza Suite 140\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94105\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 88,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "One Market Dental",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Dentist",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:00 PM",
+          "Tuesday: 8:00 AM – 5:00 PM",
+          "Wednesday: 8:00 AM – 5:00 PM",
+          "Thursday: 8:00 AM – 5:00 PM",
+          "Friday: 8:00 AM – 5:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "dentist",
+      "shortFormattedAddress": "Steuart Tower, 1 Market Plaza Suite 140, San Francisco",
+      "reviews": [
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/reviews/ChdDSUhNMG9nS0VJQ0FnSUNEcXMyX3lBRRAB",
+          "relativePublishTimeDescription": "a month ago",
+          "rating": 5,
+          "text": {
+            "text": "I have a lot of anxiety about going to the dentist, but my experience at One Market Dental helped ease those worries. The entire team from the front desk to the dental hygienists to Dr. Campbell himself were all extremely friendly, welcoming, and professional. Wanda did an excellent job of helping me get scheduled and explaining my insurance benefits. The office space is clean and comfortable, and the location is very easy to get to with it being so close to multiple Muni lines. I'm looking forward to my next appointment and have been recommending One Market Dental to all my friends and coworkers.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I have a lot of anxiety about going to the dentist, but my experience at One Market Dental helped ease those worries. The entire team from the front desk to the dental hygienists to Dr. Campbell himself were all extremely friendly, welcoming, and professional. Wanda did an excellent job of helping me get scheduled and explaining my insurance benefits. The office space is clean and comfortable, and the location is very easy to get to with it being so close to multiple Muni lines. I'm looking forward to my next appointment and have been recommending One Market Dental to all my friends and coworkers.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Ashley K",
+            "uri": "https://www.google.com/maps/contrib/113159777572794855416/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWSKzw2FoIMw4RpCYAA0_hqiepcdwIkVlyDvu4Cg5cegAp9spt1FA=s128-c0x00000000-cc-rp-mo-ba3"
+          },
+          "publishTime": "2024-03-26T22:41:32Z"
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/reviews/ChZDSUhNMG9nS0VJQ0FnSUNEdjh1eVpnEAE",
+          "relativePublishTimeDescription": "a month ago",
+          "rating": 5,
+          "text": {
+            "text": "My ride went to first street at first and then realized it was by the ferry building on the first block by Embarcadero so I was late for my first appointment but they saw me anyways. They were quick and straight to the point. I was a new patient and just went for a consultation and they made me feel comfortable. They also went out of their way to check to see if my insurance was accepted.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "My ride went to first street at first and then realized it was by the ferry building on the first block by Embarcadero so I was late for my first appointment but they saw me anyways. They were quick and straight to the point. I was a new patient and just went for a consultation and they made me feel comfortable. They also went out of their way to check to see if my insurance was accepted.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Elodie Mefret",
+            "uri": "https://www.google.com/maps/contrib/101641914424455148004/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjUpLZC0oKlypyUcCLfvEOtAWWSKpCbWXB7HdQ1qif_i4hiDBEmYng=s128-c0x00000000-cc-rp-mo-ba3"
+          },
+          "publishTime": "2024-04-04T00:13:08Z"
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/reviews/ChdDSUhNMG9nS0VJQ0FnSUM5aUlDNmd3RRAB",
+          "relativePublishTimeDescription": "2 months ago",
+          "rating": 5,
+          "text": {
+            "text": "I don’t always love going to the Dentist but my experience at One Market Dental was fantastic. Starting with a friendly welcome to experienced doctors such as Dr Campbell. I felt very comfortable and at ease. Would definitely recommend to others looking for a great Dentist in SF.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I don’t always love going to the Dentist but my experience at One Market Dental was fantastic. Starting with a friendly welcome to experienced doctors such as Dr Campbell. I felt very comfortable and at ease. Would definitely recommend to others looking for a great Dentist in SF.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Jayne Clarebrough",
+            "uri": "https://www.google.com/maps/contrib/106770134043393188112/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjV_kzUdPvj9fhUM3Q5XBQcThTHaYhFoZfuvvlvYFquHMN-XSY8=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2024-02-29T17:36:01Z"
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/reviews/ChdDSUhNMG9nS0VJQ0FnSUNsX01IbGpRRRAB",
+          "relativePublishTimeDescription": "5 months ago",
+          "rating": 5,
+          "text": {
+            "text": "I've been a patient of One Market Dental for a few years. The facility is clean, modern, and well-maintained. The whole team at One Market Dental is not only professional and highly experienced, but also incredibly friendly and helpful, and goes above and beyond to make sure you feel at ease during your appointment. The doctors are highly knowledgeable, taking the time to thoroughly explain procedures and address any concerns. Their commitment to patient care is evident.\n\nI would highly recommend One Market Dental to anyone looking for a top-notch dental experience. From their friendly staff to their state-of-the-art facility, they have truly set a standard for excellence in dental care.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I've been a patient of One Market Dental for a few years. The facility is clean, modern, and well-maintained. The whole team at One Market Dental is not only professional and highly experienced, but also incredibly friendly and helpful, and goes above and beyond to make sure you feel at ease during your appointment. The doctors are highly knowledgeable, taking the time to thoroughly explain procedures and address any concerns. Their commitment to patient care is evident.\n\nI would highly recommend One Market Dental to anyone looking for a top-notch dental experience. From their friendly staff to their state-of-the-art facility, they have truly set a standard for excellence in dental care.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "M Ross",
+            "uri": "https://www.google.com/maps/contrib/114983621115376417110/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocKSnMdYUP4ZjLTxoM4-WAgc44LDyAPFFLwGw2cwoos4hgwHsw=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2023-11-14T20:19:08Z"
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/reviews/ChdDSUhNMG9nS0VJQ0FnSUREcEsyT253RRAB",
+          "relativePublishTimeDescription": "a month ago",
+          "rating": 5,
+          "text": {
+            "text": "Have been a client since the 90s.  They do fine work, deal with insurance for me, and have an excellent system to bring in specialists to One Market Dental so that you have coordinated records/work while the paperwork remains with one point of contact.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Have been a client since the 90s.  They do fine work, deal with insurance for me, and have an excellent system to bring in specialists to One Market Dental so that you have coordinated records/work while the paperwork remains with one point of contact.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Jeff Bowles",
+            "uri": "https://www.google.com/maps/contrib/103230273715066618657/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjXplbBdnph8IroN5K6W91b5B6E7l-Ap8Os9MusJMpll4k_onyVk=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2024-04-05T20:41:22Z"
+        }
+      ],
+      "photos": [
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/photos/AUGGfZkuXaXzOEwU4A8NbWhB40bxkvy7D1rCf5EVUVRTWD2FJZPQ8Oy7qB_28FSg2OMQtT77NvH33rA_7hh4yEBMWn9FkcQkhdrkFtR71spjSpfsaskBmgrOPsXdNHgIKh6hEZMrg1eaouR4nm_jvw8kwTE81p0OnuHDxrwO",
+          "widthPx": 1600,
+          "heightPx": 675,
+          "authorAttributions": [
+            {
+              "displayName": "One Market Dental",
+              "uri": "//maps.google.com/maps/contrib/115797008123197994557",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWOvFJJbskxD-pywM6sT_SiPh-hUa0uuTgEw80X0859pAnfObk=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/photos/AUGGfZk1BIftRjvWG3oh-x0v91PJuUDmqdiWBulCLQr_3Ep7VxhlMZIoqda0qNrmyReaMo8NhQSxT7VqB2yA4SBEFMjE3BGz9YFQsynXnrNybHS6N8wFHSiQIs9YGWjuQJfNTHx9r-3kEBt4XXfsf-xpQsHgPZ4oWqfNsEML",
+          "widthPx": 3024,
+          "heightPx": 4032,
+          "authorAttributions": [
+            {
+              "displayName": "Shelly Puri",
+              "uri": "//maps.google.com/maps/contrib/104390914659004769007",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWM3FKLCiqPkuDy38u0E_IZ3NAhvQiiMHx7U93c0CGko0HegUudtQ=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/photos/AUGGfZk1E9LO_kVS8h2kMf067qXrF9WMOxrl0c8TpmcbbwS7VMNVh1KV3NUqtyOZ1j7oAX8JeePiquXZJgRjfkWVLyJjUmrExbhd1LOjwxhNJKnXK3Ys8CmBI8JT1bjwFzSOvXSpFcw6x3GYA1MJVtwWkKgzSrhkqxfNsnrl",
+          "widthPx": 4624,
+          "heightPx": 3468,
+          "authorAttributions": [
+            {
+              "displayName": "David L Tannehill (Louis V9)",
+              "uri": "//maps.google.com/maps/contrib/112262468428187060607",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWjSf6YkONzui3L0hsgYxQTRhq0phvUopv4FT7yeTVUjqJB1YUleA=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/photos/AUGGfZlnT5iMPAT-gRnFFSdEVpH0alHqlgR6sVbpWh2WvdBZqEjEsiZI0m9TN-_WixxHnWzJ1wRWbUH7O8msFZ1d6gcyQ5WvTL3Nemts2FRCTq54B1aP591dBmsHvagSNMYsho2j-hOGTdUbLu9xV4oA0tZ0Cb0KmAjQ3hcJ",
+          "widthPx": 3024,
+          "heightPx": 4032,
+          "authorAttributions": [
+            {
+              "displayName": "Shelly Puri",
+              "uri": "//maps.google.com/maps/contrib/104390914659004769007",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWM3FKLCiqPkuDy38u0E_IZ3NAhvQiiMHx7U93c0CGko0HegUudtQ=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJx76VamSAhYARec6UyHbP7X0/photos/AUGGfZmVfwL_sUzvCABEaTKIogfpgDIb9hcYudCcjwmtV3DWq9cRFDnJzM_BKOa7SN1bzAi1foAKaIgkGmFWPY4RfML_86YwGve4ki7LWGclC1GTikqWMB_pHCG5NriZm8L4xDp7EUBPdgyTJTQ9en5kgVRhhhX3R9EwSsh9",
+          "widthPx": 3024,
+          "heightPx": 4032,
+          "authorAttributions": [
+            {
+              "displayName": "Shelly Puri",
+              "uri": "//maps.google.com/maps/contrib/104390914659004769007",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWM3FKLCiqPkuDy38u0E_IZ3NAhvQiiMHx7U93c0CGko0HegUudtQ=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "restroom": true,
+      "accessibilityOptions": {
+        "wheelchairAccessibleEntrance": true,
+        "wheelchairAccessibleRestroom": true
+      }
+    },
+    {
+      "name": "places/ChIJWfDLC9yBhYARCLm2JjpBtJg",
+      "id": "ChIJWfDLC9yBhYARCLm2JjpBtJg",
+      "types": ["accounting", "consultant", "finance", "point_of_interest", "establishment"],
+      "formattedAddress": "353 Sacramento St #1900, San Francisco, CA 94111, USA",
+      "addressComponents": [
+        {
+          "longText": "1900",
+          "shortText": "1900",
+          "types": ["subpremise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "353",
+          "shortText": "353",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Sacramento Street",
+          "shortText": "Sacramento St",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94111",
+          "shortText": "94111",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJV2+J4",
+        "compoundCode": "QJV2+J4 Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.794005999999996,
+        "longitude": -122.39966
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.7927493697085,
+          "longitude": -122.40103038029149
+        },
+        "high": {
+          "latitude": 37.7954473302915,
+          "longitude": -122.39833241970851
+        }
+      },
+      "rating": 5,
+      "googleMapsUri": "https://maps.google.com/?cid=11003491507586382088",
+      "websiteUri": "http://www.pilot.com/",
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"street-address\"\u003e353 Sacramento St #1900\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94111\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 2,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "Pilot.com, Inc.",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Consultant",
+        "languageCode": "en-US"
+      },
+      "primaryType": "consultant",
+      "shortFormattedAddress": "353 Sacramento St #1900, San Francisco",
+      "reviews": [
+        {
+          "name": "places/ChIJWfDLC9yBhYARCLm2JjpBtJg/reviews/ChZDSUhNMG9nS0VJQ0FnSUN0MWN1N2VBEAE",
+          "relativePublishTimeDescription": "3 months ago",
+          "rating": 5,
+          "text": {
+            "text": "Smart and kind coworkers. Beautiful office views!",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Smart and kind coworkers. Beautiful office views!",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Mariana A",
+            "uri": "https://www.google.com/maps/contrib/100956965245181826269/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWLjlMhSkLmolUcBYOXzHYvh9_qY3CPyJtjnv34RtV4NByAkEREJQ=s128-c0x00000000-cc-rp-mo-ba5"
+          },
+          "publishTime": "2024-01-31T08:02:46Z"
+        },
+        {
+          "name": "places/ChIJWfDLC9yBhYARCLm2JjpBtJg/reviews/ChZDSUhNMG9nS0VJQ0FnSUR5aE1DWUhnEAE",
+          "relativePublishTimeDescription": "3 years ago",
+          "rating": 5,
+          "authorAttribution": {
+            "displayName": "kumar thapa",
+            "uri": "https://www.google.com/maps/contrib/112767515992073028833/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocLlCSRiXqJcNhArpBCoIIr9li6ukOj36D4JOl9wzBKRMs_hUQ=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2021-02-24T05:49:11Z"
+        }
+      ],
+      "photos": [
+        {
+          "name": "places/ChIJWfDLC9yBhYARCLm2JjpBtJg/photos/AUGGfZkuAs6LtX9EmAP6UqPoHoYdH8IHIklr3omQsByjpWuWy3Rr4bRDuVxdw9mTTomptn1UaA5Gm3gj0T9z_fluCQRCwRysFNwh5clq4UAJZ2PSV1IOpNFvH2od54ej9waFlLEaOpEnyzGi8yYyuewgHPdkCZAhYLq0hi16",
+          "widthPx": 3008,
+          "heightPx": 3003,
+          "authorAttributions": [
+            {
+              "displayName": "Mariana A",
+              "uri": "//maps.google.com/maps/contrib/100956965245181826269",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjWLjlMhSkLmolUcBYOXzHYvh9_qY3CPyJtjnv34RtV4NByAkEREJQ=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "restroom": true,
+      "accessibilityOptions": {
+        "wheelchairAccessibleParking": true,
+        "wheelchairAccessibleEntrance": true,
+        "wheelchairAccessibleRestroom": true
+      }
+    },
+    {
+      "name": "places/ChIJwWE3rmOAhYARW0gPIlzsSBA",
+      "id": "ChIJwWE3rmOAhYARW0gPIlzsSBA",
+      "types": ["lawyer", "accounting", "consultant", "finance", "point_of_interest", "establishment"],
+      "nationalPhoneNumber": "(415) 777-3200",
+      "internationalPhoneNumber": "+1 415-777-3200",
+      "formattedAddress": "425 Market St 26th floor, San Francisco, CA 94105, USA",
+      "addressComponents": [
+        {
+          "longText": "26th floor",
+          "shortText": "26th floor",
+          "types": ["subpremise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "425",
+          "shortText": "425",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Market Street",
+          "shortText": "Market St",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94105",
+          "shortText": "94105",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "5401",
+          "shortText": "5401",
+          "types": ["postal_code_suffix"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJR2+CV",
+        "compoundCode": "QJR2+CV Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.7911231,
+        "longitude": -122.39778499999998
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.7897296197085,
+          "longitude": -122.39907798029149
+        },
+        "high": {
+          "latitude": 37.7924275802915,
+          "longitude": -122.3963800197085
+        }
+      },
+      "rating": 3,
+      "googleMapsUri": "https://maps.google.com/?cid=1173447583382587483",
+      "websiteUri": "http://www.hansonbridgett.com/",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 18,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 18,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 18,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 18,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 18,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 6:00 PM",
+          "Tuesday: 8:30 AM – 6:00 PM",
+          "Wednesday: 8:30 AM – 6:00 PM",
+          "Thursday: 8:30 AM – 6:00 PM",
+          "Friday: 8:30 AM – 6:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"street-address\"\u003e425 Market St 26th floor\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94105-5401\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 2,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "Hanson Bridgett LLP",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Consultant",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 18,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 18,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 18,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 18,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 18,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 6:00 PM",
+          "Tuesday: 8:30 AM – 6:00 PM",
+          "Wednesday: 8:30 AM – 6:00 PM",
+          "Thursday: 8:30 AM – 6:00 PM",
+          "Friday: 8:30 AM – 6:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "consultant",
+      "shortFormattedAddress": "425 Market Street, 425 Market St 26th floor, San Francisco",
+      "reviews": [
+        {
+          "name": "places/ChIJwWE3rmOAhYARW0gPIlzsSBA/reviews/ChdDSUhNMG9nS0VJQ0FnSURncnN2VnhRRRAB",
+          "relativePublishTimeDescription": "6 years ago",
+          "rating": 5,
+          "text": {
+            "text": "Bil Kellermann has been a trusted business advisor since 1999.  Teresa Pahl joined our team in 2016.  Both are outstanding.  We're grateful for their help!",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Bil Kellermann has been a trusted business advisor since 1999.  Teresa Pahl joined our team in 2016.  Both are outstanding.  We're grateful for their help!",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "YourRentalHome. com",
+            "uri": "https://www.google.com/maps/contrib/103620572447343553410/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjWsw91DAfVdKxdihdiuTzt2tXLLYka7Px3kK8p-G-HLaLx5QCc1=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2018-02-13T18:54:09Z"
+        },
+        {
+          "name": "places/ChIJwWE3rmOAhYARW0gPIlzsSBA/reviews/ChZDSUhNMG9nS0VJQ0FnSURqcHA3YlJREAE",
+          "relativePublishTimeDescription": "in the last week",
+          "rating": 1,
+          "authorAttribution": {
+            "displayName": "P",
+            "uri": "https://www.google.com/maps/contrib/106814863028490302424/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocK_oSKG_KlqrT64TazYGBUtwWmY--RCG4-G-DyP6AZZOENAc6i3=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2024-05-02T15:28:06Z"
+        }
+      ],
+      "photos": [
+        {
+          "name": "places/ChIJwWE3rmOAhYARW0gPIlzsSBA/photos/AUGGfZk3vQwfNlRN_MrD7BlKPihYhdjILN6GVz_gTACdbXzNgU3n3gCZrJCDvmah0KMT5sdV8KkvY-9k7l7Z_x7fY12QLRaQ5Y4vYI5REqMKhXkd2HfN_vckp6Hy9nj7pKZtm7qj8q6qB6b82HzW2vEm0reWL3WrZhnInnel",
+          "widthPx": 1173,
+          "heightPx": 1173,
+          "authorAttributions": [
+            {
+              "displayName": "Hanson Bridgett LLP",
+              "uri": "//maps.google.com/maps/contrib/111424514546555754344",
+              "photoUri": "//lh3.googleusercontent.com/a/ACg8ocICFfBnYGBGjMpuH9OOlZMx4li42kaAJcLHrXqB_bGf3qBw3w=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "accessibilityOptions": {
+        "wheelchairAccessibleParking": true,
+        "wheelchairAccessibleEntrance": true
+      }
+    },
+    {
+      "name": "places/ChIJL4oN3buBhYARU4LbLD2pFSA",
+      "id": "ChIJL4oN3buBhYARU4LbLD2pFSA",
+      "types": ["accounting", "finance", "point_of_interest", "establishment"],
+      "nationalPhoneNumber": "(415) 781-2500",
+      "internationalPhoneNumber": "+1 415-781-2500",
+      "formattedAddress": "50 Fremont St 40th Floor, San Francisco, CA 94105, USA",
+      "addressComponents": [
+        {
+          "longText": "40th Floor",
+          "shortText": "40th Floor",
+          "types": ["subpremise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "50",
+          "shortText": "50",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Fremont Street",
+          "shortText": "Fremont St",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94105",
+          "shortText": "94105",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJR3+64",
+        "compoundCode": "QJR3+64 Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.7905027,
+        "longitude": -122.39721519999999
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.789242769708508,
+          "longitude": -122.39845073029149
+        },
+        "high": {
+          "latitude": 37.791940730291508,
+          "longitude": -122.39575276970849
+        }
+      },
+      "rating": 5,
+      "googleMapsUri": "https://maps.google.com/?cid=2311940063935300179",
+      "websiteUri": "https://www.bakertilly.com/",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 5:30 PM",
+          "Tuesday: 8:30 AM – 5:30 PM",
+          "Wednesday: 8:30 AM – 5:30 PM",
+          "Thursday: 8:30 AM – 5:30 PM",
+          "Friday: 8:30 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"street-address\"\u003e50 Fremont St 40th Floor\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94105\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 1,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "Baker Tilly US, LLP",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Accounting",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 30,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:30 AM – 5:30 PM",
+          "Tuesday: 8:30 AM – 5:30 PM",
+          "Wednesday: 8:30 AM – 5:30 PM",
+          "Thursday: 8:30 AM – 5:30 PM",
+          "Friday: 8:30 AM – 5:30 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "accounting",
+      "shortFormattedAddress": "50 Fremont Center, 50 Fremont St 40th Floor, San Francisco",
+      "reviews": [
+        {
+          "name": "places/ChIJL4oN3buBhYARU4LbLD2pFSA/reviews/ChZDSUhNMG9nS0VJQ0FnSUM1bzVIc0hnEAE",
+          "relativePublishTimeDescription": "6 months ago",
+          "rating": 5,
+          "text": {
+            "text": "Jacob was so professional, personable and efficient.  He made my appraisal go smooth and quick. I had no worries throughout the process and the time he spent here. Thank you so much Jacob.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "Jacob was so professional, personable and efficient.  He made my appraisal go smooth and quick. I had no worries throughout the process and the time he spent here. Thank you so much Jacob.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Ona Box",
+            "uri": "https://www.google.com/maps/contrib/116201096639846371723/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocL8rE-VNA_OMnims09cIHwOeFo5vI014ZfwcE2rXqK3Zs-ghA=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2023-10-16T20:15:39Z"
+        }
+      ],
+      "accessibilityOptions": {
+        "wheelchairAccessibleEntrance": true
+      }
+    },
+    {
+      "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI",
+      "id": "ChIJwbdCV_WAhYARyh2kynTSktI",
+      "types": ["dental_clinic", "dentist", "point_of_interest", "health", "establishment"],
+      "nationalPhoneNumber": "(415) 421-4772",
+      "internationalPhoneNumber": "+1 415-421-4772",
+      "formattedAddress": "1 Embarcadero Ctr, San Francisco, CA 94111, USA",
+      "addressComponents": [
+        {
+          "longText": "1",
+          "shortText": "1",
+          "types": ["street_number"],
+          "languageCode": "en-US"
+        },
+        {
+          "longText": "Embarcadero Center",
+          "shortText": "Embarcadero Ctr",
+          "types": ["route"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94111",
+          "shortText": "94111",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJV2+Q4",
+        "compoundCode": "QJV2+Q4 Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.7944167,
+        "longitude": -122.3996389
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.7932277197085,
+          "longitude": -122.40071873029147
+        },
+        "high": {
+          "latitude": 37.7959256802915,
+          "longitude": -122.39802076970848
+        }
+      },
+      "rating": 4.8,
+      "googleMapsUri": "https://maps.google.com/?cid=15173421493622414794",
+      "websiteUri": "http://www.cosmeticdentistryassociates.net/",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:00 PM",
+          "Tuesday: 8:00 AM – 5:00 PM",
+          "Wednesday: 8:00 AM – 5:00 PM",
+          "Thursday: 8:00 AM – 5:00 PM",
+          "Friday: 8:00 AM – 5:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"street-address\"\u003e1 Embarcadero Ctr\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94111\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "userRatingCount": 52,
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "Cosmetic Dentistry Associates",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Dental Clinic",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:00 PM",
+          "Tuesday: 8:00 AM – 5:00 PM",
+          "Wednesday: 8:00 AM – 5:00 PM",
+          "Thursday: 8:00 AM – 5:00 PM",
+          "Friday: 8:00 AM – 5:00 PM",
+          "Saturday: Closed",
+          "Sunday: Closed"
+        ]
+      },
+      "primaryType": "dental_clinic",
+      "shortFormattedAddress": "One Embarcadero Center, 1 Embarcadero Ctr, San Francisco",
+      "reviews": [
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/reviews/ChdDSUhNMG9nS0VJQ0FnSUNDMDl6djVBRRAB",
+          "relativePublishTimeDescription": "3 years ago",
+          "rating": 5,
+          "text": {
+            "text": "I had been to four different dentists before finally finding Dr. Puno at Cosmetic Dentistry Associates. My previous dentists were all nice enough (well, except for one...) but there was always something missing, whether it be thoroughness, execution of services, personnel, care, etc. I'm hopeful that Dr. Puno will be my forever dentist because she is the best of the best!\n\nA friend of mine recommended Dr. Puno to me after I complained about my previous dental appointments. It's a huge bonus that she is located in One Embarcadero Center, since that's only two blocks away from my office. This makes it really easy and convenient for me to see her, whereas before I really had to move my schedule around to go across town. They also validate for parking, another plus!\n\nIt was super easy to set up an appointment as a new patient. With a few emails exchanged, I had my new patient consultation and cleaning appointment set up, and also received the forms to fill out prior to arriving at the office. This saves precious time and it's surprising how many other dentists don't offer this.\n\nUpon arrival at their office, it's really clean and modern looking. It suits the Embarcadero Center aesthetic. Since I visited during the pandemic, they were very thorough and checked my temperature and did a screening questionnaire. Additionally, you sanitize your hands and the bottom of your shoes. I also appreciated that they have plenty of air purifiers in plain sight. Good ventilation/air circulation is a huge factor in the spread of COVID-19, and it was really reassuring to see that they took this seriously. I've been anxious to go grocery shopping (let alone the dentist) but the office really made me feel at ease and completely safe.\n\nThis was probably the best dental cleaning I ever had. My teeth are now stain-free, and feel so nice and smooth. I've had cleanings before where I left and my teeth still felt gritty/dirty, which is a terrible feeling. Dr. Puno also noticed right away that I had previously extracted several teeth. This is not a major factor, but it shows her awareness and attention to detail, which I really appreciated. I also liked that I was able to ask her plenty of questions and voice any concerns I had, and she would take her time to assess and explain to me the why/how/what/when of it all. She did not pressure me for any procedures, but simply gave me the facts and her educated opinions, and let me decide for myself. For example, I have a crevice in my back molar that tends to get stained and attract food particles. Many dentists would probably suggest to seal or fill it, however Dr. Puno said that since I seem to practice good oral hygiene, that we could leave it be and continue to monitor it and reassess at a later time if it gets borderline serious. I remember I had asked one of my previous dentists whether or not I should remove my wisdom teeth, and he literally said \"I don't know, up to you if you feel like it.\" You never want to hear something like that from a licensed professional in charge of your health and well being!\n\nI left their office with a fresh smile and a newly instilled confidence in my dentist. For once, I actually find myself looking forward to my next dental appointment! If any of my friends or family need dental recommendations, I will definitely suggest Dr. Puno.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I had been to four different dentists before finally finding Dr. Puno at Cosmetic Dentistry Associates. My previous dentists were all nice enough (well, except for one...) but there was always something missing, whether it be thoroughness, execution of services, personnel, care, etc. I'm hopeful that Dr. Puno will be my forever dentist because she is the best of the best!\n\nA friend of mine recommended Dr. Puno to me after I complained about my previous dental appointments. It's a huge bonus that she is located in One Embarcadero Center, since that's only two blocks away from my office. This makes it really easy and convenient for me to see her, whereas before I really had to move my schedule around to go across town. They also validate for parking, another plus!\n\nIt was super easy to set up an appointment as a new patient. With a few emails exchanged, I had my new patient consultation and cleaning appointment set up, and also received the forms to fill out prior to arriving at the office. This saves precious time and it's surprising how many other dentists don't offer this.\n\nUpon arrival at their office, it's really clean and modern looking. It suits the Embarcadero Center aesthetic. Since I visited during the pandemic, they were very thorough and checked my temperature and did a screening questionnaire. Additionally, you sanitize your hands and the bottom of your shoes. I also appreciated that they have plenty of air purifiers in plain sight. Good ventilation/air circulation is a huge factor in the spread of COVID-19, and it was really reassuring to see that they took this seriously. I've been anxious to go grocery shopping (let alone the dentist) but the office really made me feel at ease and completely safe.\n\nThis was probably the best dental cleaning I ever had. My teeth are now stain-free, and feel so nice and smooth. I've had cleanings before where I left and my teeth still felt gritty/dirty, which is a terrible feeling. Dr. Puno also noticed right away that I had previously extracted several teeth. This is not a major factor, but it shows her awareness and attention to detail, which I really appreciated. I also liked that I was able to ask her plenty of questions and voice any concerns I had, and she would take her time to assess and explain to me the why/how/what/when of it all. She did not pressure me for any procedures, but simply gave me the facts and her educated opinions, and let me decide for myself. For example, I have a crevice in my back molar that tends to get stained and attract food particles. Many dentists would probably suggest to seal or fill it, however Dr. Puno said that since I seem to practice good oral hygiene, that we could leave it be and continue to monitor it and reassess at a later time if it gets borderline serious. I remember I had asked one of my previous dentists whether or not I should remove my wisdom teeth, and he literally said \"I don't know, up to you if you feel like it.\" You never want to hear something like that from a licensed professional in charge of your health and well being!\n\nI left their office with a fresh smile and a newly instilled confidence in my dentist. For once, I actually find myself looking forward to my next dental appointment! If any of my friends or family need dental recommendations, I will definitely suggest Dr. Puno.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Munnie Tran",
+            "uri": "https://www.google.com/maps/contrib/101818532685297031071/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjW_gf5sPtosdyKmu0O5URMbcxKEcc0KhHxL_BRg-f2V0Sy4FyRgAw=s128-c0x00000000-cc-rp-mo-ba5"
+          },
+          "publishTime": "2020-09-02T20:01:06Z"
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/reviews/ChZDSUhNMG9nS0VJQ0FnSURjbDZhZ2VREAE",
+          "relativePublishTimeDescription": "3 years ago",
+          "rating": 5,
+          "text": {
+            "text": "I love this place, 5 star all the way.\n1.  Super professional and cares only about the patient's well being.  I was a patient at two other dental practices before transferring to here.  Never felt like they tried to sell me on any treatments.  I was advised on issue and future concerns but they never pushed the treatment.  They only explained the problem, cause of the problem, the solution and alternatives.\n2.  The ortho treatment is impressive.  My 10 year old daughter is currently on their ortho treatment and a few days after her braces came on, I saw results.  (Pictures attached.  We had to remove the top wire because my daughter complained about it too much) It was impressive, very impressive.  I and my two younger children will be going on this treatment as well.\n3.  The staff is friendly and pleasant.  Makes the visits comfortable and enjoyable.\n4.  They are technologically above par!  Compared to the other two dental offices I've been at, they can pretty much do everything in house.  Crowns, implants, etc.  I spoke with other people who had ortho treatments before and the measures that Dr Puno provides is unheard of to most.  Don't know what the gizmo is called, but that machine was impressive.  It measures and analyzes your bite, jaw line, nerve tissues, etc.  (Picture attached)  Two thumbs up here.\n5.  They really stepped up when reopening the office during this pandemic.  WOWZA!  They do the typical questions and temperature reading prior to you entering the office.  Normal stuff.  Then you step on two pads to clean the bottom of your shoes.  That's thorough.  Then you sanitize your hands.  Usual procedure.  But the WOWZA part if the airflow.  Every corners and rooms has a Dyson air filtering fan and then in the middle of the office is a hospital grade air purifying system!  That is beyond expectation.  It feels super clean and safety is a top priority.  The little snake plants that purifies air is a cute plus.\n\nI highly recommend this practice.  They're very busy but that's because they provide wonderful services.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I love this place, 5 star all the way.\n1.  Super professional and cares only about the patient's well being.  I was a patient at two other dental practices before transferring to here.  Never felt like they tried to sell me on any treatments.  I was advised on issue and future concerns but they never pushed the treatment.  They only explained the problem, cause of the problem, the solution and alternatives.\n2.  The ortho treatment is impressive.  My 10 year old daughter is currently on their ortho treatment and a few days after her braces came on, I saw results.  (Pictures attached.  We had to remove the top wire because my daughter complained about it too much) It was impressive, very impressive.  I and my two younger children will be going on this treatment as well.\n3.  The staff is friendly and pleasant.  Makes the visits comfortable and enjoyable.\n4.  They are technologically above par!  Compared to the other two dental offices I've been at, they can pretty much do everything in house.  Crowns, implants, etc.  I spoke with other people who had ortho treatments before and the measures that Dr Puno provides is unheard of to most.  Don't know what the gizmo is called, but that machine was impressive.  It measures and analyzes your bite, jaw line, nerve tissues, etc.  (Picture attached)  Two thumbs up here.\n5.  They really stepped up when reopening the office during this pandemic.  WOWZA!  They do the typical questions and temperature reading prior to you entering the office.  Normal stuff.  Then you step on two pads to clean the bottom of your shoes.  That's thorough.  Then you sanitize your hands.  Usual procedure.  But the WOWZA part if the airflow.  Every corners and rooms has a Dyson air filtering fan and then in the middle of the office is a hospital grade air purifying system!  That is beyond expectation.  It feels super clean and safety is a top priority.  The little snake plants that purifies air is a cute plus.\n\nI highly recommend this practice.  They're very busy but that's because they provide wonderful services.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Selina Tran",
+            "uri": "https://www.google.com/maps/contrib/107305032786384434043/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocIbyCsJFhCPxNCfgrtCinPfqqN3HpwbcsP7H_52WonIO5M8Xw=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2020-06-19T16:59:54Z"
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/reviews/ChdDSUhNMG9nS0VJQ0FnSUNSMWVTVmxnRRAB",
+          "relativePublishTimeDescription": "11 months ago",
+          "rating": 5,
+          "text": {
+            "text": "I don’t usually write review but this office is so amazing that I’ve to spread my word. I’m always very phobic to see a dentist. Dr. Puno is very professional and patience with me and she has a gentle touch. All her staff is amazing, Angel & Christine in the front office went above and beyond to help schedule appointments, check my insurance benefits and gave me an estimate of cost and insurance coverage. Cora are very friendly that makes me feel very caring at the office. They also have a lot of new technologies and laser machine to help with my snoring.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I don’t usually write review but this office is so amazing that I’ve to spread my word. I’m always very phobic to see a dentist. Dr. Puno is very professional and patience with me and she has a gentle touch. All her staff is amazing, Angel & Christine in the front office went above and beyond to help schedule appointments, check my insurance benefits and gave me an estimate of cost and insurance coverage. Cora are very friendly that makes me feel very caring at the office. They also have a lot of new technologies and laser machine to help with my snoring.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "T Chan",
+            "uri": "https://www.google.com/maps/contrib/108359033555457484293/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocKCtd5STi9p2z0XMa_C1r6-gWhStPlorC_5HZVMIHf46RvPSg=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2023-05-26T04:40:02Z"
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/reviews/ChZDSUhNMG9nS0VJQ0FnSUR4amVhTlJREAE",
+          "relativePublishTimeDescription": "10 months ago",
+          "rating": 5,
+          "text": {
+            "text": "I just recently moved to San Francisco, I found this office online and let me just tell you they did not disappoint. The front staff was extremely kind and helpful. Dr. Amy was the dentist that helped me and her assistant Nikkia. They were both genuine and patient with all my questions. I had an initial exam done and some X-rays. Dr. Amy took her time in addressing all my concerns, which I really appreciated. I’m happy I found this office.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "I just recently moved to San Francisco, I found this office online and let me just tell you they did not disappoint. The front staff was extremely kind and helpful. Dr. Amy was the dentist that helped me and her assistant Nikkia. They were both genuine and patient with all my questions. I had an initial exam done and some X-rays. Dr. Amy took her time in addressing all my concerns, which I really appreciated. I’m happy I found this office.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Alonzo Jimenez",
+            "uri": "https://www.google.com/maps/contrib/109527320228576268699/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a-/ALV-UjVmSBXmZbznaf_XHXI4Y8-lukLkscvWEqMpoV4h3htQNZgt-ESp=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2023-06-13T06:56:45Z"
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/reviews/ChdDSUhNMG9nS0VJQ0FnSUN4M2U2dDdBRRAB",
+          "relativePublishTimeDescription": "11 months ago",
+          "rating": 5,
+          "text": {
+            "text": "A hard place to find when it’s your first time but when you call the office, the staff is always so friendly and let you know exactly how to get there and when you get inside they’ll greet you with smiles. Well, at least I believe is a smile. They still have pretty high Covid regulations. I was a little nervous because I hadn’t been to a dentist in so long, but one of the assistance, Alexis, was so kind and understanding. She talked me through everything that would be happening today and didn’t make me feel bad about waiting  as long as I did. The doctor came in and was equally as nice and understanding and I’m so glad I chose this office.",
+            "languageCode": "en"
+          },
+          "originalText": {
+            "text": "A hard place to find when it’s your first time but when you call the office, the staff is always so friendly and let you know exactly how to get there and when you get inside they’ll greet you with smiles. Well, at least I believe is a smile. They still have pretty high Covid regulations. I was a little nervous because I hadn’t been to a dentist in so long, but one of the assistance, Alexis, was so kind and understanding. She talked me through everything that would be happening today and didn’t make me feel bad about waiting  as long as I did. The doctor came in and was equally as nice and understanding and I’m so glad I chose this office.",
+            "languageCode": "en"
+          },
+          "authorAttribution": {
+            "displayName": "Samantha Rey",
+            "uri": "https://www.google.com/maps/contrib/114604691752291793139/reviews",
+            "photoUri": "https://lh3.googleusercontent.com/a/ACg8ocLlECJkQ7UYb0eu8f7oLbOuvr9rad1M8eaPOBd0zi2XRK2e=s128-c0x00000000-cc-rp-mo"
+          },
+          "publishTime": "2023-05-24T00:25:31Z"
+        }
+      ],
+      "photos": [
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZlGcYsNbUxOx69ACB8WV24lKXW9KsRQtV7tDR0KKABH95WH6bC7QN_dGQUayrepcH94yIqjTvWUCR4bNEfNotli2SDDEC_GX9Mgvk2jAXjdsErnG9TXV1KewjYbpYsb5BsP8JRo0g4bkVeXPdn8KIYCl8Rpl_vzMV3e",
+          "widthPx": 3000,
+          "heightPx": 4000,
+          "authorAttributions": [
+            {
+              "displayName": "Munnie Tran",
+              "uri": "//maps.google.com/maps/contrib/101818532685297031071",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjW_gf5sPtosdyKmu0O5URMbcxKEcc0KhHxL_BRg-f2V0Sy4FyRgAw=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZnhuXvhyVGX8oYjwnmXRY0EjY5NsNZKlF7U_WPOGgX1dLxvgX4h7AsIgW8BiPhbbwee1wlPHGfz9O032zgV14fKoMX_vzVplZvvE2E_JUBJjCcP5wVGbj6P0yCaM9jDhY2Df-Yc9ywLMCk0XuvcLUbtj4PZ0dP1affE",
+          "widthPx": 4032,
+          "heightPx": 3024,
+          "authorAttributions": [
+            {
+              "displayName": "James Brown",
+              "uri": "//maps.google.com/maps/contrib/111487100111477587354",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjU518yHL6Pztklhp7X1LkLVzwzxu1ZjL9wCnHMhChX292cVk46ayg=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZmSoiCivQyCSDhgXcdpCRF4K9d4tXoBof68w_03KXbWrzx_CKMx4lpgDVPkl32xmQ1XIBI5BGiXW_n7QTHrZqNZNyuls1BZR1XbEBvv-LwpvsyeBIxhuQlZJ0wN1ZlkzFBkAEBSU8KsTUhMC-zvME0_ItkN_zkpCgbz",
+          "widthPx": 3000,
+          "heightPx": 4000,
+          "authorAttributions": [
+            {
+              "displayName": "Munnie Tran",
+              "uri": "//maps.google.com/maps/contrib/101818532685297031071",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjW_gf5sPtosdyKmu0O5URMbcxKEcc0KhHxL_BRg-f2V0Sy4FyRgAw=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZmsTrrigrXsrhLBG8ksgbgOBmnWYW3ecFS7MS7MEEPhs6uREocDvR4Vz75t9vv1ncNyQrVVYzMV6-nWg58pdCPPchTuk0GopIHSzKytTzZvHHsb4BklQ-i623iFjMNu2TZYPhTiQMbr5PQnWVjP3nsfYE4kqWBvWMm7",
+          "widthPx": 4032,
+          "heightPx": 3024,
+          "authorAttributions": [
+            {
+              "displayName": "James Brown",
+              "uri": "//maps.google.com/maps/contrib/111487100111477587354",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjU518yHL6Pztklhp7X1LkLVzwzxu1ZjL9wCnHMhChX292cVk46ayg=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZmFWN23tBeTXpEdeQ9-GiiGC-0bnp5tDNSGuRyrqRwTnYWUTDroFFreeyO5_GbwlLU_eEMovrVgEF4vWZYvN9kc0pKzLokuVfBZIfXf0kSpShu25j_5msxsd4OxkjZAVtx22yTYcb2gd1iBlizqOHfFKQPZQQrm8lkl",
+          "widthPx": 3000,
+          "heightPx": 4000,
+          "authorAttributions": [
+            {
+              "displayName": "Munnie Tran",
+              "uri": "//maps.google.com/maps/contrib/101818532685297031071",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjW_gf5sPtosdyKmu0O5URMbcxKEcc0KhHxL_BRg-f2V0Sy4FyRgAw=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZnZYF8d26a4qXCfs09y9rzHxD4ubeT9qMjnqogSyWczEBIbR7puVUFO2CKkZMZIfdg_O3e_TmYXvioMcJrK7XOC5fesqOMOyinjQCdNwRfcavZeEIfYPVsO4eG_wVAj-uouYbj1tNNefQDrM6iq92JBHeuHCFPflakZ",
+          "widthPx": 827,
+          "heightPx": 1702,
+          "authorAttributions": [
+            {
+              "displayName": "Selina Tran",
+              "uri": "//maps.google.com/maps/contrib/107305032786384434043",
+              "photoUri": "//lh3.googleusercontent.com/a/ACg8ocIbyCsJFhCPxNCfgrtCinPfqqN3HpwbcsP7H_52WonIO5M8Xw=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZmWTlfyXjqp7422tBWifdYilRyc7BF2I3wUvKsLn7etSGyGiQi4Grk37gZZTHftPM_7W_wJFGqmycAxxjvKHWxsnpJanl9bl7TPPT15Y0r_e6Zo__GKpd2qldfXfQQ-Vqr-UaGHHBbU9fV7Wc3u0prtxLF0HmhG-UtG",
+          "widthPx": 1536,
+          "heightPx": 2048,
+          "authorAttributions": [
+            {
+              "displayName": "Selina Tran",
+              "uri": "//maps.google.com/maps/contrib/107305032786384434043",
+              "photoUri": "//lh3.googleusercontent.com/a/ACg8ocIbyCsJFhCPxNCfgrtCinPfqqN3HpwbcsP7H_52WonIO5M8Xw=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJwbdCV_WAhYARyh2kynTSktI/photos/AUGGfZl6WqPluGENSLgHUEH4LYZdF-agtWhOl-JaOEiuO9MrCX3AQREyAVIGq79gG6yLS1v8JFeWQM5HVfby3KX_332vdloBS3CBmkSlYe23C1iswOlLirfuDyY_wo42IY3iCtTFif51Zyfik4eSyd3OU_L8DRMNUmCxRuWU",
+          "widthPx": 612,
+          "heightPx": 1259,
+          "authorAttributions": [
+            {
+              "displayName": "Selina Tran",
+              "uri": "//maps.google.com/maps/contrib/107305032786384434043",
+              "photoUri": "//lh3.googleusercontent.com/a/ACg8ocIbyCsJFhCPxNCfgrtCinPfqqN3HpwbcsP7H_52WonIO5M8Xw=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "restroom": true,
+      "accessibilityOptions": {
+        "wheelchairAccessibleParking": true,
+        "wheelchairAccessibleEntrance": true,
+        "wheelchairAccessibleRestroom": true
+      }
+    },
+    {
+      "name": "places/ChIJLdqXpGaAhYARcjmq2LOEZxc",
+      "id": "ChIJLdqXpGaAhYARcjmq2LOEZxc",
+      "types": ["accounting", "finance", "point_of_interest", "establishment"],
+      "nationalPhoneNumber": "(415) 974-6000",
+      "internationalPhoneNumber": "+1 415-974-6000",
+      "formattedAddress": "One California, Suite 1700, San Francisco, CA 94111, USA",
+      "addressComponents": [
+        {
+          "longText": "Suite 1700",
+          "shortText": "Suite 1700",
+          "types": ["subpremise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "One California",
+          "shortText": "One California",
+          "types": ["premise"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "Financial District",
+          "shortText": "Financial District",
+          "types": ["neighborhood", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco",
+          "shortText": "SF",
+          "types": ["locality", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "San Francisco County",
+          "shortText": "San Francisco County",
+          "types": ["administrative_area_level_2", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "California",
+          "shortText": "CA",
+          "types": ["administrative_area_level_1", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "United States",
+          "shortText": "US",
+          "types": ["country", "political"],
+          "languageCode": "en"
+        },
+        {
+          "longText": "94111",
+          "shortText": "94111",
+          "types": ["postal_code"],
+          "languageCode": "en-US"
+        }
+      ],
+      "plusCode": {
+        "globalCode": "849VQJV3+84",
+        "compoundCode": "QJV3+84 Financial District, San Francisco, CA, USA"
+      },
+      "location": {
+        "latitude": 37.7932571,
+        "longitude": -122.39721519999999
+      },
+      "viewport": {
+        "low": {
+          "latitude": 37.79194376970851,
+          "longitude": -122.39851228029148
+        },
+        "high": {
+          "latitude": 37.794641730291509,
+          "longitude": -122.39581431970849
+        }
+      },
+      "googleMapsUri": "https://maps.google.com/?cid=1686462493442586994",
+      "websiteUri": "http://www.eisneramper.com/",
+      "regularOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 8,
+              "minute": 0
+            },
+            "close": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:00 PM",
+          "Tuesday: 8:00 AM – 5:00 PM",
+          "Wednesday: 8:00 AM – 5:00 PM",
+          "Thursday: 8:00 AM – 5:00 PM",
+          "Friday: 8:00 AM – 5:00 PM",
+          "Saturday: 8:00 AM – 5:00 PM",
+          "Sunday: 8:00 AM – 5:00 PM"
+        ]
+      },
+      "utcOffsetMinutes": -420,
+      "adrFormatAddress": "\u003cspan class=\"extended-address\"\u003eOne California\u003c/span\u003e, \u003cspan class=\"street-address\"\u003eSuite 1700\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSan Francisco\u003c/span\u003e, \u003cspan class=\"region\"\u003eCA\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e94111\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eUSA\u003c/span\u003e",
+      "businessStatus": "OPERATIONAL",
+      "iconMaskBaseUri": "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "iconBackgroundColor": "#7B9EB0",
+      "displayName": {
+        "text": "EisnerAmper",
+        "languageCode": "en"
+      },
+      "primaryTypeDisplayName": {
+        "text": "Accounting",
+        "languageCode": "en-US"
+      },
+      "currentOpeningHours": {
+        "openNow": true,
+        "periods": [
+          {
+            "open": {
+              "day": 0,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 12
+              }
+            },
+            "close": {
+              "day": 0,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 12
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 1,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            },
+            "close": {
+              "day": 1,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 13
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 2,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            },
+            "close": {
+              "day": 2,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 7
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 3,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            },
+            "close": {
+              "day": 3,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 8
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 4,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            },
+            "close": {
+              "day": 4,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 9
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 5,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            },
+            "close": {
+              "day": 5,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 10
+              }
+            }
+          },
+          {
+            "open": {
+              "day": 6,
+              "hour": 8,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 11
+              }
+            },
+            "close": {
+              "day": 6,
+              "hour": 17,
+              "minute": 0,
+              "date": {
+                "year": 2024,
+                "month": 5,
+                "day": 11
+              }
+            }
+          }
+        ],
+        "weekdayDescriptions": [
+          "Monday: 8:00 AM – 5:00 PM",
+          "Tuesday: 8:00 AM – 5:00 PM",
+          "Wednesday: 8:00 AM – 5:00 PM",
+          "Thursday: 8:00 AM – 5:00 PM",
+          "Friday: 8:00 AM – 5:00 PM",
+          "Saturday: 8:00 AM – 5:00 PM",
+          "Sunday: 8:00 AM – 5:00 PM"
+        ]
+      },
+      "primaryType": "accounting",
+      "shortFormattedAddress": "One California, Suite 1700, San Francisco",
+      "photos": [
+        {
+          "name": "places/ChIJLdqXpGaAhYARcjmq2LOEZxc/photos/AUGGfZlw3AEcWaMdR4LzfxTBPIL4IhcPWlhBSSgCVOW_KFit0TH3YwWnAj6-WY0OOX9llysX9VU6NK31F5w2C5InBSeydNqDRxtP-42bBo_j6riqL24pMieG_LoNDG8lpvWDj2QoJbhMPesTmeXO-v8SrWt0KmFU6t7qF8m_",
+          "widthPx": 2048,
+          "heightPx": 1367,
+          "authorAttributions": [
+            {
+              "displayName": "Eli Zaturanski",
+              "uri": "//maps.google.com/maps/contrib/111628778257682927785",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjUvtij0ZgxpZmZsJ_4YUsy2ZKzROGdZr7V4R04qRHWW1g10MMSn=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJLdqXpGaAhYARcjmq2LOEZxc/photos/AUGGfZlVM3PknWsqaRYXuGUiJVaje4OfAIl1mx7im1OgJHSslU7251lo_PV-AfMavdT4b3J2dGbKVUOQoLA2NBB7XTZbsxawBHEulGH--SRgQNRuiyxpI44kXxWIfZqIeavfeJ7qGADWCe3rQ7jOQL4EqKjN_cKoAt_sIrWz",
+          "widthPx": 2048,
+          "heightPx": 1367,
+          "authorAttributions": [
+            {
+              "displayName": "Eli Zaturanski",
+              "uri": "//maps.google.com/maps/contrib/111628778257682927785",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjUvtij0ZgxpZmZsJ_4YUsy2ZKzROGdZr7V4R04qRHWW1g10MMSn=s100-p-k-no-mo"
+            }
+          ]
+        },
+        {
+          "name": "places/ChIJLdqXpGaAhYARcjmq2LOEZxc/photos/AUGGfZkNvcb9zS_DtXcNZJp84LR1Q5X7CQEvzv-4nexoTTNE6Sdojnn0PtRyG1z5DmIoCsEgSSvala8uVH1MoXOCz2XWfXpXNx8lGJXJesq12S00Er6WCMv-RPARx1m7mWTjZ7RxuYHKcHnphRNP9peLos92WKAKvytCmTKc",
+          "widthPx": 1367,
+          "heightPx": 2048,
+          "authorAttributions": [
+            {
+              "displayName": "Eli Zaturanski",
+              "uri": "//maps.google.com/maps/contrib/111628778257682927785",
+              "photoUri": "//lh3.googleusercontent.com/a-/ALV-UjUvtij0ZgxpZmZsJ_4YUsy2ZKzROGdZr7V4R04qRHWW1g10MMSn=s100-p-k-no-mo"
+            }
+          ]
+        }
+      ],
+      "accessibilityOptions": {
+        "wheelchairAccessibleParking": true,
+        "wheelchairAccessibleEntrance": true
+      }
+    }
+  ]
+}

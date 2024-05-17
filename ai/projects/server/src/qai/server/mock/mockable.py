@@ -1,7 +1,6 @@
 import functools
-from typing import Any
 
-from flask import jsonify, request
+from flask import request
 from pydantic import BaseModel
 
 
@@ -17,10 +16,10 @@ class mockable:
         @functools.wraps(func)
         def decorated_function(*args, **kwargs):
             instance = self.model_cls(**request.get_json())
-            is_mock = getattr(instance, "mock", False)
-            if is_mock:
-                ofunc = getattr(__import__('qai.server.mock.mock_functions', fromlist=[func.__name__]), func.__name__)
-                return ofunc(*args, **kwargs)
+            if getattr(instance, "mock", False):
+                impt = __import__("qai.server.mock.mock_functions", fromlist=[func.__name__])
+                mock_func = getattr(impt, func.__name__)
+                return mock_func(*args, **kwargs)
             return func(*args, **kwargs)
 
         return decorated_function

@@ -1,4 +1,6 @@
 import os
+import sys
+from logging import getLogger
 from typing import List, Optional
 
 from llama_index.core import SQLDatabase
@@ -15,6 +17,7 @@ from sqlalchemy.schema import CreateTable
 
 from qai.agent import ROOT_DIR
 
+log = getLogger(__name__)
 PROJ_DIR = os.path.dirname(os.path.dirname(os.path.dirname(ROOT_DIR)))
 
 
@@ -145,7 +148,7 @@ class RefineSQLQuery(DatabaseToolSpec):
             steps = steps["steps"]
         steps = [StepModel(**step) for step in steps]
         steps = self._refine_step_queries(steps)
-        print(f"Returning steps = {steps}")
+        log.debug(f"Returning steps = {steps}")
         return steps
 
     ## separate company and people steps. Merge filters into the same step.
@@ -222,11 +225,17 @@ class RefineSQLQuery(DatabaseToolSpec):
         r: Response = query_engine.query(str(query))
         if r.metadata and "sql_query" in r.metadata:
             sql_query = r.metadata["sql_query"]
-            print("##", sql_query)
-            with self.sql_database.engine.connect() as connection:
-                result = connection.execute(text(sql_query))
-                for item in result.fetchall():
-                    return_dict.append({k: v for k, v in zip(item._fields, item._t)})
+            log.debug("##", sql_query)
+            try:
+                with self.sql_database.engine.connect() as connection:
+                    result = connection.execute(text(sql_query))
+                    for item in result.fetchall():
+                        return_dict.append({k: v for k, v in zip(item._fields, item._t)})
+            except Exception as e:
+                log.error("Error loading people from the database")
+                log.exception(e)
+                raise
+
         return return_dict
 
     def load_companies(self, query: str) -> List[dict]:
@@ -255,7 +264,7 @@ class RefineSQLQuery(DatabaseToolSpec):
         r: Response = query_engine.query(str(query))
         if r.metadata and "sql_query" in r.metadata:
             sql_query = r.metadata["sql_query"]
-            print("##", sql_query)
+            log.debug(f"## {sql_query}")
             with self.sql_database.engine.connect() as connection:
                 result = connection.execute(text(sql_query))
                 for item in result.fetchall():
@@ -267,7 +276,6 @@ class RefineSQLQuery(DatabaseToolSpec):
         try:
             source = return_result.sources[-1]
             for raw_output in source.raw_output:
-                print("   ###########")
                 sm: StepModel = raw_output
                 query_list.append(sm.sentence)
             return " ".join(query_list)
