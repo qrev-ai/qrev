@@ -2152,7 +2152,7 @@ async function _campaignProspectBounceWebhook(
 
     if (invalidProspectEmails.length) {
         let [removeResp, removeErr] = await removeInvalidProspectsFromCampaign(
-            { campaignSequenceId, invalidProspectEmails },
+            { campaignSequenceId, invalidProspectEmails, accountId },
             { txid }
         );
         if (removeErr) throw removeErr;
