@@ -575,7 +575,9 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
             isFirstSequenceStep: true,
             sequenceStepTimeValue: { time_value: 1, time_unit: "day" },
             prospectSenderMap: {},
+            prospectLastScheduleTimeMap: {},
             defaultTimezone,
+            prevStepTimeValue: null,
         },
         { txid }
     );
@@ -703,7 +705,9 @@ function scheduleTimeForSequenceProspects(
         isFirstSequenceStep,
         sequenceStepTimeValue,
         prospectSenderMap,
+        prospectLastScheduleTimeMap,
         defaultTimezone,
+        prevStepTimeValue,
     },
     { txid }
 ) {
@@ -751,6 +755,8 @@ function scheduleTimeForSequenceProspects(
                 isFirstSequenceStep,
                 sequenceStepTimeValue,
                 prospectSenderMap,
+                prospectLastScheduleTimeMap,
+                prevStepTimeValue,
             },
             { txid }
         );
@@ -777,7 +783,7 @@ function groupProspectsByTimezone({ prospects, defaultTz }, { txid }) {
     return tzGroupedProspects;
 }
 
-export function scheduleTimeForProspects(
+function scheduleTimeForProspects(
     {
         prospects,
         perHourLimit,
@@ -790,6 +796,8 @@ export function scheduleTimeForProspects(
         isFirstSequenceStep,
         sequenceStepTimeValue,
         prospectSenderMap,
+        prospectLastScheduleTimeMap,
+        prevStepTimeValue,
     },
     { txid }
 ) {
@@ -806,18 +814,22 @@ export function scheduleTimeForProspects(
     );
 
     let initialRangeTime = new Date().getTime();
+
     if (!isFirstSequenceStep) {
         let { time_value, time_unit } = sequenceStepTimeValue;
         let timeValueMillis = time_value * 24 * 60 * 60 * 1000;
         if (time_unit === "hour") timeValueMillis = time_value * 60 * 60 * 1000;
         initialRangeTime = initialRangeTime + timeValueMillis;
     }
+
+    let endRangeTime = initialRangeTime + 14 * 24 * 60 * 60 * 1000;
+
     let scheduleTimes =
         SlotGen_utils.createFreeFromBusySlotsOpenLinkNewCustomHours(
             {
                 busy: [],
                 range_start_time: initialRangeTime,
-                range_end_time: initialRangeTime + 14 * 24 * 60 * 60 * 1000,
+                range_end_time: endRangeTime,
                 window_start_time_tz: timezone,
                 duration: 60,
                 custom_hours: scheduleTimeHours,
@@ -865,6 +877,11 @@ export function scheduleTimeForProspects(
                         prospectDomain,
                         domainScheduleMap,
                         prospectEmail,
+                        prospectLastScheduledTime:
+                            prospectLastScheduleTimeMap[prospectEmail],
+                        sequenceStepTimeValue,
+                        isFirstSequenceStep,
+                        prevStepTimeValue,
                     },
                     { txid }
                 );
@@ -878,6 +895,7 @@ export function scheduleTimeForProspects(
                 found = true;
                 selectedTime = startTime;
                 selectedSender = existingSenderEmail;
+                prospectLastScheduleTimeMap[prospectEmail] = startTime;
             } else {
                 for (const sender of senderList) {
                     let senderEmail = sender.email;
@@ -895,6 +913,11 @@ export function scheduleTimeForProspects(
                             prospectDomain,
                             domainScheduleMap,
                             prospectEmail,
+                            prospectLastScheduledTime:
+                                prospectLastScheduleTimeMap[prospectEmail],
+                            sequenceStepTimeValue,
+                            isFirstSequenceStep,
+                            prevStepTimeValue,
                         },
                         { txid }
                     );
@@ -909,6 +932,8 @@ export function scheduleTimeForProspects(
                     selectedTime = startTime;
                     selectedSender = senderEmail;
                     prospectSenderMap[prospectEmail] = senderEmail;
+                    prospectLastScheduleTimeMap[prospectEmail] = startTime;
+
                     break;
                 }
             }
@@ -1089,6 +1114,27 @@ function isSameDomainProspectScheduledForTime(
     return false;
 }
 
+function convertTimeStepValueToMillis({ timeValue, timeUnit }, { txid }) {
+    const funcName = "convertTimeStepValueToMillis";
+    const logg = logger.child({ txid, funcName });
+    // logg.info(`started`);
+
+    let stepValueMillis = null;
+    if (timeUnit === "hour") stepValueMillis = timeValue * 60 * 60 * 1000;
+    else if (timeUnit === "day")
+        stepValueMillis = timeValue * 24 * 60 * 60 * 1000;
+    else if (timeUnit === "week")
+        stepValueMillis = timeValue * 7 * 24 * 60 * 60 * 1000;
+    else if (timeUnit === "month")
+        stepValueMillis = timeValue * 30 * 24 * 60 * 60 * 1000;
+    else if (timeUnit === "year")
+        stepValueMillis = timeValue * 365 * 24 * 60 * 60 * 1000;
+    else throw `time_unit: ${timeUnit} is invalid`;
+
+    // logg.info(`ended`);
+    return stepValueMillis;
+}
+
 function scheduleTimeForProspectForSender(
     {
         scheduleMap,
@@ -1100,12 +1146,66 @@ function scheduleTimeForProspectForSender(
         prospectDomain,
         domainScheduleMap,
         prospectEmail,
+        prospectLastScheduledTime,
+        sequenceStepTimeValue,
+        isFirstSequenceStep,
+        prevStepTimeValue,
     },
     { txid }
 ) {
     const funcName = "scheduleTimeForProspectForSender";
     const logg = logger.child({ txid, funcName });
     // logg.info(`started`);
+
+    if (prospectLastScheduledTime) {
+        // if the start time is before last scheduled time, then return false
+        // WHY: to avoid sending the message from sequence step 2 before sequence step 1
+        if (startTime < prospectLastScheduledTime) {
+            // logg.info(
+            //     `ended with false since startTime[${startTime}] < prospectLastScheduledTime[${prospectLastScheduledTime}]`
+            // );
+            return {
+                isLimitConditionSatisfied: false,
+                isSameDomainProspectScheduled: false,
+            };
+        }
+
+        // sequenceStepTimeValue format: {time_value: 1, time_unit: "day"}
+        // if the start time is before last scheduled time + time_value, then return false
+        // WHY: if sequence step 2 is to be scheduled 2 days after sequence step 1, then we need to check this condition
+        // Ignore this condition if it is the first sequence step since we dont have any previous scheduled time
+        let { time_value: timeValue, time_unit: timeUnit } =
+            sequenceStepTimeValue;
+        if (!isFirstSequenceStep && prevStepTimeValue) {
+            let stepValueMillis = convertTimeStepValueToMillis(
+                { timeValue, timeUnit },
+                { txid }
+            );
+
+            let { time_value: prevTimeValue, time_unit: prevTimeUnit } =
+                prevStepTimeValue;
+            let prevStepValueMillis = convertTimeStepValueToMillis(
+                { timeValue: prevTimeValue, timeUnit: prevTimeUnit },
+                { txid }
+            );
+
+            let differenceStepValueMillis =
+                stepValueMillis - prevStepValueMillis;
+
+            if (
+                startTime <
+                prospectLastScheduledTime + differenceStepValueMillis
+            ) {
+                // logg.info(
+                //     `ended with false since startTime[${startTime}] < prospectLastScheduledTime[${prospectLastScheduledTime}] + differenceStepValueMillis[${differenceStepValueMillis}]`
+                // );
+                return {
+                    isLimitConditionSatisfied: false,
+                    isSameDomainProspectScheduled: false,
+                };
+            }
+        }
+    }
 
     if (!senderScheduleMap[senderEmail][startTime]) {
         senderScheduleMap[senderEmail][startTime] = 0;
