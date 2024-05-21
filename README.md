@@ -39,8 +39,8 @@ The question we ask ourselves constantly is whether we should mimic the real wor
 within the app ? or Have one superagent that co-ordinates with other software agents internally. 
 
 We are starting with the latter approach. We think based on the users role and role based permissions, Qai will be able 
-to do different things. It will also simplify the requirement of remembering names of Digial workers like Qai 
-just for the sake of seeming cool. But internally, there will be an army of digial workers / agents doing their job anyways. 
+to do different things. It will also simplify the requirement of remembering names of Digital workers like Qai 
+just for the sake of seeming cool. But internally, there will be an army of digital workers / agents doing their job anyways. 
 
 Open to ideas. 
 
