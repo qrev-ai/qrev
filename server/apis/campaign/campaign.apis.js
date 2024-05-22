@@ -173,6 +173,42 @@ export async function getSequenceDetailsApi(req, res, next) {
     );
     if (resultErr) throw resultErr;
 
+    /*
+    * Sample response structure:
+
+    let result = {
+        name: "SEQ 1",
+        step_details: {
+            steps: 1,
+            days: 1,
+        },
+        current_prospects: {
+            active: 12,
+            bounced: 1,
+        },
+        steps: [
+            {
+                active: true,
+                order: 1,
+                type: "email",
+                time_of_dispatch: {
+                    type: "from_prospect_added_time",
+                    value: { time_value: 1, time_unit: "day" },
+                },
+                draft_type: "ai_generated", // or "manual"
+                subject: "",
+                body: "",
+                analytics: {
+                    delivered: 0,
+                    pending: 0,
+                    bounced: 0,
+                    opened: 0,
+                },
+            },
+        ],
+    };
+    */
+
     logg.info(`ended successfully`);
     return res.json({
         success: true,

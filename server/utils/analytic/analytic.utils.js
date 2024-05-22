@@ -276,3 +276,61 @@ export const getSequenceProspectAnalytics = functionWrapper(
     "getSequenceProspectAnalytics",
     _getSequenceProspectAnalytics
 );
+
+async function _getSequenceAnalytics(
+    { accountId, sequenceId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId not found`;
+
+    let [analytics, analyticsErr] = await getAnalyticsFromDb(
+        { accountId, type: "campaign_message", sequenceIds: [sequenceId] },
+        { txid }
+    );
+    if (analyticsErr) throw analyticsErr;
+
+    logg.info(`analytics length: ${analytics.length}`);
+
+    let result = {};
+    for (const analytic of analytics) {
+        let seqStepId = analytic.sequence_step;
+        seqStepId =
+            typeof seqStepId === "object" ? seqStepId.toString() : seqStepId;
+
+        if (!result[seqStepId]) {
+            result[seqStepId] = {
+                delivered: 0,
+                bounced: 0,
+                opened: 0,
+            };
+        }
+
+        let actionType = analytic.action_type;
+        if (actionType === AnalyticActionTypes.campaign_message_send) {
+            if (
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.message_status === "bounced"
+            ) {
+                result[seqStepId].bounced++;
+            } else {
+                result[seqStepId].delivered++;
+            }
+        } else if (actionType === AnalyticActionTypes.campaign_message_open) {
+            result[seqStepId].opened++;
+        } else if (actionType === AnalyticActionTypes.campaign_message_reply) {
+            result[seqStepId].replied++;
+        }
+    }
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getSequenceAnalytics = functionWrapper(
+    fileName,
+    "getSequenceAnalytics",
+    _getSequenceAnalytics
+);

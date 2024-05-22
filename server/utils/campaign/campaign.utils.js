@@ -1623,7 +1623,7 @@ async function _storeMessageSendAnalytic(
     return [sessionId, null];
 }
 
-export const storeMessageSendAnalytic = functionWrapper(
+const storeMessageSendAnalytic = functionWrapper(
     fileName,
     "storeMessageSendAnalytic",
     _storeMessageSendAnalytic
@@ -1842,6 +1842,28 @@ async function _getSequenceDetails(
         }
     }
 
+    let pendingSpmsDocs = await SequenceProspectMessageSchedule.find({
+        sequence: sequenceId,
+        account: accountId,
+        message_status: "pending",
+    }).lean();
+    logg.info(`pendingSpmsDocs.length: ${pendingSpmsDocs.length}`);
+
+    let pendingSpmsMap = {};
+    for (let i = 0; i < pendingSpmsDocs.length; i++) {
+        let pendingSpmsDoc = pendingSpmsDocs[i];
+        let seqStepId = pendingSpmsDoc.sequence_step;
+        if (!pendingSpmsMap[seqStepId]) pendingSpmsMap[seqStepId] = 0;
+        pendingSpmsMap[seqStepId]++;
+    }
+
+    let [seqAnalyticsMap, analyticErr] =
+        await AnalyticUtils.getSequenceAnalytics(
+            { accountId, sequenceId },
+            { txid }
+        );
+    if (analyticErr) throw analyticErr;
+
     for (let i = 0; i < sequenceSteps.length; i++) {
         let sequenceStep = sequenceSteps[i];
         let item = {
@@ -1858,6 +1880,14 @@ async function _getSequenceDetails(
             item.draft_type = sequenceStep.draft_type;
             item.subject = sequenceStep.subject;
             item.body = sequenceStep.body;
+        }
+
+        let seqStepId = sequenceStep._id;
+        let seqStepAnalytics = seqAnalyticsMap && seqAnalyticsMap[seqStepId];
+        if (seqStepAnalytics) {
+            item.analytics = seqStepAnalytics;
+            let seqStepPendingCount = pendingSpmsMap[seqStepId] || 0;
+            item.analytics.pending = seqStepPendingCount;
         }
 
         result.steps.push(item);
