@@ -680,9 +680,14 @@ function getLimitConfig({}, { txid }) {
     const funcName = "getLimitConfig";
     const logg = logger.child({ txid, funcName });
     // logg.info(`started`);
-    // * These limits are for 1 sender as per GMail Restrictions. This needs to be adjusted for Outlook later.
+    // * The Per Hour limits is for 1 sender as per GMail Restrictions. This needs to be adjusted for Outlook later.
     let perHourLimit = 20;
-    let perDayLimit = 500;
+
+    // * Even though the Per Day limit is 500 (as per GMail Restrictions), we are keeping it as 50 for now.
+    // * Because, initially we want companies to start with a lower limit and then once they are comfortable, we can increase it.
+    // * Hence, in the future, we need to make this dynamic based on the user's comfort level.
+    // * Also, this needs to be adjusted for Outlook later.
+    let perDayLimit = 50;
 
     // logg.info(`ended`);
     return { perHourLimit, perDayLimit };
