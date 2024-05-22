@@ -131,17 +131,24 @@ async function _saveAuth(
 export const saveAuth = functionWrapper(fileName, "saveAuth", _saveAuth);
 
 async function _refreshOrReturnToken(
-    { authObj, email, returnBackAuthObj },
+    { authObj, email, userId, returnBackAuthObj },
     { logg, txid, funcName }
 ) {
     logg.info(`started`);
-    if (email && !authObj) {
-        logg.info(`fetching authObj from db for email: ${email}`);
-        authObj = await GoogleOauth.findOne({ email }).sort("-expiry").lean();
+    if (!authObj) {
+        let queryObj = {};
+        if (email) {
+            queryObj.email = email;
+        } else if (userId) {
+            queryObj.user_id = userId;
+        } else {
+            throw `email or userId not found`;
+        }
+        authObj = await GoogleOauth.findOne(queryObj).sort("-expiry").lean();
         logg.info(`authObj: ${JSON.stringify(authObj)}`);
     }
 
-    if (!authObj) throw `invalid authObj for email: ${email}`;
+    if (!authObj) throw `invalid authObj`;
     let accessToken = authObj.access_token;
     let expiry = authObj.expiry;
     let refreshToken = authObj.refresh_token;
@@ -309,4 +316,64 @@ export const hasEmailBounced = functionWrapper(
     fileName,
     "hasEmailBounced",
     _hasEmailBounced
+);
+
+async function _hasEmailReplied(
+    { emailThreadId, senderAuthObj },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!emailThreadId) throw `emailThreadId is invalid`;
+    if (!senderAuthObj) throw `senderAuthObj is invalid`;
+
+    let [accessToken, refreshOrReturnTokenErr] = await refreshOrReturnToken(
+        { authObj: senderAuthObj },
+        { txid }
+    );
+    if (refreshOrReturnTokenErr) throw refreshOrReturnTokenErr;
+
+    let url = `https://gmail.googleapis.com/gmail/v1/users/me/threads/${emailThreadId}?format=full`;
+    let headers = {
+        headers: { Authorization: `Bearer ${accessToken}` },
+    };
+
+    let resp = await axios.get(url, headers);
+    let threadData = resp.data;
+    logg.info(`threadData: ${JSON.stringify(threadData)}`);
+
+    let messages = threadData && threadData.messages;
+    if (!messages) {
+        logg.error(`no messages found for this thread`);
+        return [false, null];
+    }
+
+    for (const message of messages) {
+        let headers = message && message.payload && message.payload.headers;
+        if (!headers) {
+            logg.error(`no headers found for this message`);
+            continue;
+        }
+
+        let replyHeader = headers.find(
+            (header) => header.name === "In-Reply-To"
+        );
+        if (replyHeader) {
+            let replyMessage = message.snippet;
+            let replyMessageId = message.id;
+            let result = { message: replyMessage, message_id: replyMessageId };
+            logg.info(`email replied: ${JSON.stringify(result)}`);
+            logg.info(`ended`);
+            return [result, null];
+        }
+    }
+
+    logg.info(`no reply headers found`);
+    logg.info(`ended`);
+    return [false, null];
+}
+
+export const hasEmailReplied = functionWrapper(
+    fileName,
+    "hasEmailReplied",
+    _hasEmailReplied
 );

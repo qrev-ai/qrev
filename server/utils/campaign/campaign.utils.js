@@ -1381,23 +1381,62 @@ async function _executeCampaignSequenceStep(
         throw `failed to find spmsDoc for spmsId: ${spmsId}`;
     }
 
-    let [resp, err] = await executeCampaignStepUtil(
-        { spmsDoc, spmsId },
-        { txid, sendErrorMsg: true }
-    );
-
-    let failed = false;
-    if (err) {
-        logg.error(`err: ${err}`);
-        failed = true;
-        resp = { messageResponse: null, hasEmailBounced: null };
+    let [hasRepliedToPrevStep, repliedErr] =
+        await hasProspectRepliedToPreviousStep(
+            {
+                sequenceId: spmsDoc.sequence,
+                sequenceProspectId: spmsDoc.sequence_prospect,
+                currentSpmsId: spmsId,
+                currentSequenceStepId: spmsDoc.sequence_step,
+                accountId: spmsDoc.account,
+            },
+            { txid, sendErrorMsg: true }
+        );
+    if (repliedErr) {
+        logg.error(
+            `got reply error. but continuing... repliedErr: ${repliedErr}`
+        );
     }
-    let { messageResponse, hasEmailBounced } = resp;
+
+    let messageResponse = null,
+        hasEmailBounced = false;
+    let failed = false;
+
+    if (hasRepliedToPrevStep) {
+        logg.info(`prospect has replied. so skipping this sending the message`);
+
+        messageResponse = {
+            reason: "prospect has replied to previous step",
+            data: hasRepliedToPrevStep,
+        };
+    } else {
+        let [resp, err] = await executeCampaignStepUtil(
+            { spmsDoc, spmsId },
+            { txid, sendErrorMsg: true }
+        );
+        if (err) {
+            logg.error(
+                `got error while sending message. but continuing... err: ${err}`
+            );
+
+            failed = true;
+            messageResponse = {
+                reason: "failed to send email",
+                data: `${err}`,
+            };
+        } else {
+            messageResponse = resp && resp.messageResponse;
+            hasEmailBounced = resp && resp.hasEmailBounced;
+        }
+    }
+
+    let messageStatus = "";
+    if (hasRepliedToPrevStep) messageStatus = "skipped";
+    else if (failed) messageStatus = "failed";
+    else if (hasEmailBounced) messageStatus = "bounced";
+    else messageStatus = "sent";
 
     let queryObj = { _id: spmsId };
-    let messageStatus = "sent";
-    if (failed) messageStatus = "failed";
-    else if (hasEmailBounced) messageStatus = "bounced";
 
     let updateObj = {
         message_status: messageStatus,
@@ -2472,4 +2511,92 @@ const removeInvalidProspectsFromCampaign = functionWrapper(
     fileName,
     "removeInvalidProspectsFromCampaign",
     _removeInvalidProspectsFromCampaign
+);
+
+async function _hasProspectRepliedToPreviousStep(
+    {
+        sequenceId,
+        sequenceProspectId,
+        currentSpmsId,
+        currentSequenceStepId,
+        accountId,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `sequenceId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!sequenceProspectId) throw `sequenceProspectId is invalid`;
+    if (!currentSpmsId) throw `currentSpmsId is invalid`;
+    if (!currentSequenceStepId) throw `currentSequenceStepId is invalid`;
+
+    let seqStepsQueryObj = { sequence: sequenceId, account: accountId };
+    let seqSteps = await SequenceStep.find(seqStepsQueryObj)
+        .sort("order")
+        .lean();
+    logg.info(`seqSteps.length: ${seqSteps.length}`);
+    logg.info(`seqSteps: ${JSON.stringify(seqSteps)}`);
+
+    let prevSeqStepId = null;
+    for (let i = 0; i < seqSteps.length; i++) {
+        let seqStep = seqSteps[i];
+        if (seqStep._id === currentSequenceStepId) {
+            break;
+        }
+        prevSeqStepId = seqStep._id;
+    }
+
+    if (!prevSeqStepId) {
+        logg.info(`no previous seqStepId found. So returning false`);
+        logg.info(`ended`);
+        return [false, null];
+    }
+
+    let queryObj = {
+        sequence: sequenceId,
+        sequence_prospect: sequenceProspectId,
+        sequence_step: prevSeqStepId,
+    };
+
+    let prevSpmsDoc = await SequenceProspectMessageSchedule.findOne(
+        queryObj
+    ).lean();
+    logg.info(`prevSpmsDoc: ${JSON.stringify(prevSpmsDoc)}`);
+
+    if (!prevSpmsDoc) {
+        throw `failed to find prevSpmsDoc for queryObj: ${JSON.stringify(
+            queryObj
+        )}`;
+    }
+
+    let prevMessageResponse = prevSpmsDoc.message_response;
+    let emailThreadId =
+        prevMessageResponse && prevMessageResponse.email_thread_id;
+    let senderUserId = prevSpmsDoc.sender;
+    if (emailThreadId && senderUserId) {
+        let [senderAuthObj, authObjErr] =
+            await GoogleUtils.refreshOrReturnToken(
+                { userId: senderUserId, returnBackAuthObj: true },
+                { txid }
+            );
+        if (authObjErr) throw authObjErr;
+
+        let [hasReplied, hasRepliedErr] = await GoogleUtils.hasEmailReplied(
+            { emailThreadId, senderAuthObj },
+            { txid }
+        );
+        if (hasRepliedErr) throw hasRepliedErr;
+        logg.info(`hasReplied: ${hasReplied}`);
+        logg.info(`ended`);
+        return [hasReplied, null];
+    }
+
+    logg.info(`ended with false`);
+    return [false, null];
+}
+
+const hasProspectRepliedToPreviousStep = functionWrapper(
+    fileName,
+    "hasProspectRepliedToPreviousStep",
+    _hasProspectRepliedToPreviousStep
 );

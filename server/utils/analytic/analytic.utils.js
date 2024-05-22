@@ -246,6 +246,8 @@ async function _getSequenceProspectAnalytics(
             if (actionType === AnalyticActionTypes.campaign_message_send) {
                 if (messageStatus === "bounced") {
                     actionType = "sent_bounced";
+                } else if (messageStatus === "skipped") {
+                    actionType = "sent_skipped";
                 } else {
                     actionType = "sent";
                 }
@@ -303,6 +305,7 @@ async function _getSequenceAnalytics(
                 delivered: 0,
                 bounced: 0,
                 opened: 0,
+                skipped: 0,
             };
         }
 
@@ -313,6 +316,11 @@ async function _getSequenceAnalytics(
                 analytic.analytic_metadata.message_status === "bounced"
             ) {
                 result[seqStepId].bounced++;
+            } else if (
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.message_status === "skipped"
+            ) {
+                result[seqStepId].skipped++;
             } else {
                 result[seqStepId].delivered++;
             }
