@@ -1406,7 +1406,7 @@ async function _executeCampaignSequenceStep(
         logg.info(`prospect has replied. so skipping this sending the message`);
 
         messageResponse = {
-            reason: "prospect has replied to previous step",
+            reason: "prospect_replied_to_previous_step",
             data: hasRepliedToPrevStep,
         };
     } else {
@@ -2569,7 +2569,26 @@ async function _hasProspectRepliedToPreviousStep(
         )}`;
     }
 
+    let prevMessageStatus = prevSpmsDoc.message_status;
     let prevMessageResponse = prevSpmsDoc.message_response;
+    if (prevMessageStatus === "skipped") {
+        let prevMessageReason =
+            prevMessageResponse && prevMessageResponse.reason;
+        if (prevMessageReason === "prospect_replied_to_previous_step") {
+            logg.info(
+                `since prospect replied to some old previous step, so considering as replied`
+            );
+            let result = prevMessageResponse && prevMessageResponse.data;
+            logg.info(`result: ${JSON.stringify(result)}`);
+            logg.info(`ended`);
+            return [result, null];
+        } else {
+            logg.info(`since prospect did not reply to some old previous step`);
+            logg.info(`ended`);
+            return [false, null];
+        }
+    }
+
     let emailThreadId =
         prevMessageResponse && prevMessageResponse.email_thread_id;
     let senderUserId = prevSpmsDoc.sender;
@@ -2586,7 +2605,10 @@ async function _hasProspectRepliedToPreviousStep(
             { txid }
         );
         if (hasRepliedErr) throw hasRepliedErr;
-        logg.info(`hasReplied: ${hasReplied}`);
+        if (hasReplied) {
+            hasReplied.replied_sequence_step_id = prevSeqStepId;
+        }
+        logg.info(`hasReplied: ${JSON.stringify(hasReplied)}`);
         logg.info(`ended`);
         return [hasReplied, null];
     }
