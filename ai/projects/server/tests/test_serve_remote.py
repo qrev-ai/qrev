@@ -11,9 +11,9 @@ from qai.server.serve import app
 
 log = getLogger(__name__)
 
-REMOTE_TEST = strtobool(os.getenv("TEST_REMOTE", "False"))
+REMOTE_TEST = strtobool(os.getenv("TEST_REMOTE", "True"))
 if not REMOTE_TEST:
-    log.warn("Skipping remote tests for test_server_remote.py. enable by TEST_REMOTE=True")
+    log.warning("Skipping remote tests for test_server_remote.py. enable by TEST_REMOTE=True")
 
 if "CHROMA_SERVER_AUTH_CREDENTIALS" in os.environ:
     settings = Settings(
