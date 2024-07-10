@@ -1,0 +1,49 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
+[tool.poetry]
+authors = ["parnell <152523161+leeparnell@users.noreply.github.com>"]
+description = "Qai AI API"
+name = "qai-ai"
+packages = [{from = "src", include = "qai"}]
+readme = "README.md"
+version = "0.5.2.3"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+chromadb = "^0.4.22"
+dataclasses-json = "^0.6.4"
+langchain-community = "^0.0.34"
+llama-index = "^0.10.30"
+llama-index-embeddings-huggingface = "^0.2.0"
+llama-index-vector-stores-chroma = "^0.1.7"
+openai = "^1.23.2"
+pandas = "^2.2.1"
+pi-conf = "^0.7.7.5"
+pi-log = "^0.5.7.3"
+qai-storage = {develop = true, path = "../storage"}
+termcolor = "^2.4.0"
+
+[[tool.poetry.source]]
+name = "pypi"
+priority = "primary"
+
+[[tool.poetry.source]]
+name = "pytorch-gpu-src"
+priority = "explicit"
+url = "https://download.pytorch.org/whl/cu118"
+
+[[tool.poetry.source]]
+name = "pytorch-cpu-src"
+priority = "explicit"
+url = "https://download.pytorch.org/whl/cpu"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+
+[tool.tomlsort]
+all = true
+in_place = true
+overrides."tool.poetry.dependencies".first = ["python"]

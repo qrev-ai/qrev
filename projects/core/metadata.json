@@ -1,0 +1,99 @@
+{
+  "id": "6da0aed9-ee6e-4c7e-ae47-6dae1266e610",
+  "class_name": "qai.core.meta.Meta",
+  "path": "/Users/parnell/workspace/qrev/ai/projects/core/src",
+  "files": [],
+  "directories": [
+    {
+      "id": "b8970dae-c2dc-4517-b48d-36c399c13898",
+      "parent_id": "6da0aed9-ee6e-4c7e-ae47-6dae1266e610",
+      "class_name": "qai.core.meta.MetaDir",
+      "path": "qai",
+      "files": [],
+      "directories": [
+        {
+          "id": "97ca584b-ca5c-4442-85b3-23bf92e90163",
+          "parent_id": "b8970dae-c2dc-4517-b48d-36c399c13898",
+          "class_name": "qai.core.meta.MetaDir",
+          "path": "core",
+          "files": [
+            {
+              "id": "7408c778-3b8c-4dfe-ac95-97f72c8c47e7",
+              "parent_id": "97ca584b-ca5c-4442-85b3-23bf92e90163",
+              "class_name": "qai.core.meta.MetaFile",
+              "path": "__init__.py"
+            },
+            {
+              "id": "9e701c9e-b275-4dac-9207-11ebc161acb0",
+              "parent_id": "97ca584b-ca5c-4442-85b3-23bf92e90163",
+              "class_name": "qai.core.meta.MetaFile",
+              "path": "message.py"
+            },
+            {
+              "id": "6e6e5625-8adc-4583-b3a2-924393f1a91d",
+              "parent_id": "97ca584b-ca5c-4442-85b3-23bf92e90163",
+              "class_name": "qai.core.meta.MetaFile",
+              "path": "t.py"
+            },
+            {
+              "id": "412107b6-e428-4a58-b341-7d7496dc898a",
+              "parent_id": "97ca584b-ca5c-4442-85b3-23bf92e90163",
+              "class_name": "qai.core.meta.MetaFile",
+              "path": "meta.py"
+            }
+          ],
+          "directories": [
+            {
+              "id": "2f723be0-bfd2-43e5-8b71-50deb1ce5810",
+              "parent_id": "97ca584b-ca5c-4442-85b3-23bf92e90163",
+              "class_name": "qai.core.meta.MetaDir",
+              "path": "__pycache__",
+              "files": [
+                {
+                  "id": "2feb0f9b-c3ac-4cf9-9d0e-992511ed3acd",
+                  "parent_id": "2f723be0-bfd2-43e5-8b71-50deb1ce5810",
+                  "class_name": "qai.core.meta.MetaFile",
+                  "path": "t.cpython-312.pyc"
+                },
+                {
+                  "id": "c10780b8-1625-4033-9dbb-923afad43416",
+                  "parent_id": "2f723be0-bfd2-43e5-8b71-50deb1ce5810",
+                  "class_name": "qai.core.meta.MetaFile",
+                  "path": "message.cpython-311.pyc"
+                },
+                {
+                  "id": "77075596-afb7-456d-a8bc-835b727333a2",
+                  "parent_id": "2f723be0-bfd2-43e5-8b71-50deb1ce5810",
+                  "class_name": "qai.core.meta.MetaFile",
+                  "path": "meta.cpython-312.pyc"
+                },
+                {
+                  "id": "c9104401-2c03-42c6-9ce1-cd706198d2e3",
+                  "parent_id": "2f723be0-bfd2-43e5-8b71-50deb1ce5810",
+                  "class_name": "qai.core.meta.MetaFile",
+                  "path": "meta.cpython-311.pyc"
+                },
+                {
+                  "id": "bfc15a87-b0eb-43f0-afad-558e3da0aa03",
+                  "parent_id": "2f723be0-bfd2-43e5-8b71-50deb1ce5810",
+                  "class_name": "qai.core.meta.MetaFile",
+                  "path": "__init__.cpython-312.pyc"
+                },
+                {
+                  "id": "aa85368c-5430-464f-ae43-4bbb93f7f1e2",
+                  "parent_id": "2f723be0-bfd2-43e5-8b71-50deb1ce5810",
+                  "class_name": "qai.core.meta.MetaFile",
+                  "path": "__init__.cpython-311.pyc"
+                }
+              ],
+              "directories": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metas": [],
+  "created_at": "2024-05-28T23:08:43.505481Z",
+  "updated_at": "2024-05-28T23:08:43.505611Z"
+}

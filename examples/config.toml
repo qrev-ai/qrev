@@ -1,0 +1,109 @@
+
+version = "1.1"
+build_time = "<dynamically replaced>"
+git_hash = "<dynamically replaced>"
+
+CHROMA_SERVER_AUTH_CREDENTIALS="<auth credentials>"
+
+
+[openai]
+api_key = "<api key>"
+
+## Model parameters
+[model]
+name = "gpt-3.5-turbo"
+temperature = 0.0
+
+## Database connection settings, for campaign information, people/companies
+[db]
+host="<host>"
+user="<user>"
+password="<password>"
+dbname="<dbname>"
+port=3306
+scheme="mysql+mysqlconnector"
+
+[mongo]
+uri = "mongodb+srv://<url reference to back end mongo db>"
+db = "<db name>"
+collection = "<collection name>"
+
+[email]
+on_complete_emails_url = "<url to let server know emails are complete>"
+delay_complete_request = 1 # seconds
+
+
+
+[server]
+allowed_tokens = [
+    "<allowed token1>",
+    "<allowed token2>",
+]
+
+## Chroma http server connection settings
+[chroma]
+type = "http"
+host = "localhost"
+port = 8000
+
+
+[huggingface]
+api_token = "<hugging face api token>"
+
+[aws]
+repo = "37348591923847.dkr.ecr.us-east-1.amazonaws.com/myrepo"
+access_key = "<access key>"
+
+chatbot_bucket = "suparev-chat-storage"
+company_ids_file = "suparev-company-ids.json"
+history_file = "chatbot-history/company-<company_id>/<user_id>-history.json"
+enabled = false
+
+
+
+# -----------------------------------
+# Clients
+# -----------------------------------
+[client]
+current_client = "client_1_name" ## should change
+
+[client.client_1_name.mongo]
+uri = "mongodb+srv://<url reference to mongo db>"
+database = "client-<client 1 name>"
+
+[client.client_2_name.mongo]
+uri = "mongodb+srv://<url reference to mongo db>"
+database = "client-<client 2 name>"
+
+# -----------------------------------
+# External sources
+# -----------------------------------
+[nubela]
+api_key="<api key>"
+
+[pdl]
+api_key="<api key>"
+
+
+# -----------------------------------
+# Email Verification Configuration
+# -----------------------------------
+[mongo.email_verification]
+# toml locations of any email verification service to be used
+millionverifier = "millionverifier" # toml location
+zerobounce = "zerobounce" # toml location
+
+## Email Verification Services
+[millionverifier] 
+api_key = "<api key>"
+
+uri = "mongodb+srv://<url reference to mongo db>"
+database = "external-sources"
+collection = "email-verifications"
+
+[zerobounce]
+api_key = "<api key>"
+
+uri = "mongodb+srv://<url reference to mongo db>"
+database = "external-sources"
+collection = "email-verifications"

@@ -1,0 +1,19 @@
+[build-system]
+build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core"]
+
+[tool.poetry]
+authors = ["parnell <3028114+parnell@users.noreply.github.com>"]
+description = ""
+name = "qai-template"
+packages = [{from = "src", include = "qai"}]
+readme = "README.md"
+version = "0.1"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+
+[tool.tomlsort]
+all = true
+in_place = true
+overrides."tool.poetry.dependencies".first = ["python"]

@@ -2,18 +2,15 @@
 node_modules
 
 ## logs
-rejections.log
-exception.log
+*.log
 
 ## Ignore workspace information
 projects/*/.venv
-projects/*/poetry.toml
 
 ## App
-test_conversational_db
 results
 
-## Staging Directories
+## Docker Staging Directories
 docker_staging*
 
 ## System
@@ -21,21 +18,22 @@ docker_staging*
 
 ## Poetry
 .poetry.toml
+poetry.toml
 
 ## Python
-*.py[co]
 __pycache__
+.installed.cfg
 *.egg
 *.egg-info
+*.py[co]
+bin
 build
+develop-eggs
+dist
 eggs
 parts
-bin
-var
 sdist
-develop-eggs
-.installed.cfg
-dist
+var
 
 ## Installer logs
 pip-log.txt
@@ -51,16 +49,15 @@ poetry.lock
 ## caches
 cachedir
 .cache
+.mypy_cache
 .pytest_cache
 
 ## Mac
 .DS_Store
 
-## temp files
+## Other Ignore 
+.private
 *.bk.*
-test_retrieval_*
-tempdb
-t.csv
 errors.txt
 
 ## vscode
