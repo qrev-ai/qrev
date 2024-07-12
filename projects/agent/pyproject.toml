@@ -43,7 +43,7 @@ python-dateutil = "2.8.2"
 python-dotenv = "^1.0.1"
 qai-ai = {develop = true, path = "../ai"}
 qai-core = {develop = true, path = "../core"}
-pdl-api = { path = "../../../../pdl_api/pdl-api", develop = true }
+pdl-api = { path = "../../../../pdl-api", develop = true }
 sqlalchemy = "^2.0.29"
 pi-blink = "^1.0.3"
 instructor = "^1.3.2"
