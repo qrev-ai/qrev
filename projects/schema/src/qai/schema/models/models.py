@@ -683,6 +683,18 @@ class Campaign(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
             v = [domain.lstrip("http://").lstrip("https://").lstrip("www.") for domain in v]
         return v
 
+class ContactList(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
+    name: str = Field(..., description="The name of the contact list")
+    description: Optional[str] = Field(default=None, description="The description of the contact list")
+
+    contacts: list[Link[Contact]] = Field(
+        default=None, description="The references to the people of the contact list"
+    )
+
+    class Settings:
+        name = "contact_lists"
+        equality_fields = ["name"]
+        keep_nulls = False
 
 class CampaignStep(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
     campaign_id: PydanticObjectId = Field(..., description="The ID of the campaign")
