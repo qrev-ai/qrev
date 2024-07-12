@@ -17,8 +17,8 @@ from beanie import Document
 from beanie import Link as BeanieLink
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindOne as BeanieFindOne
-from flexible_datetime import FlexDateTime
-from nameparser import HumanName  # type : ignore
+from flexible_datetime import flextime
+from nameparser import HumanName  # type: ignore
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from qai.schema.extensions import ExtendedDocument
 
@@ -133,7 +133,7 @@ class Labels(BaseModel):
 
 
 class ExpiredAtDoc(BaseModel):
-    expired_at: Optional[FlexDateTime] = Field(
+    expired_at: Optional[flextime] = Field(
         default=None, description="The timestamp of the document expiration"
     )
 
@@ -156,22 +156,22 @@ class Deleteable(BaseModel):
 
 
 class DateRange(BaseModel):
-    start: Optional[FlexDateTime] = Field(default=None, description="The start date of the range")
-    end: Optional[FlexDateTime] = Field(default=None, description="The end date of the range")
+    start: Optional[flextime] = Field(default=None, description="The start date of the range")
+    end: Optional[flextime] = Field(default=None, description="The end date of the range")
 
 
 class Updateable(BaseModel):
-    updated_at: Optional[FlexDateTime] = Field(
+    updated_at: Optional[flextime] = Field(
         default=None, description="The timestamp of the document update"
     )
-    last_checked_at: Optional[FlexDateTime] = Field(
+    last_checked_at: Optional[flextime] = Field(
         default=None, description="The timestamp of the last check"
     )
 
 
 class CreatedAtDoc(ExtendedDocument):
-    created_at: FlexDateTime = Field(
-        default_factory=FlexDateTime, description="The timestamp of the document creation"
+    created_at: flextime = Field(
+        default_factory=flextime, description="The timestamp of the document creation"
     )
 
 
