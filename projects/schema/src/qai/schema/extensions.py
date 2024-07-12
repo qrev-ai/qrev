@@ -186,18 +186,18 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
             if val is None and not nones_ok:
                 return False
             try:
-                other = getattr(other, field_name)
+                oval = getattr(other, field_name)
             except AttributeError:
                 if not nones_ok:
                     return False
-                other = None
+                oval = None
             if to_lower:
                 if isinstance(val, str):
                     val = val.lower()
-                if isinstance(other, str):
-                    other = other.lower()
+                if isinstance(oval, str):
+                    oval = oval.lower()
 
-            if val != other:
+            if val != oval:
                 return False
         return True
 
