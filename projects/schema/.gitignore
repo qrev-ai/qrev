@@ -52,6 +52,7 @@ cachedir
 .mypy_cache
 .pytest_cache
 
+
 ## Mac
 .DS_Store
 
@@ -59,6 +60,7 @@ cachedir
 .private
 *.bk.*
 errors.txt
+libpostal
 
 ## vscode
 .vscode

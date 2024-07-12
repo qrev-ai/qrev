@@ -16,14 +16,16 @@ pydantic = {extras = ["email"], version = "^2.7.4"}
 nameparser = "^1.1.3"
 beanie = "^1.26.0"
 phonenumbers = "^8.13.39"
-flexible-datetime = {path = "../../../../flexible-datetime", develop = true}
-pi-conf = {path = "../../../../pi-conf", develop = true}
+flexible-datetime = "^0.3.2"
+pi-conf = "^0.7.8.3"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
 
 [tool.mypy]
 ignore_missing_imports = true
+
+
 
 
 
