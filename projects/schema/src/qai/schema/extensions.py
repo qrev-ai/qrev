@@ -26,6 +26,8 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from pydantic._internal._model_construction import ModelMetaclass
 from pymongo.client_session import ClientSession
 
+from qai.schema.mergers.merge import Priority, merge_model, NORMAL_PRIORITY
+
 T = TypeVar("T", bound=Document)
 ET = TypeVar("ET", bound="ExtendedDocument")
 
@@ -155,12 +157,26 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
     def from_str(cls: type[ET], s: str) -> ET:
         raise NotImplementedError("from_str must be implemented in the subclass of Extended")
 
+    def __merge__(self: ET, other: ET, self_priority: Priority, other_priority: Priority) -> ET:
+        """
+        Merge self with other
+        """
+        merge_model(target=self, source=other, target_priority=self_priority, source_priority=other_priority)
+        return self
+
+    def merge(self: ET, other: ET, self_priority: Priority = NORMAL_PRIORITY, other_priority: Priority = NORMAL_PRIORITY) -> ET:
+        """
+        Merge self with other
+        """
+        return self.__merge__(other, self_priority, other_priority)
+
+
     def __str__(self) -> str:
         """
         Return a string representation of the document. doesn't return the None fields
         """
         fields = []
-        for field in self.dict().items():
+        for field in self.model_fields.items():
             if field[1] is not None:
                 fields.append(f"{field[0]}={field[1]}")
         return ", ".join(fields)

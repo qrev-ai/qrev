@@ -6,13 +6,13 @@ requires = ["poetry-core"]
 authors = ["parnell <3028114+parnell@users.noreply.github.com>"]
 description = ""
 name = "qai-schema"
-packages = [{from = "src", include = "qai"}]
+packages = [{ from = "src", include = "qai" }]
 readme = "README.md"
-version = "0.1"
+version = "0.1.1"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-pydantic = {extras = ["email"], version = "^2.7.4"}
+pydantic = { extras = ["email"], version = "^2.7.4" }
 nameparser = "^1.1.3"
 beanie = "^1.26.0"
 phonenumbers = "^8.13.39"
@@ -24,10 +24,6 @@ pytest = "^8.2.2"
 
 [tool.mypy]
 ignore_missing_imports = true
-
-
-
-
 
 
 [tool.poetry.group.parsers.dependencies]

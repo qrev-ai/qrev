@@ -20,6 +20,7 @@ from beanie.odm.queries.find import FindOne as BeanieFindOne
 from flexible_datetime import flextime
 from nameparser import HumanName  # type: ignore
 from pydantic import BaseModel, EmailStr, Field, field_validator
+
 from qai.schema.extensions import ExtendedDocument
 
 if TYPE_CHECKING:
@@ -29,6 +30,19 @@ if TYPE_CHECKING:
 else:
     Link = BeanieLink
     FindOne = BeanieFindOne
+
+
+def clean_domain(domain: str) -> str:
+    # Remove protocol if present
+    domain = re.sub(r"^https?://", "", domain)
+
+    # Remove www. if present
+    domain = re.sub(r"^www\.", "", domain)
+
+    # Remove any trailing slash
+    domain = domain.rstrip("/")
+
+    return domain
 
 
 class ProvenanceType(StrEnum):
@@ -270,6 +284,13 @@ class Address(ExtendedDocument):
     )
     raw: Optional[str] = Field(default=None, description="The raw address, to be parsed")
 
+    def equality_hash(self):
+        ## make a tuple of all equality_fields
+        all_kv = self.model_fields.items()
+        return tuple(
+            [getattr(self, k) for k, v in all_kv if k in self.Settings.equality_fields]
+        )
+
     class Settings:
         equality_fields = ["street", "street2", "city", "state", "postal_code", "country"]
 
@@ -390,14 +411,16 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
         # return work_history[0].title
         return self.work_history[0].title
 
-
     def match_query(self) -> dict[str, Any]:
-        query: List[dict[str, Any]] = []
+        query: list[dict[str, Any]] = []
 
         # Match by email
         if self.emails and isinstance(self.emails, list):
-            email_conditions = [{"emails.address": re.compile(f"^{re.escape(email.address)}$", re.IGNORECASE)} 
-                                for email in self.emails if email.address]
+            email_conditions = [
+                {"emails.address": re.compile(f"^{re.escape(email.address)}$", re.IGNORECASE)}
+                for email in self.emails
+                if email.address
+            ]
             if email_conditions:
                 query.append({"$or": email_conditions})
 
@@ -406,20 +429,32 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
             for address in self.addresses:
                 address_conditions = {}
                 if self.name.first:
-                    address_conditions["name.first"] = re.compile(f"^{re.escape(self.name.first)}$", re.IGNORECASE)
+                    address_conditions["name.first"] = re.compile(
+                        f"^{re.escape(self.name.first)}$", re.IGNORECASE
+                    )
                 if self.name.last:
-                    address_conditions["name.last"] = re.compile(f"^{re.escape(self.name.last)}$", re.IGNORECASE)
+                    address_conditions["name.last"] = re.compile(
+                        f"^{re.escape(self.name.last)}$", re.IGNORECASE
+                    )
                 if address.street:
-                    address_conditions["addresses.street"] = re.compile(f"^{re.escape(address.street)}$", re.IGNORECASE)
+                    address_conditions["addresses.street"] = re.compile(
+                        f"^{re.escape(address.street)}$", re.IGNORECASE
+                    )
                 if address.city:
-                    address_conditions["addresses.city"] = re.compile(f"^{re.escape(address.city)}$", re.IGNORECASE)
+                    address_conditions["addresses.city"] = re.compile(
+                        f"^{re.escape(address.city)}$", re.IGNORECASE
+                    )
                 if address.state:
-                    address_conditions["addresses.state"] = re.compile(f"^{re.escape(address.state)}$", re.IGNORECASE)
+                    address_conditions["addresses.state"] = re.compile(
+                        f"^{re.escape(address.state)}$", re.IGNORECASE
+                    )
                 if address.postal_code:
                     address_conditions["addresses.postal_code"] = address.postal_code
                 if address.country:
-                    address_conditions["addresses.country"] = re.compile(f"^{re.escape(address.country)}$", re.IGNORECASE)
-                
+                    address_conditions["addresses.country"] = re.compile(
+                        f"^{re.escape(address.country)}$", re.IGNORECASE
+                    )
+
                 if len(address_conditions) > 0:
                     query.append({"$and": [{k: v} for k, v in address_conditions.items()]})
         ## TODO - clean up match conditions
@@ -439,12 +474,14 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
         if self.social_media and isinstance(self.social_media, list):
             for sm in self.social_media:
                 if sm.url and sm.type:
-                    query.append({
-                        "$and": [
-                            {"social_media.url": sm.url},
-                            {"social_media.type": str(sm.type)}
-                        ]
-                    })
+                    query.append(
+                        {
+                            "$and": [
+                                {"social_media.url": sm.url},
+                                {"social_media.type": str(sm.type)},
+                            ]
+                        }
+                    )
 
         # # Match by phone number
         # if self.phone_numbers and isinstance(self.phone_numbers, list):
@@ -559,14 +596,10 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
     def find_by_linkedin_url(cls, linkedin_url: str) -> dict[str, Any]:
         return {"social_media.url": linkedin_url}
 
-    @classmethod
-    def find_by_linkedin_url(cls, linkedin_url: str) -> dict[str, Any]:
-        return {"social_media.url": linkedin_url}
-
     @field_validator("domains", mode="before")
     def strip_protocols(cls, v):
         if isinstance(v, list):
-            v = [domain.lstrip("http://").lstrip("https://").lstrip("www.") for domain in v]
+            return [clean_domain(domain) for domain in v]
         return v
 
     def eq(self, other, nones_ok: bool = False, to_lower: bool = False):
@@ -582,6 +615,10 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
             return self.name == other.name and self.domains == other.domains
         return True
 
+    def full_print(self):
+        """Print the company with all its fields"""
+        return self.model_dump(by_alias=True, exclude_none=True)
+
 
 class Contact(CreatedAtDoc, Taggable, Labels, Deleteable):
     """A snapshot in time of a person for outreach purposes."""
@@ -595,6 +632,9 @@ class Contact(CreatedAtDoc, Taggable, Labels, Deleteable):
         default=None, description="The reference to the company"
     )
     email: Optional[Email] = Field(default=None, description="The email of the contact")
+    email_verifications: Optional[dict[str, dict[str, Any]]] = Field(
+        default=None, description="The email verifications of the contact"
+    )
     phone: Optional[PhoneNumber] = Field(
         default=None, description="The phone number of the contact"
     )
@@ -683,9 +723,12 @@ class Campaign(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
             v = [domain.lstrip("http://").lstrip("https://").lstrip("www.") for domain in v]
         return v
 
+
 class ContactList(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
     name: str = Field(..., description="The name of the contact list")
-    description: Optional[str] = Field(default=None, description="The description of the contact list")
+    description: Optional[str] = Field(
+        default=None, description="The description of the contact list"
+    )
 
     contacts: list[Link[Contact]] = Field(
         default=None, description="The references to the people of the contact list"
@@ -695,6 +738,7 @@ class ContactList(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
         name = "contact_lists"
         equality_fields = ["name"]
         keep_nulls = False
+
 
 class CampaignStep(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
     campaign_id: PydanticObjectId = Field(..., description="The ID of the campaign")
@@ -738,11 +782,11 @@ class CampaignBatch(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
 ## Load optional external parsers
 try:
     print("Loading external parsers")
-    from qai.schema.parsers.address_parser import transform_address
+    # from qai.schema.parsers.address_parser import transform_address
 
     print("Loaded external parsers")
 
-    Address.from_str = transform_address
+    # Address.from_str = transform_address
     print("Address.from_str set")
 except ImportError as e:
     print(f"Failed to load external parsers: {e}")
