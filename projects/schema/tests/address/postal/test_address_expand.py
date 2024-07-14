@@ -1,7 +1,14 @@
 import pytest
-from postal.expand import expand_address
+try:
+    from postal.expand import expand_address
+    postal_available = True
+except ImportError:
+    postal_available = False
+    expand_address = lambda x: x
 
+skip_if_no_postal = pytest.mark.skipif(not postal_available, reason="postal package is not installed")
 
+@skip_if_no_postal
 def test_us_address():
     address = "1600 Pennsylvania Ave NW, Washington, DC 20500"
     a = expand_address(address)
@@ -13,7 +20,7 @@ def test_us_address():
     ]
     assert sorted(a) == sorted(expected)
 
-
+@skip_if_no_postal
 def test_uk_address():
     address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
     a = expand_address(address)
@@ -27,14 +34,14 @@ def test_uk_address():
     ]
     assert sorted(a) == sorted(expected)
 
-
+@skip_if_no_postal
 def test_fr_address():
     address = "Eiffel Tower, Champ de Mars, 5 Avenue Anatole France, 75007 Paris, France"
     a = expand_address(address)
     expected = ["eiffel tower champ de marches 5 avenue anatole france 75007 paris france"]
     assert sorted(a) == sorted(expected)
 
-
+@skip_if_no_postal
 def test_au_address():
     address = "1 Macquarie Street, Sydney, NSW 2000, Australia"
     a = expand_address(address)
@@ -44,7 +51,7 @@ def test_au_address():
     ]
     assert sorted(a) == sorted(expected)
 
-
+@skip_if_no_postal
 def test_in_address():
     address = "Mahatma Gandhi Road, Mumbai, Maharashtra 400001, India"
     a = expand_address(address)

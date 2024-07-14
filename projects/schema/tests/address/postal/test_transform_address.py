@@ -1,9 +1,20 @@
 import pytest
 
 from qai.schema.models.models import Address
-from qai.schema.parsers.address_parser_postal import parse_address
 
+try:
+    from qai.schema.parsers.address_parser_postal import parse_address
 
+    postal_available = True
+except ImportError:
+    postal_available = False
+    parse_address = lambda x: x #type: ignore
+
+skip_if_no_postal = pytest.mark.skipif(
+    not postal_available, reason="postal package is not installed"
+)
+
+@skip_if_no_postal
 def test_transform_us_address():
     ## TODO: DC is not technically a state, and instead is a territory.
     address = "1600 Pennsylvania Ave NW, Washington, DC 20500"
@@ -19,7 +30,7 @@ def test_transform_us_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
-
+@skip_if_no_postal
 def test_transform_us_address_city():
     address = "Stillwater, Oklahoma, United States"
     expected = Address(
@@ -34,7 +45,7 @@ def test_transform_us_address_city():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
-
+@skip_if_no_postal
 def test_transform_uk_address():
     address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
     expected = Address(
@@ -49,7 +60,7 @@ def test_transform_uk_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
-
+@skip_if_no_postal
 def test_transform_fr_address():
     address = "5 Avenue Anatole, 75007 Paris, France"
     expected = Address(
@@ -64,7 +75,7 @@ def test_transform_fr_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
-
+@skip_if_no_postal
 def test_transform_au_address():
     address = "1 Macquarie Street, Sydney, NSW 2000, Australia"
     expected = Address(
@@ -79,7 +90,7 @@ def test_transform_au_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
-
+@skip_if_no_postal
 def test_transform_in_address():
     address = "Mahatma Gandhi Road, Mumbai, Maharashtra 400001, India"
     expected = Address(

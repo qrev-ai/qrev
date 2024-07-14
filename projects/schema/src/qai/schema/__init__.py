@@ -1,6 +1,6 @@
 from qai.schema.extensions import DocExtensions as DocExtensions
 from qai.schema.extensions import ExtendedDocument as ExtendedDocument
-from qai.schema.models.models import Address as Address
+from qai.schema.models.address import Address as Address
 from qai.schema.models.models import Campaign as Campaign
 from qai.schema.models.models import CampaignBatch as CampaignBatch
 from qai.schema.models.models import CampaignOptions as CampaignOptions

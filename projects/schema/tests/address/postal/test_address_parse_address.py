@@ -1,7 +1,19 @@
 import pytest
-from postal.parser import parse_address
+
+try:
+    from postal.parser import parse_address
+
+    postal_available = True
+except ImportError:
+    postal_available = False
+    parse_address = lambda x: x
+
+skip_if_no_postal = pytest.mark.skipif(
+    not postal_available, reason="postal package is not installed"
+)
 
 
+@skip_if_no_postal
 def test_us_address():
     address = "1600 Pennsylvania Ave NW, Washington, DC 20500"
     a = parse_address(address)
@@ -14,6 +26,8 @@ def test_us_address():
     ]
     assert a == expected
 
+
+@skip_if_no_postal
 def test_us_address_city():
     address = "Washington DC"
     a = parse_address(address)
@@ -22,6 +36,8 @@ def test_us_address_city():
     ]
     assert a == expected
 
+
+@skip_if_no_postal
 def test_us_address_city_state():
     address = "Stillwater, Oklahoma"
     a = parse_address(address)
@@ -31,6 +47,8 @@ def test_us_address_city_state():
     ]
     assert a == expected
 
+
+@skip_if_no_postal
 def test_uk_address():
     address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
     a = parse_address(address)
@@ -44,6 +62,7 @@ def test_uk_address():
     assert a == expected
 
 
+@skip_if_no_postal
 def test_fr_address():
     address = "Eiffel Tower, Champ de Mars, 5 Avenue Anatole France, 75007 Paris, France"
     a = parse_address(address)
@@ -59,6 +78,7 @@ def test_fr_address():
     assert a == expected
 
 
+@skip_if_no_postal
 def test_au_address():
     address = "1 Macquarie Street, Sydney, NSW 2000, Australia"
     a = parse_address(address)
@@ -73,6 +93,7 @@ def test_au_address():
     assert a == expected
 
 
+@skip_if_no_postal
 def test_in_address():
     address = "Mahatma Gandhi Road, Mumbai, Maharashtra 400001, India"
     a = parse_address(address)
