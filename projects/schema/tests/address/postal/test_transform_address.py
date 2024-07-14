@@ -1,6 +1,8 @@
 import pytest
-from qai.schema.parsers.address_parser import transform_address
+
 from qai.schema.models.models import Address
+from qai.schema.parsers.address_parser_postal import parse_address
+
 
 def test_transform_us_address():
     ## TODO: DC is not technically a state, and instead is a territory.
@@ -12,10 +14,11 @@ def test_transform_us_address():
         postal_code="20500",
         country=None,
         current=None,
-        notes=None
+        notes=None,
     )
-    result = transform_address(address)
+    result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 def test_transform_us_address_city():
     address = "Stillwater, Oklahoma, United States"
@@ -26,10 +29,11 @@ def test_transform_us_address_city():
         postal_code=None,
         country="united states",
         current=False,
-        notes=None
+        notes=None,
     )
-    result = transform_address(address)
+    result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 def test_transform_uk_address():
     address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
@@ -40,10 +44,11 @@ def test_transform_uk_address():
         postal_code="sw1a 2aa",
         country="united kingdom",
         current=False,
-        notes=None
+        notes=None,
     )
-    result = transform_address(address)    
+    result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 def test_transform_fr_address():
     address = "5 Avenue Anatole, 75007 Paris, France"
@@ -54,10 +59,11 @@ def test_transform_fr_address():
         postal_code="75007",
         country="france",
         current=False,
-        notes=None
+        notes=None,
     )
-    result = transform_address(address)
+    result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 def test_transform_au_address():
     address = "1 Macquarie Street, Sydney, NSW 2000, Australia"
@@ -68,10 +74,11 @@ def test_transform_au_address():
         postal_code="2000",
         country="australia",
         current=False,
-        notes=None
+        notes=None,
     )
-    result = transform_address(address)
+    result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 def test_transform_in_address():
     address = "Mahatma Gandhi Road, Mumbai, Maharashtra 400001, India"
@@ -82,10 +89,11 @@ def test_transform_in_address():
         postal_code="400001",
         country="india",
         current=False,
-        notes=None
+        notes=None,
     )
-    result = transform_address(address)
+    result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-rP"])

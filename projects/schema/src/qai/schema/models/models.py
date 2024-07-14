@@ -13,6 +13,7 @@ from typing import (
     cast,
 )
 
+from addressformatting import AddressFormatter
 from beanie import Document
 from beanie import Link as BeanieLink
 from beanie import PydanticObjectId
@@ -22,6 +23,7 @@ from nameparser import HumanName  # type: ignore
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from qai.schema.extensions import ExtendedDocument
+from qai.schema.parsers.load_parsers import load_address_parser
 
 if TYPE_CHECKING:
     _T = TypeVar("_T", bound=Document)
@@ -287,12 +289,67 @@ class Address(ExtendedDocument):
     def equality_hash(self):
         ## make a tuple of all equality_fields
         all_kv = self.model_fields.items()
-        return tuple(
-            [getattr(self, k) for k, v in all_kv if k in self.Settings.equality_fields]
-        )
+        return tuple([getattr(self, k) for k, v in all_kv if k in self.Settings.equality_fields])
+
+    @field_validator("street", "street2", "city", "state", "postal_code", "country", "notes", "raw")
+    @classmethod
+    def strip_whitespace(cls, v: Optional[str]) -> Optional[str]:
+        return v.strip() if v else v
+
+    @classmethod
+    def from_str(cls: type["Address"], s: str, *args, **kwargs) -> "Address":
+        return cls.parse_address(s, *args, **kwargs)  # type: ignore
+
+    @classmethod
+    def parse_address(cls: type["Address"], s: str, *args, **kwargs) -> "Address":
+        if not hasattr(cls, "_parse_address"):
+            cls._parse_address = load_address_parser()
+        assert cls._parse_address, "No address parser loaded"
+        return cls._parse_address(cls, s, *args, **kwargs)
 
     class Settings:
         equality_fields = ["street", "street2", "city", "state", "postal_code", "country"]
+
+    def __str__(self) -> str:
+        return self.format_address(self)
+
+    @classmethod
+    def format_address(cls, address: "Address", one_line: bool = False) -> str:
+        address_dict = {
+            "road": address.street,
+            "house": address.street2,
+            "city": address.city,
+            "state": address.state,
+            "postcode": address.postal_code,
+            "country": address.country,
+        }
+
+        # Remove None values
+        data_dict = {k: v for k, v in address_dict.items() if v is not None}
+        formatter = AddressFormatter()
+        # Format the address using address-formatting
+        if one_line:
+            formatted_address = formatter.one_line(data_dict, country=address.country)
+        else:
+            formatted_address = formatter.format(data_dict, country=address.country)
+        # Ensure state is included if it's in the original address
+        if address.state and address.state not in formatted_address:
+            if one_line:
+                parts = formatted_address.split(", ")
+                if len(parts) >= 2:
+                    parts.insert(-1, address.state)
+                formatted_address = ", ".join(parts)
+            else:
+                lines = formatted_address.split("\n")
+                if len(lines) >= 2:
+                    lines.insert(-1, address.state)
+                formatted_address = "\n".join(lines)
+
+        # Remove any whitespace before or after newlines, and strip the entire string
+        formatted_address = re.sub(r"\s*\n\s*", "\n", formatted_address.strip())
+        if not formatted_address:
+            formatted_address = address.raw or ""
+        return formatted_address.strip()
 
 
 class Email(ExtendedDocument, ExpiredAtDoc):
@@ -777,20 +834,6 @@ class CampaignBatch(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
         name = "campaign_batches"
         equality_fields = ["campaign_id", "campaign_step_id", "order", "name"]
         keep_nulls = False
-
-
-## Load optional external parsers
-try:
-    print("Loading external parsers")
-    # from qai.schema.parsers.address_parser import transform_address
-
-    print("Loaded external parsers")
-
-    # Address.from_str = transform_address
-    print("Address.from_str set")
-except ImportError as e:
-    print(f"Failed to load external parsers: {e}")
-    pass
 
 
 def _sort_job_key(obj: Job):

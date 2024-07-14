@@ -154,7 +154,7 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
         )
 
     @classmethod
-    def from_str(cls: type[ET], s: str) -> ET:
+    def from_str(cls: type[ET], s: str, *args, **kwargs) -> ET:
         raise NotImplementedError("from_str must be implemented in the subclass of Extended")
 
     def __merge__(self: ET, other: ET, self_priority: Priority, other_priority: Priority) -> ET:
