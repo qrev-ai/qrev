@@ -1,29 +1,26 @@
-import asyncio
 import re
-from datetime import UTC, datetime
 from enum import StrEnum
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Optional,
-    Self,
-    Sequence,
-    TypeAlias,
-    TypeVar,
-    cast,
-)
+from typing import TYPE_CHECKING, Any, Optional, Self, TypeAlias, TypeVar, cast
 
-from addressformatting import AddressFormatter
 from beanie import Document
 from beanie import Link as BeanieLink
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindOne as BeanieFindOne
-from flexible_datetime import flextime
 from nameparser import HumanName  # type: ignore
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from qai.schema.extensions import ExtendedDocument
-from qai.schema.parsers.load_parsers import load_address_parser
+
+from .addons import (
+    CreatedAtDoc,
+    DateRange,
+    Deleteable,
+    ExpiredAtDoc,
+    Labels,
+    Provenance,
+    Taggable,
+)
+from .address import Address
 
 if TYPE_CHECKING:
     _T = TypeVar("_T", bound=Document)
@@ -140,57 +137,6 @@ class PhoneType(StrEnum):
     FAX = "fax"
 
 
-class Taggable(BaseModel):
-    tags: Optional[list[str]] = Field(default=None, description="The tags for the document")
-
-
-class Labels(BaseModel):
-    tags: Optional[list[str]] = Field(default=None, description="The tags for the document")
-
-
-class ExpiredAtDoc(BaseModel):
-    expired_at: Optional[flextime] = Field(
-        default=None, description="The timestamp of the document expiration"
-    )
-
-
-class Provenance(BaseModel):
-    source: str = Field(default=None, description="The source of the document")
-    source_id: Optional[PydanticObjectId] = Field(
-        default=None, description="The source id of the document"
-    )
-    str_id: Optional[str] = Field(
-        default=None, description="The source id of the document if not inserted into the database"
-    )
-
-
-class Deleteable(BaseModel):
-    deleted_at: Optional[datetime] = Field(
-        default=None, description="The timestamp of the document deletion"
-    )
-    is_deleted: bool = Field(default=False, description="Whether the document is deleted")
-
-
-class DateRange(BaseModel):
-    start: Optional[flextime] = Field(default=None, description="The start date of the range")
-    end: Optional[flextime] = Field(default=None, description="The end date of the range")
-
-
-class Updateable(BaseModel):
-    updated_at: Optional[flextime] = Field(
-        default=None, description="The timestamp of the document update"
-    )
-    last_checked_at: Optional[flextime] = Field(
-        default=None, description="The timestamp of the last check"
-    )
-
-
-class CreatedAtDoc(ExtendedDocument):
-    created_at: flextime = Field(
-        default_factory=flextime, description="The timestamp of the document creation"
-    )
-
-
 class Name(BaseModel):
     title: Optional[str] = Field(
         default=None, description="The title of the person, Ex: Mr, Mrs, Dr, etc."
@@ -268,88 +214,6 @@ class PhoneNumber(CreatedAtDoc):
 
     class Settings:
         equality_fields = ["number"]
-
-
-class Address(ExtendedDocument):
-    street: Optional[str] = Field(default=None, description="The street address")
-    street2: Optional[str] = Field(default=None, description="The street address")
-    city: Optional[str] = Field(default=None, description="The city")
-    state: Optional[str] = Field(default=None, description="The state")
-    postal_code: Optional[str] = Field(default=None, description="The postal code")
-    country: Optional[str] = Field(default=None, description="The country")
-    current: Optional[bool] = Field(
-        default=None, description="Whether the address is the current one"
-    )
-    notes: Optional[str] = Field(default=None, description="The address notes")
-    provenance: Optional[Provenance] = Field(
-        default=None, description="The provenance of the address"
-    )
-    raw: Optional[str] = Field(default=None, description="The raw address, to be parsed")
-
-    def equality_hash(self):
-        ## make a tuple of all equality_fields
-        all_kv = self.model_fields.items()
-        return tuple([getattr(self, k) for k, v in all_kv if k in self.Settings.equality_fields])
-
-    @field_validator("street", "street2", "city", "state", "postal_code", "country", "notes", "raw")
-    @classmethod
-    def strip_whitespace(cls, v: Optional[str]) -> Optional[str]:
-        return v.strip() if v else v
-
-    @classmethod
-    def from_str(cls: type["Address"], s: str, *args, **kwargs) -> "Address":
-        return cls.parse_address(s, *args, **kwargs)  # type: ignore
-
-    @classmethod
-    def parse_address(cls: type["Address"], s: str, *args, **kwargs) -> "Address":
-        if not hasattr(cls, "_parse_address"):
-            cls._parse_address = load_address_parser()
-        assert cls._parse_address, "No address parser loaded"
-        return cls._parse_address(cls, s, *args, **kwargs)
-
-    class Settings:
-        equality_fields = ["street", "street2", "city", "state", "postal_code", "country"]
-
-    def __str__(self) -> str:
-        return self.format_address(self)
-
-    @classmethod
-    def format_address(cls, address: "Address", one_line: bool = False) -> str:
-        address_dict = {
-            "road": address.street,
-            "house": address.street2,
-            "city": address.city,
-            "state": address.state,
-            "postcode": address.postal_code,
-            "country": address.country,
-        }
-
-        # Remove None values
-        data_dict = {k: v for k, v in address_dict.items() if v is not None}
-        formatter = AddressFormatter()
-        # Format the address using address-formatting
-        if one_line:
-            formatted_address = formatter.one_line(data_dict, country=address.country)
-        else:
-            formatted_address = formatter.format(data_dict, country=address.country)
-        # Ensure state is included if it's in the original address
-        if address.state and address.state not in formatted_address:
-            if one_line:
-                parts = formatted_address.split(", ")
-                if len(parts) >= 2:
-                    parts.insert(-1, address.state)
-                formatted_address = ", ".join(parts)
-            else:
-                lines = formatted_address.split("\n")
-                if len(lines) >= 2:
-                    lines.insert(-1, address.state)
-                formatted_address = "\n".join(lines)
-
-        # Remove any whitespace before or after newlines, and strip the entire string
-        formatted_address = re.sub(r"\s*\n\s*", "\n", formatted_address.strip())
-        if not formatted_address:
-            formatted_address = address.raw or ""
-        return formatted_address.strip()
 
 
 class Email(ExtendedDocument, ExpiredAtDoc):
