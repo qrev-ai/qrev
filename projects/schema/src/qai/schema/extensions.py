@@ -26,7 +26,7 @@ from motor.motor_asyncio import AsyncIOMotorCollection
 from pydantic._internal._model_construction import ModelMetaclass
 from pymongo.client_session import ClientSession
 
-from qai.schema.mergers.merge import Priority, merge_model, NORMAL_PRIORITY
+from qai.schema.mergers.merge import NORMAL_PRIORITY, Priority, merge_model
 
 T = TypeVar("T", bound=Document)
 ET = TypeVar("ET", bound="ExtendedDocument")

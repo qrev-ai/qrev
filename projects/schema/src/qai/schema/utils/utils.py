@@ -9,6 +9,19 @@ class MatchingAlgorithm(StrEnum):
     CONTAINS = "Contains"
 
 
+def clean_domain(domain: str) -> str:
+    # Remove protocol if present
+    domain = re.sub(r"^https?://", "", domain)
+
+    # Remove www. if present
+    domain = re.sub(r"^www\.", "", domain)
+
+    # Remove any trailing slash
+    domain = domain.rstrip("/")
+
+    return domain
+
+
 def title_matches(
     title: str,
     filter_titles: list[str],

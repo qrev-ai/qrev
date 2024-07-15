@@ -6,6 +6,26 @@ from flexible_datetime import flextime
 from pydantic import BaseModel, Field
 
 from qai.schema.extensions import ExtendedDocument
+from qai.schema.mergers.merge import (
+    HIGH_PRIORITY,
+    HIGHER_PRIORITY,
+    LOW_PRIORITY,
+    LOWER_PRIORITY,
+    NORMAL_PRIORITY,
+)
+
+priorities = {
+    "manual": NORMAL_PRIORITY,
+    "ai_generated": LOW_PRIORITY,
+    "linkedin": HIGHER_PRIORITY,
+    "slintel": HIGH_PRIORITY,
+    "pdl": HIGH_PRIORITY,
+    "nubela": HIGH_PRIORITY,
+}
+
+
+def get_priority(source: str):
+    return priorities.get(source, NORMAL_PRIORITY)
 
 
 class Taggable(BaseModel):
@@ -30,6 +50,10 @@ class Provenance(BaseModel):
     str_id: Optional[str] = Field(
         default=None, description="The source id of the document if not inserted into the database"
     )
+
+    @property
+    def priority(self):
+        return get_priority(self.source)
 
 
 class Deleteable(BaseModel):

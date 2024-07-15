@@ -6,7 +6,7 @@ from typing import Any, TypeVar, cast
 
 import pyap
 
-from qai.schema.models.models import Address
+from qai.schema.models.address_model import Address
 
 ET = TypeVar('ET', bound='Address')
 

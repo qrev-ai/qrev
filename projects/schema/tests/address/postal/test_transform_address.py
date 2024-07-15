@@ -1,6 +1,7 @@
 import pytest
 
-from qai.schema.models.models import Address
+from qai.schema import Address
+import pytest
 
 try:
     from qai.schema.parsers.address_parser_postal import parse_address
@@ -13,6 +14,7 @@ except ImportError:
 skip_if_no_postal = pytest.mark.skipif(
     not postal_available, reason="postal package is not installed"
 )
+
 
 @skip_if_no_postal
 def test_transform_us_address():
@@ -30,6 +32,7 @@ def test_transform_us_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
+
 @skip_if_no_postal
 def test_transform_us_address_city():
     address = "Stillwater, Oklahoma, United States"
@@ -44,6 +47,7 @@ def test_transform_us_address_city():
     )
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 @skip_if_no_postal
 def test_transform_uk_address():
@@ -60,6 +64,7 @@ def test_transform_uk_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
+
 @skip_if_no_postal
 def test_transform_fr_address():
     address = "5 Avenue Anatole, 75007 Paris, France"
@@ -75,6 +80,7 @@ def test_transform_fr_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
+
 @skip_if_no_postal
 def test_transform_au_address():
     address = "1 Macquarie Street, Sydney, NSW 2000, Australia"
@@ -89,6 +95,7 @@ def test_transform_au_address():
     )
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
+
 
 @skip_if_no_postal
 def test_transform_in_address():

@@ -4,7 +4,7 @@ from typing import Any, Type, cast
 from postal.parser import parse_address as postal_parse_address  # type: ignore
 
 from qai.schema.extensions import ET
-from qai.schema.models.models import Address as Address
+from qai.schema.models.address_model import Address as Address
 
 
 def parse_address(s: str, *args, **kwargs) -> Address:
