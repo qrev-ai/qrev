@@ -3,7 +3,7 @@ import re
 from logging import getLogger
 from typing import Optional
 
-from addressformatting import AddressFormatter
+from addressformatting import AddressFormatter #type: ignore
 from pydantic import Field, field_validator
 
 from qai.schema.extensions import ExtendedDocument
@@ -47,7 +47,7 @@ class Address(ExtendedDocument):
         if not hasattr(cls, "_parse_address"):
             cls._parse_address = load_address_parser()
         assert cls._parse_address, "No address parser loaded"
-        return cls._parse_address(cls, s, *args, **kwargs)
+        return cls._parse_address(s, *args, **kwargs)
 
     class Settings:
         equality_fields = ["street", "street2", "city", "state", "postal_code", "country"]

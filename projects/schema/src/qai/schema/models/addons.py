@@ -25,7 +25,7 @@ priorities = {
 
 
 def get_priority(source: str):
-    return priorities.get(source, NORMAL_PRIORITY)
+    return priorities.get(source.lower(), NORMAL_PRIORITY)
 
 
 class Taggable(BaseModel):
@@ -49,6 +49,9 @@ class Provenance(BaseModel):
     )
     str_id: Optional[str] = Field(
         default=None, description="The source id of the document if not inserted into the database"
+    )
+    sources: Optional[list[str]] = Field(
+        default=None, description="The sources of the document"
     )
 
     @property

@@ -5,7 +5,7 @@ from postal.parser import parse_address as postal_parse_address  # type: ignore
 
 from qai.schema.extensions import ET
 from qai.schema.models.address_model import Address as Address
-
+import pycountry
 
 def parse_address(s: str, *args, **kwargs) -> Address:
     """
@@ -25,8 +25,20 @@ def parse_address(s: str, *args, **kwargs) -> Address:
     "country"
 
     """
-    # expanded_address = expand_address(address)[0]
-    parsed_address = postal_parse_address(s)
+    country_str = kwargs.get("country", None)
+    if country_str:
+        country = pycountry.countries.search_fuzzy(country_str)
+        if country:
+            kwargs["country"] = country[0].alpha_2
+    
+    if "country" in kwargs:
+        ## TODO, currently postal has some error where country="str" doesn't work
+        ## So we need to pass the country as part of the string, if it's not in the string
+        if not s.endswith(kwargs["country"]):
+            s = f"{s}, {kwargs['country']}"
+        kwargs.pop("country")
+
+    parsed_address = postal_parse_address(s, **kwargs)
 
     address_dict: dict[str, Any] = {
         "current": False,
@@ -48,4 +60,3 @@ def parse_address(s: str, *args, **kwargs) -> Address:
     ## Remove empy strings
     address_dict = {k: v for k, v in address_dict.items() if v}
     return Address(**address_dict)
-

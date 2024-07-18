@@ -2,7 +2,7 @@ import re
 from typing import Any, Optional
 
 from beanie import PydanticObjectId
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from qai.schema.models.addons import (
     CreatedAtDoc,
@@ -18,7 +18,6 @@ from qai.schema.models.models import GenderEnum
 from qai.schema.models.name_model import Name
 from qai.schema.models.phone_number_model import PhoneNumber
 from qai.schema.models.social_media_model import SocialMedia, SocialMediaType
-from qai.schema.models.addons import Provenance
 
 
 class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
@@ -44,12 +43,19 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
     work_history: Optional[list[Job]] = Field(
         default=None, description="The work history of the person"
     )
+    education_history: Optional[list[Job]] = Field(
+        default=None, description="The education history of the person"
+    )
     sources: Optional[list[Provenance]] = Field(
         default=None, description="The sources of the person"
     )
     provenance: Optional[Provenance] = Field(
         default=None, description="The provenance of the person"
     )
+    activities: Optional[list[dict[Any, Any]]] = Field(
+        default=None, description="The online activities of the person"
+    )
+    skills: Optional[list[str]] = Field(default=None, description="The skills of the person")
 
     class Settings:
         name = "people"
@@ -63,6 +69,12 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
         if self.name:
             return self.name.full_name
         return ""
+    
+    @property
+    def job(self) -> Job:
+        if self.work_history:
+            return self.work_history[0]
+        raise ValueError("No job found for person")
 
     def get_linkedin_url(self) -> Optional[str]:
         if not self.social_media:

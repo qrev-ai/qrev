@@ -5,8 +5,7 @@ from pydantic import BaseModel
 
 T = TypeVar("T")
 
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 Priority = NewType("Priority", int)
 
@@ -151,18 +150,18 @@ class SmartCombineDictsStrategy(MergeStrategy[Dict[Any, Any]]):
         target_priority: Priority,
         source_priority: Priority,
     ) -> Dict[Any, Any]:
-        logger.debug(
+        log.debug(
             f"Merging dicts with priorities: target={target_priority}, source={source_priority}"
         )
-        logger.debug(f"Target dict: {target_value}")
-        logger.debug(f"Source dict: {source_value}")
+        log.debug(f"Target dict: {target_value}")
+        log.debug(f"Source dict: {source_value}")
 
         merged = {}
         all_keys = set(target_value.keys()) | set(source_value.keys())
 
         for key in all_keys:
             if key in target_value and key in source_value:
-                logger.debug(f"Merging key '{key}' present in both dicts")
+                log.debug(f"Merging key '{key}' present in both dicts")
                 merged[key] = merge_value(
                     source_value=source_value[key],
                     target_value=target_value[key],
@@ -170,13 +169,13 @@ class SmartCombineDictsStrategy(MergeStrategy[Dict[Any, Any]]):
                     target_priority=target_priority,
                 )
             elif key in target_value:
-                logger.debug(f"Using target value for key '{key}'")
+                log.debug(f"Using target value for key '{key}'")
                 merged[key] = target_value[key]
             else:
-                logger.debug(f"Using source value for key '{key}'")
+                log.debug(f"Using source value for key '{key}'")
                 merged[key] = source_value[key]
 
-        logger.debug(f"Merged dict: {merged}")
+        log.debug(f"Merged dict: {merged}")
         return merged
 
 
@@ -196,20 +195,20 @@ def merge_value(
     target_priority: Priority,
     field_name: Optional[str] = None,
 ) -> T:
-    logger.debug(
+    log.debug(
         f"Merging values for field '{field_name}': target={target_value}, source={source_value}"
     )
-    logger.debug(f"Priorities: target={target_priority}, source={source_priority}")
+    log.debug(f"Priorities: target={target_priority}, source={source_priority}")
 
     if target_value is None:
-        logger.debug("Target value is None, using source value")
+        log.debug("Target value is None, using source value")
         return source_value
     if source_value is None:
-        logger.debug("Source value is None, using target value")
+        log.debug("Source value is None, using target value")
         return target_value
 
     if isinstance(target_value, BaseModel) and isinstance(source_value, BaseModel):
-        logger.debug("Merging nested models")
+        log.debug("Merging nested models")
         merged_model = target_value.model_copy()
         merge_model(
             source=source_value,
@@ -219,7 +218,7 @@ def merge_value(
         )
         return merged_model
     elif isinstance(target_value, dict) and isinstance(source_value, dict):
-        logger.debug("Merging dictionaries")
+        log.debug("Merging dictionaries")
         return SmartCombineDictsStrategy().__merge__(
             target_value=target_value,
             source_value=source_value,
@@ -227,7 +226,7 @@ def merge_value(
             source_priority=source_priority,
         )
     elif isinstance(target_value, list) and isinstance(source_value, list):
-        logger.debug("Merging lists")
+        log.debug("Merging lists")
         return SmartListAsSetMergeStrategy().__merge__(
             target_value=target_value,
             source_value=source_value,
@@ -236,10 +235,10 @@ def merge_value(
         )
     else:
         if source_priority > target_priority:
-            logger.debug("Source priority higher, using source value")
+            log.debug("Source priority higher, using source value")
             return source_value
         else:
-            logger.debug("Target priority higher or equal, using target value")
+            log.debug("Target priority higher or equal, using target value")
             return target_value
 
 
