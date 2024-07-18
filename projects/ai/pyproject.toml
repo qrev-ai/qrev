@@ -20,7 +20,7 @@ llama-index-embeddings-huggingface = "^0.2.0"
 llama-index-vector-stores-chroma = "^0.1.7"
 openai = "^1.23.2"
 pandas = "^2.2.1"
-pi-conf = "^0.7.7.5"
+pi-conf = "^0.8.2"
 pi-log = "^0.5.7.3"
 qai-storage = {develop = true, path = "../storage"}
 termcolor = "^2.4.0"

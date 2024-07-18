@@ -22,7 +22,7 @@ llama-index-llms-huggingface = "^0.1.1"
 llama-index-llms-openai = "^0.1.1"
 llama-index-vector-stores-chroma = "^0.1.1"
 numpy = "^1.26.3"
-pi-conf = "^0.7.7.1"
+pi-conf = "^0.8.2"
 tenacity = "^8.2.3"
 
 [tool.poetry.group.dev.dependencies]
