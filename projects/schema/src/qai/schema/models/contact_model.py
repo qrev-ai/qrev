@@ -89,6 +89,16 @@ class Contact(CreatedAtDoc, Taggable, Labels, Deleteable):
         )
         return c
 
+    @classmethod
+    async def get_or_create(
+        cls: type["Contact"], person: Person, company: Company, campaign: "Campaign"
+    ) -> "Contact":
+        contact = cls.from_data(person=person, company=company, campaign=campaign)
+        return await Contact.find_or_insert(contact)
+
+    @property
+    def safe_company_name(self) -> str:
+        return self.company.name if self.company else ""
 
 class ContactList(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
     name: str = Field(..., description="The name of the contact list")

@@ -1,4 +1,5 @@
 import asyncio
+import json
 from abc import abstractmethod
 from typing import (
     Any,
@@ -25,7 +26,6 @@ from beanie.odm.utils.state import save_state_after
 from motor.motor_asyncio import AsyncIOMotorCollection
 from pydantic._internal._model_construction import ModelMetaclass
 from pymongo.client_session import ClientSession
-
 from qai.schema.mergers.merge import NORMAL_PRIORITY, Priority, merge_model
 
 T = TypeVar("T", bound=Document)
@@ -154,6 +154,57 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
         )
 
     @classmethod
+    async def find_or_insert(  # type: ignore
+        cls: type[ET],
+        document: ET,
+        *args: Union[Mapping[str, Any], bool],
+        projection_model: Type["DocumentProjectionType"] = None,  # type: ignore
+        ignore_cache: bool = False,
+        fetch_links: bool = False,
+        with_children: bool = False,
+        nesting_depth: Optional[int] = None,
+        nesting_depths_per_field: Optional[Dict[str, int]] = None,
+        session: Optional[ClientSession] = None,
+        link_rule: WriteRules = WriteRules.DO_NOTHING,
+        ignore_revision: bool = False,
+        insert_kwargs: Optional[dict] = None,  # type: ignore
+        find_kwargs: Optional[dict] = None,
+        skip_actions: Optional[List[Union[ActionDirections, str]]] = None,
+    ) -> ET:
+        """
+        find or insert document with provided args
+        """
+        if find_kwargs is None:
+            find_kwargs = {}
+        if insert_kwargs is None:
+            insert_kwargs = {}
+
+        ## Get all Settings.equality_fields
+        if not args:
+            params = document.match_query()
+            args = tuple([params])  # type: ignore
+        doc = await document.find_one(
+            args[0],
+            projection_model=projection_model,
+            session=session,
+            ignore_cache=ignore_cache,
+            fetch_links=fetch_links,
+            with_children=with_children,
+            nesting_depth=nesting_depth,
+            nesting_depths_per_field=nesting_depths_per_field,
+            **find_kwargs
+        )
+
+        if doc:
+            return doc
+        return await document.insert(
+            session=session,
+            link_rule=link_rule,
+            skip_actions=skip_actions,
+            **insert_kwargs,
+        )
+
+    @classmethod
     def from_str(cls: type[ET], s: str, *args, **kwargs) -> ET:
         raise NotImplementedError("from_str must be implemented in the subclass of Extended")
 
@@ -161,15 +212,21 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
         """
         Merge self with other
         """
-        merge_model(target=self, source=other, target_priority=self_priority, source_priority=other_priority)
+        merge_model(
+            target=self, source=other, target_priority=self_priority, source_priority=other_priority
+        )
         return self
 
-    def merge(self: ET, other: ET, self_priority: Priority = NORMAL_PRIORITY, other_priority: Priority = NORMAL_PRIORITY) -> ET:
+    def merge(
+        self: ET,
+        other: ET,
+        self_priority: Priority = NORMAL_PRIORITY,
+        other_priority: Priority = NORMAL_PRIORITY,
+    ) -> ET:
         """
         Merge self with other
         """
         return self.__merge__(other, self_priority, other_priority)
-
 
     def __str__(self) -> str:
         """
@@ -259,6 +316,17 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
             return None
         return await self.find_one(**params)
 
+    def pformat(
+        self: ET,
+        indent: int = 2,
+        exclude_none: bool = True,
+        **kwargs,
+    ) -> str:
+        """
+        Pretty format the document
+        """
+        return json.dumps(self.model_dump(exclude_none=True, **kwargs), indent=indent)
+
 
 setattr(Document, "upsert", ExtendedDocument.upsert)
 
@@ -298,6 +366,14 @@ class DocExtensions:
     @classmethod
     @abstractmethod
     def from_str(cls, s: str): ...
+
+    @abstractmethod
+    def pformat(
+        self: ET,
+        indent: int = 2,
+        exclude_none: bool = True,
+        **kwargs,
+    ) -> str: ...
 
 
 def get_extended_documents(

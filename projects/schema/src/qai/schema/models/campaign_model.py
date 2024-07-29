@@ -5,7 +5,6 @@ from beanie import Link as BeanieLink
 from beanie import PydanticObjectId
 from beanie.odm.queries.find import FindOne as BeanieFindOne
 from pydantic import BaseModel, EmailStr, Field, field_validator
-
 from qai.schema.models.addons import (
     CreatedAtDoc,
     DateRange,
@@ -17,6 +16,12 @@ from qai.schema.models.company_model import Company
 from qai.schema.models.contact_model import Contact
 from qai.schema.models.models import OutreachType
 from qai.schema.models.qbeanie import Link
+
+
+class EnrichmentSources(BaseModel):
+    pdl: bool = False
+    nubela: bool = False
+    linkedin: bool = False
 
 
 class CampaignOptions(BaseModel):
@@ -35,11 +40,11 @@ class Campaign(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
     )
     campaign_steps: list[Link["CampaignStep"]] = Field(default_factory=list)
 
-    filter_emails: list[EmailStr] = Field(
+    exclude_domains: list[str] = Field(default_factory=list, title="List of domains to filter out")
+    exclude_emails: list[EmailStr] = Field(
         default_factory=list, title="List of emails to filter out"
     )
-    filter_titles: list[str] = Field(default_factory=list, title="List of titles to filter out")
-    filter_domains: list[str] = Field(default_factory=list, title="List of domains to filter out")
+    exclude_titles: list[str] = Field(default_factory=list, title="List of titles to filter out")
     include_emails: list[str] = Field(default_factory=list, title="List of emails to include")
     include_titles: list[str] = Field(default_factory=list, title="List of titles to include")
 
@@ -50,7 +55,7 @@ class Campaign(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
         equality_fields = ["name"]
         keep_nulls = False
 
-    @field_validator("filter_domains", mode="before")
+    @field_validator("exclude_domains", mode="before")
     def strip_protocols(cls, v):
         if isinstance(v, list):
             v = [domain.lstrip("http://").lstrip("https://").lstrip("www.") for domain in v]

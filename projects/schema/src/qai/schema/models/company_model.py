@@ -92,6 +92,11 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
 
         return {"$or": query}
 
+    @property
+    def website(self) -> str:
+        if self.domains:
+            return self.domains[0]
+        raise ValueError(f"No website for company domains={self.domains}. ")
     @classmethod
     def find_by_linkedin_url(cls, linkedin_url: str) -> dict[str, Any]:
         return {"social_media.url": linkedin_url}

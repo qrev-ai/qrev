@@ -69,7 +69,25 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
         if self.name:
             return self.name.full_name
         return ""
-    
+
+    @property
+    def work_email(self) -> Optional[str]:
+        work_email = self.get_work_email()
+        if work_email:
+            return work_email.address
+        if self.emails:
+            for email in self.emails:
+                if email.type == "work":
+                    return email.address
+        return None
+
+    @property
+    def work_title(self) -> Optional[str]:
+        work_title = self.get_work_title()
+        if work_title:
+            return work_title
+        return None
+
     @property
     def job(self) -> Job:
         if self.work_history:
