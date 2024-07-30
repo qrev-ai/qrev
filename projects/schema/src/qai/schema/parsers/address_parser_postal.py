@@ -29,7 +29,7 @@ def parse_address(s: str, *args, **kwargs) -> Address:
     if country_str:
         country = pycountry.countries.search_fuzzy(country_str)
         if country:
-            kwargs["country"] = country[0].alpha_2
+            kwargs["country"] = country[0].alpha_2 # type: ignore
     
     if "country" in kwargs:
         ## TODO, currently postal has some error where country="str" doesn't work
