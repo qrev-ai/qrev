@@ -1,6 +1,6 @@
 import pytest
 
-from qai.schema import Address
+from qai.schema.models.address_model import Address, _load_address_parser
 import pytest
 
 try:
@@ -112,6 +112,21 @@ def test_transform_in_address():
     result = parse_address(address)
     assert result.eq(expected, nones_ok=True)
 
+
+@skip_if_no_postal
+def test_address_from_str():
+    pa = _load_address_parser("qai.schema.parsers.address_parser_postal")
+    assert pa
+    Address.parse_address = pa
+    
+    address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
+    a = Address.from_str(s=address, country="GB")
+    assert a.street == "10 downing street"
+    assert a.city == "london"
+    assert a.postal_code == "sw1a 2aa"
+    assert a.country == "united kingdom gb"
+    assert a.state is None
+    assert a.street2 is None
 
 if __name__ == "__main__":
     pytest.main([__file__, "-rP"])

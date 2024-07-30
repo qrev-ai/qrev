@@ -19,6 +19,7 @@ docker_staging*
 ## Poetry
 .poetry.toml
 poetry.toml
+poetry.lock
 
 ## Python
 __pycache__

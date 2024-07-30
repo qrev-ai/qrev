@@ -1,15 +1,17 @@
 import importlib
 import re
 from logging import getLogger
-from typing import Optional
+from typing import Callable, Optional, TypeVar
 
-from addressformatting import AddressFormatter #type: ignore
+from addressformatting import AddressFormatter  # type: ignore
 from pydantic import Field, field_validator
 
 from qai.schema.extensions import ExtendedDocument
 from qai.schema.models.addons import Provenance
 
 log = getLogger(__name__)
+
+T = TypeVar("T", bound="Address")
 
 
 class Address(ExtendedDocument):
@@ -39,15 +41,15 @@ class Address(ExtendedDocument):
         return v.strip() if v else v
 
     @classmethod
-    def from_str(cls: type["Address"], s: str, *args, **kwargs) -> "Address":
-        return cls.parse_address(s, *args, **kwargs)  # type: ignore
+    def from_str(cls: type[T], s: str, *args, **kwargs) -> T:
+        return cls.parse_address(s=s, *args, **kwargs)  # type: ignore
 
     @classmethod
-    def parse_address(cls: type["Address"], s: str, *args, **kwargs) -> "Address":
+    def parse_address(cls: type["T"], s: str, *args, **kwargs) -> T:
         if not hasattr(cls, "_parse_address"):
-            cls._parse_address = load_address_parser()
-        assert cls._parse_address, "No address parser loaded"
-        return cls._parse_address(s, *args, **kwargs)
+            cls.parse_address = _load_address_parsers()
+        assert cls.parse_address, "No address parser loaded"
+        return cls.parse_address(s=s, *args, **kwargs)
 
     class Settings:
         equality_fields = ["street", "street2", "city", "state", "postal_code", "country"]
@@ -94,7 +96,19 @@ class Address(ExtendedDocument):
         return formatted_address.strip()
 
 
-def load_address_parser():
+def _load_address_parser(module_path: str) -> Optional[Callable]:
+    try:
+        module = importlib.import_module(module_path)
+        parse_address = getattr(module, "parse_address")
+        return parse_address
+    except ImportError:
+        log.debug(f"Failed to import {module_path} parser")
+    except AttributeError:
+        log.debug(f"{module_path} parser does not have parse_address function")
+    return None
+
+
+def _load_address_parsers() -> Callable:
     log.debug("Loading external Address parsers")
 
     parsers = [
@@ -103,15 +117,10 @@ def load_address_parser():
     ]
 
     for parser_name, module_path in parsers:
-        try:
-            module = importlib.import_module(module_path)
-            parse_address = getattr(module, "parse_address")
-            log.debug(f"Loaded {parser_name} Address parser")
+        parse_address = _load_address_parser(module_path)
+        if parse_address:
+            log.debug(f"Loaded {parser_name} parser")
             return parse_address
-        except ImportError:
-            log.debug(f"Failed to import {parser_name} parser")
-        except AttributeError:
-            log.debug(f"{parser_name} parser does not have parse_address function")
     else:
         log.error("No Address parser could be loaded")
-        return None
+        raise

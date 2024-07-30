@@ -5,7 +5,7 @@ and seems limited in its parsing capabilities. But it's still better than nothin
 import pyap
 import pytest
 from pyap.exceptions import CountryDetectionMissing
-
+from qai.schema.models.address_model import Address, _load_address_parser
 
 def parse_address(address, country="US"):
     parsed_addresses = pyap.parse(address, country=country)
@@ -111,6 +111,20 @@ class TestPyAP:
         with pytest.raises(CountryDetectionMissing):
             address = "Mahatma Gandhi Road, Mumbai, Maharashtra 400001, India"
             a = parse_address(address, country="IN")
+
+    def test_address_from_str_with_country(self):
+        pa = _load_address_parser("qai.schema.parsers.address_parser_pyap")
+        assert pa
+        Address.parse_address = pa
+        
+        address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
+        a = Address.from_str(s=address, country="GB")
+        assert a.street == "10 Downing Street"
+        assert a.city == "London"
+        assert a.postal_code == "SW1A 2AA"
+        assert a.country == "GB"
+        assert a.state is None
+        assert a.street2 is None
 
 
 if __name__ == "__main__":

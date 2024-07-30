@@ -10,9 +10,9 @@ from qai.schema.models.address_model import Address
 
 ET = TypeVar('ET', bound='Address')
 
-def parse_address(cls: type[ET], s: str, country: str = 'US') -> Address:
+def parse_address(s: str, country: str = 'US', *args, **kwargs) -> Address:
     # Parse the address using pyap
-    parsed_addresses = pyap.parse(s, country="US")
+    parsed_addresses = pyap.parse(s, country=country)
 
     if not parsed_addresses:
         raise ValueError("Unable to parse the address")
