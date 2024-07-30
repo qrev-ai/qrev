@@ -8,7 +8,7 @@ description = "Qai AI API"
 name = "qai-ai"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.2.3"
+version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -20,10 +20,13 @@ llama-index-embeddings-huggingface = "^0.2.0"
 llama-index-vector-stores-chroma = "^0.1.7"
 openai = "^1.23.2"
 pandas = "^2.2.1"
-pi-conf = "^0.8.2"
-pi-log = "^0.5.7.3"
-qai-storage = {develop = true, path = "../storage"}
+pi-conf = "0.8.5"
+pi-log = "0.5.8.1"
 termcolor = "^2.4.0"
+qai-storage = "^0.6.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
 
 [[tool.poetry.source]]
 name = "pypi"
@@ -38,10 +41,6 @@ url = "https://download.pytorch.org/whl/cu118"
 name = "pytorch-cpu-src"
 priority = "explicit"
 url = "https://download.pytorch.org/whl/cpu"
-
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.2.2"
 
 [tool.tomlsort]
 all = true

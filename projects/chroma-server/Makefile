@@ -52,6 +52,18 @@ heartbeat::
 	curl -f http://${IP_P}/api/v1/collections
 
 
-format:	## Run code autoformatters (black).
-	pre-commit install
-	git ls-files | xargs pre-commit run black --files
+format:	
+	toml-sort pyproject.toml
+
+# Test Project
+test:: 
+	pytest tests
+
+
+# Build the project
+poetry_build:: format
+	poetry build
+
+# Publish the project
+poetry_publish:: test build 
+	poetry publish

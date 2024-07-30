@@ -8,22 +8,22 @@ description = ""
 name = "chroma-server"
 packages = [{from = "src", include = "chroma-server"}]
 readme = "README.md"
-version = "0.5"
+version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = "^3.10.13"
 boto3 = "^1.28.46"
 chromadb = "^0.4.22"
-pi-conf = "^0.8.2"
+llama-index = "^0.10.6"
+llama-index-embeddings-huggingface = "^0.1.4"
+llama-index-vector-stores-chroma = "^0.1.6"
+pi-conf = "0.8.5"
 pip = "^24.0"
 python-dotenv = "^1.0.1"
 toml = "^0.10.2"
-llama-index = "^0.10.6"
-llama-index-vector-stores-chroma = "^0.1.6"
-llama-index-embeddings-huggingface = "^0.1.4"
 torch = [
-    { python = ">=3.10,<3.11", markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", url = "https://download.pytorch.org/whl/cpu/torch-2.2.1-cp310-none-macosx_11_0_arm64.whl" },
-    { python = ">=3.10,<3.11", markers = "sys_platform == 'linux'", url = "https://download.pytorch.org/whl/cpu-cxx11-abi/torch-2.2.1%2Bcpu.cxx11.abi-cp310-cp310-linux_x86_64.whl" },
+    {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", python = ">=3.10,<3.11", url = "https://download.pytorch.org/whl/cpu/torch-2.2.1-cp310-none-macosx_11_0_arm64.whl"},
+    {markers = "sys_platform == 'linux'", python = ">=3.10,<3.11", url = "https://download.pytorch.org/whl/cpu-cxx11-abi/torch-2.2.1%2Bcpu.cxx11.abi-cp310-cp310-linux_x86_64.whl"},
 ]
 
 [tool.tomlsort]

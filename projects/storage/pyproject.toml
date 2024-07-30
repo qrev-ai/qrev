@@ -8,7 +8,7 @@ description = "Qai Storage API"
 name = "qai-storage"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.1"
+version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -22,7 +22,7 @@ llama-index-llms-huggingface = "^0.1.1"
 llama-index-llms-openai = "^0.1.1"
 llama-index-vector-stores-chroma = "^0.1.1"
 numpy = "^1.26.3"
-pi-conf = "^0.8.2"
+pi-conf = "0.8.5"
 tenacity = "^8.2.3"
 
 [tool.poetry.group.dev.dependencies]

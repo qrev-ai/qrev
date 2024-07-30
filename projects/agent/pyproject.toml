@@ -15,7 +15,7 @@ description = "Qai Agents for the Qai AI Platform"
 name = "qai-agent"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.2.5"
+version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -33,18 +33,18 @@ multiprocess = "^0.70.16"
 mysql-connector-python = "^8.4.0"
 openai = "^1.23.2"
 pandas = "^2.2.1"
-pi-conf = "^0.8.2"
-pi-log = "^0.5.8.1"
+pi-conf = "0.8.5"
+pi-log = "0.5.8.1"
 pip = "^24.0"
 pydantic = "^2.7.0"
 pymongo = "^4.6.3"
 python-dateutil = "2.8.2"
 python-dotenv = "^1.0.1"
-qai-ai = {develop = true, path = "../ai"}
-qai-core = {develop = true, path = "../core"}
-pdl-api = { path = "../../../../pdl-api", develop = true }
+qai-ai = "0.6.0"
+qai-core = "0.6.0"
+pdl-api = "0.1.2"
 sqlalchemy = "^2.0.29"
-pi-blink = "^1.0.3"
+pi-blink = "1.0.3"
 instructor = "^1.3.2"
 
 [tool.poetry.group.dev.dependencies]

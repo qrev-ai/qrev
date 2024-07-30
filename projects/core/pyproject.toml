@@ -8,13 +8,13 @@ description = ""
 name = "qai-core"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.5"
+version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<4.0"
 json-fix = "^1.0.0"
-pytest = "^8.2.1"
 pydantic = "^2.7.1"
+pytest = "^8.2.1"
 
 [tool.poetry.group.dev.dependencies]
 toml-sort = "^0.23.1"
