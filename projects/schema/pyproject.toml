@@ -11,7 +11,7 @@ description = ""
 name = "qai-schema"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.6.0"
+version = "0.6.1"
 
 [tool.poetry.dependencies]
 python = "^3.11"
