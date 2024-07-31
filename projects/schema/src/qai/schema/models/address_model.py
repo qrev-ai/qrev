@@ -1,7 +1,7 @@
 import importlib
 import re
 from logging import getLogger
-from typing import Callable, Optional, TypeVar
+from typing import Callable, Optional, TypeVar, cast
 
 from addressformatting import AddressFormatter  # type: ignore
 from pydantic import Field, field_validator
@@ -49,7 +49,10 @@ class Address(ExtendedDocument):
         if not hasattr(cls, "_parse_address"):
             cls.parse_address = _load_address_parsers()
         assert cls.parse_address, "No address parser loaded"
-        return cls.parse_address(s=s, *args, **kwargs)
+        try:
+            return cls.parse_address(s=s, *args, **kwargs)
+        except:
+            return cast(T, Address(raw=s))
 
     class Settings:
         equality_fields = ["street", "street2", "city", "state", "postal_code", "country"]
