@@ -24,22 +24,22 @@ numpy = "^1.26.3"
 pytest = "^8.0.1"
 
 [tool.poetry.group.qai-ai.dependencies]
-qai-ai = "0.6.0"
+qai-ai = "^0.6.0"
 
 [tool.poetry.group.qai-chat.dependencies]
-qai-chat = "0.6.0"
+qai-chat = "^0.6.0"
 
 # [tool.poetry.group.qai-chroma-server.dependencies]
 # chroma-server = {develop = true, path = "projects/chroma-server"}
 
 [tool.poetry.group.qai-core.dependencies]
-qai-core = "0.6.0"
+qai-core = "^0.6.0"
 
 [tool.poetry.group.qai-scraper.dependencies]
-qai-scraper = "0.6.0"
+qai-scraper = "^0.6.0"
 
 [tool.poetry.group.qai-storage.dependencies]
-qai-storage = "0.6.0"
+qai-storage = "^0.6.0"
 
 [tool.tomlsort]
 all = true
