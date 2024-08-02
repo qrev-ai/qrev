@@ -14,10 +14,11 @@ import requests
 from dotenv import load_dotenv
 from openai import OpenAI
 from openai.types.chat import ChatCompletion
-from tenacity import retry, stop_after_attempt, wait_random_exponential
-from termcolor import colored
+try:
+    from termcolor import colored
+except ImportError:
+    colored = lambda x, y: x
 
-from flask import current_app as app
 # from qai.chat import cfg
 from qai.chat.layers.layer import Layer
 from qai.chat.layers.query import Query, QueryReturn
@@ -60,30 +61,6 @@ def pretty_print_conversation(messages):
                 )
             )
 
-
-@retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
-def chat_completion_request(messages, tools=None, tool_choice=None, model=None):
-    model = model or app.cfg.model.name
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + openai.api_key,
-    }
-    json_data = {"model": model, "messages": messages}
-    if tools is not None:
-        json_data.update({"tools": tools})
-    if tool_choice is not None:
-        json_data.update({"tool_choice": tool_choice})
-    try:
-        response = requests.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers=headers,
-            json=json_data,
-        )
-        return response
-    except Exception as e:
-        print("Unable to generate ChatCompletion response")
-        print(f"Exception: {e}")
-        return e
 
 
 @dataclass(kw_only=True)

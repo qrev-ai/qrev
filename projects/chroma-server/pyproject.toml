@@ -8,12 +8,12 @@ description = ""
 name = "chroma-server"
 packages = [{from = "src", include = "chroma-server"}]
 readme = "README.md"
-version = "0.6.0"
+version = "0.6.1"
 
 [tool.poetry.dependencies]
 python = "^3.10.13"
 boto3 = "^1.28.46"
-chromadb = "^0.4.22"
+chromadb = "^0.5.5"
 llama-index = "^0.10.6"
 llama-index-embeddings-huggingface = "^0.1.4"
 llama-index-vector-stores-chroma = "^0.1.6"

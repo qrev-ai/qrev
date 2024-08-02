@@ -12,7 +12,7 @@ version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-chromadb = "^0.4.22"
+chromadb = "^0.5.5"
 dataclasses-json = "^0.6.4"
 langchain-community = "^0.0.34"
 llama-index = "^0.10.30"
@@ -23,7 +23,9 @@ pandas = "^2.2.1"
 pi-conf = "^0.8.5"
 pi-log = "^0.5.8.1"
 termcolor = "^2.4.0"
-qai-storage = "^0.6.0"
+qai-storage = "^0.6.1"
+huggingface = "^0.0.1"
+llama-index-llms-huggingface = "^0.2.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
