@@ -2,16 +2,17 @@
 and seems limited in its parsing capabilities. But it's still better than nothing.
 """
 
-import pyap
 import pytest
 from pyap.exceptions import CountryDetectionMissing
-from qai.schema.models.address_model import Address, _load_address_parser
 
-def parse_address(address, country="US"):
-    parsed_addresses = pyap.parse(address, country=country)
-    if not parsed_addresses:
-        raise ValueError(f"Unable to parse address: {address}")
-    return parsed_addresses[0].data_as_dict  # type: ignore
+from qai.schema.models.address_model import Address, _load_address_parser
+from qai.schema.parsers.address_parser_pyap import parse_address
+
+# def parse_address(address, country="US"):
+#     parsed_addresses = pyap.parse(address, country=country)
+#     if not parsed_addresses:
+#         raise ValueError(f"Unable to parse address: {address}")
+#     return parsed_addresses[0].data_as_dict  # type: ignore
 
 
 def assert_address_parts(actual, expected):
@@ -43,29 +44,47 @@ class TestPyAP:
             }
             assert_address_parts(a, expected)
 
-    def test_us_address_city(
+    def test_us_address_long_country(
         self,
     ):
         """
         Test parsing a US address, It doesn't correctly parse
         """
-        with pytest.raises(ValueError):
-            address = "Washington DC"
-            a = parse_address(address)
-            expected = {"city": "Washington", "region1": "DC", "country_id": "US"}
-            assert_address_parts(a, expected)
+        # with pytest.raises(ValueError):
+
+        address = "Berkeley, California, United States"
+        a = parse_address(address)
+        d = a.model_dump(exclude_none=True)
+        expected = {
+            "city": "Berkeley",
+            "state": "California",
+            "country": "US",
+            "raw": "Berkeley, California, United States",
+        }
+        assert_address_parts(d, expected)
+
+    def test_us_address_city(
+        self,
+    ):
+        address = "Washington DC"
+        a = parse_address(address)
+        d = a.model_dump(exclude_none=True)
+        expected = {"city": "Washington", "state": "DC", "country": "US", "raw": "Washington DC"}
+        assert_address_parts(d, expected)
 
     def test_us_address_city_state(
         self,
     ):
-        """
-        Test parsing a US address, It doesn't correctly parse
-        """
-        with pytest.raises(ValueError):
-            address = "Stillwater, Oklahoma"
-            a = parse_address(address)
-            expected = {"city": "Stillwater", "region1": "Oklahoma", "country_id": "US"}
-            assert_address_parts(a, expected)
+        address = "Stillwater, Oklahoma"
+        a = parse_address(address)
+        d = a.model_dump(exclude_none=True)
+        expected = {
+            "city": "Stillwater",
+            "state": "Oklahoma",
+            "country": "US",
+            "raw": "Stillwater, Oklahoma",
+        }
+        assert_address_parts(d, expected)
 
     def test_uk_address(
         self,
@@ -73,14 +92,14 @@ class TestPyAP:
         address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
         a = parse_address(address, country="GB")
         expected = {
-            "street_number": "10",
-            "street_name": "Downing Street",
-            "street_type": None,
+            "street": "10 Downing Street",
             "city": "London",
             "postal_code": "SW1A 2AA",
-            "country_id": "GB",
+            "country": "GB",
+            "raw": "10 Downing Street, London, SW1A 2AA, United Kingdom",
         }
-        assert_address_parts(a, expected)
+        d = a.model_dump(exclude_none=True)
+        assert_address_parts(d, expected)
 
     def test_fr_address(
         self,
@@ -116,7 +135,7 @@ class TestPyAP:
         pa = _load_address_parser("qai.schema.parsers.address_parser_pyap")
         assert pa
         Address.parse_address = pa
-        
+
         address = "10 Downing Street, London, SW1A 2AA, United Kingdom"
         a = Address.from_str(s=address, country="GB")
         assert a.street == "10 Downing Street"

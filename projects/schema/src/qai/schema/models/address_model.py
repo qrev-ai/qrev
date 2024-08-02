@@ -47,10 +47,10 @@ class Address(ExtendedDocument):
     @classmethod
     def parse_address(cls: type["T"], s: str, *args, **kwargs) -> T:
         if not hasattr(cls, "_parse_address"):
-            cls.parse_address = _load_address_parsers()
-        assert cls.parse_address, "No address parser loaded"
+            setattr(cls, "_parse_address", _load_address_parsers())
+            assert cls._parse_address, "No address parser loaded" #type: ignore
         try:
-            return cls.parse_address(s=s, *args, **kwargs)
+            return cls._parse_address(s=s, *args, **kwargs)  # type: ignore
         except:
             return cast(T, Address(raw=s))
 
@@ -111,6 +111,10 @@ def _load_address_parser(module_path: str) -> Optional[Callable]:
     return None
 
 
+def _basic_parse_address(s: str, *args, **kwargs) -> Address:
+    return Address(raw=s)
+
+
 def _load_address_parsers() -> Callable:
     log.debug("Loading external Address parsers")
 
@@ -126,4 +130,4 @@ def _load_address_parsers() -> Callable:
             return parse_address
     else:
         log.error("No Address parser could be loaded")
-        raise
+        return _basic_parse_address
