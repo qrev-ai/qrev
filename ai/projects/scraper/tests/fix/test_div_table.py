@@ -65,7 +65,7 @@ class TestDivTable(unittest.TestCase):
         tk = DivTable(
             table="table",
             columns=["column1", "column2"],
-            tr="Item"
+            trs=["Item"]
         )
         soup = tk.make_soup(html_str)
         newsoup = tk.process(soup)

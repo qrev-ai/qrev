@@ -3,7 +3,7 @@ import uuid
 
 import pytest
 
-from qai.schema.models import Company, Email, Person, Name
+from qai.schema import Company, Email, Name, Person
 
 
 @pytest.fixture

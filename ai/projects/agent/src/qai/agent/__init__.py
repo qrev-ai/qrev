@@ -1,8 +1,8 @@
 import os
 from importlib.metadata import version
 
-from pi_conf import load_config
 from dotenv import load_dotenv
+from pi_conf import load_config
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_DIR = os.path.abspath(os.path.join(ROOT_DIR, os.pardir, os.pardir, os.pardir))

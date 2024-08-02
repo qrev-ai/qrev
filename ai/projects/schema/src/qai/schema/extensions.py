@@ -1,8 +1,21 @@
+import asyncio
+import json
 from abc import abstractmethod
-from typing import Any, Dict, List, Mapping, Optional, Type, TypeVar, Union
+from typing import (
+    Any,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Self,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+)
 from urllib.parse import urlparse
 
-from beanie import Document
+from beanie import Document, View
 from beanie.exceptions import CollectionWasNotInitialized
 from beanie.odm.actions import ActionDirections, EventTypes, wrap_with_actions
 from beanie.odm.documents import DocType, DocumentProjectionType
@@ -11,25 +24,81 @@ from beanie.odm.settings.document import DocumentSettings
 from beanie.odm.utils.self_validation import validate_self_before
 from beanie.odm.utils.state import save_state_after
 from motor.motor_asyncio import AsyncIOMotorCollection
+from pydantic._internal._model_construction import ModelMetaclass
 from pymongo.client_session import ClientSession
+from qai.schema.mergers.merge import NORMAL_PRIORITY, Priority, merge_model
 
 T = TypeVar("T", bound=Document)
 ET = TypeVar("ET", bound="ExtendedDocument")
 
 offline_settings = DocumentSettings()
 
+# Create a global registry dictionary
+extended_document_registry: dict[str, Any] = {}
 
-class ExtendedDocument(Document):
+
+# Define the metaclass for registering subclasses
+class ExtendedDocumentMeta(type):
+    def __new__(cls, name, bases, dct):
+        new_class = super().__new__(cls, name, bases, dct)
+        extended_document_registry[name] = new_class
+        return new_class
+
+
+# Define a combined metaclass
+class CombinedMeta(ExtendedDocumentMeta, ModelMetaclass):
+    pass
+
+
+class ExtendedDocument(Document, metaclass=CombinedMeta):
 
     @classmethod
     def get_motor_collection(cls) -> AsyncIOMotorCollection:
         try:
             return super().get_motor_collection()
         except CollectionWasNotInitialized:
-            """ We don't mind if the collection is not initialized 
+            """We don't mind if the collection is not initialized
             until we actually need the collection for db interactions
             """
-            return None # type: ignore
+            return None  # type: ignore
+
+    @classmethod
+    async def load(
+        cls: type[ET],
+        projection_model: Type["DocumentProjectionType"] = None,  # type: ignore
+        session: Optional[ClientSession] = None,
+        ignore_cache: bool = False,
+        fetch_links: bool = False,
+        with_children: bool = False,
+        nesting_depth: Optional[int] = None,
+        nesting_depths_per_field: Optional[Dict[str, int]] = None,
+        *args: Union[Mapping[str, Any], bool],
+    ) -> Optional[ET]:
+        raise NotImplementedError("load must be implemented in the subclass of Extended")
+        if not args:
+            fields = cls.Settings.equality_fields
+            args = tuple([params])  # type: ignore
+        doc = await cls.find_one(
+            args[0],
+            projection_model=projection_model,
+            session=session,
+            ignore_cache=ignore_cache,
+            fetch_links=fetch_links,
+            with_children=with_children,
+            nesting_depth=nesting_depth,
+            nesting_depths_per_field=nesting_depths_per_field,
+        )
+        return doc
+
+    @classmethod
+    async def find_many_fetch(cls, *args) -> list[Self]:
+        if args:
+            ecs = await cls.find_many(*args).to_list()
+        else:
+            ecs = await cls.find_all().to_list()
+
+        await asyncio.gather(*[ec.fetch_all_links() for ec in ecs])
+        return ecs
 
     @wrap_with_actions(EventTypes.SAVE)
     @save_state_after
@@ -84,7 +153,92 @@ class ExtendedDocument(Document):
             **pymongo_kwargs,
         )
 
-    def eq(self, other, nones_ok: bool = False):
+    @classmethod
+    async def find_or_insert(  # type: ignore
+        cls: type[ET],
+        document: ET,
+        *args: Union[Mapping[str, Any], bool],
+        projection_model: Type["DocumentProjectionType"] = None,  # type: ignore
+        ignore_cache: bool = False,
+        fetch_links: bool = False,
+        with_children: bool = False,
+        nesting_depth: Optional[int] = None,
+        nesting_depths_per_field: Optional[Dict[str, int]] = None,
+        session: Optional[ClientSession] = None,
+        link_rule: WriteRules = WriteRules.DO_NOTHING,
+        ignore_revision: bool = False,
+        insert_kwargs: Optional[dict] = None,  # type: ignore
+        find_kwargs: Optional[dict] = None,
+        skip_actions: Optional[List[Union[ActionDirections, str]]] = None,
+    ) -> ET:
+        """
+        find or insert document with provided args
+        """
+        if find_kwargs is None:
+            find_kwargs = {}
+        if insert_kwargs is None:
+            insert_kwargs = {}
+
+        ## Get all Settings.equality_fields
+        if not args:
+            params = document.match_query()
+            args = tuple([params])  # type: ignore
+        doc = await document.find_one(
+            args[0],
+            projection_model=projection_model,
+            session=session,
+            ignore_cache=ignore_cache,
+            fetch_links=fetch_links,
+            with_children=with_children,
+            nesting_depth=nesting_depth,
+            nesting_depths_per_field=nesting_depths_per_field,
+            **find_kwargs
+        )
+
+        if doc:
+            return doc
+        return await document.insert(
+            session=session,
+            link_rule=link_rule,
+            skip_actions=skip_actions,
+            **insert_kwargs,
+        )
+
+    @classmethod
+    def from_str(cls: type[ET], s: str, *args, **kwargs) -> ET:
+        raise NotImplementedError("from_str must be implemented in the subclass of Extended")
+
+    def __merge__(self: ET, other: ET, self_priority: Priority, other_priority: Priority) -> ET:
+        """
+        Merge self with other
+        """
+        merge_model(
+            target=self, source=other, target_priority=self_priority, source_priority=other_priority
+        )
+        return self
+
+    def merge(
+        self: ET,
+        other: ET,
+        self_priority: Priority = NORMAL_PRIORITY,
+        other_priority: Priority = NORMAL_PRIORITY,
+    ) -> ET:
+        """
+        Merge self with other
+        """
+        return self.__merge__(other, self_priority, other_priority)
+
+    def __str__(self) -> str:
+        """
+        Return a string representation of the document. doesn't return the None fields
+        """
+        fields = []
+        for field in self.model_fields.items():
+            if field[1] is not None:
+                fields.append(f"{field[0]}={field[1]}")
+        return ", ".join(fields)
+
+    def eq(self, other, nones_ok: bool = False, to_lower: bool = False):
         """
         Check if two documents are equal.
         Rules:
@@ -104,7 +258,19 @@ class ExtendedDocument(Document):
             val = getattr(self, field_name)
             if val is None and not nones_ok:
                 return False
-            if val != getattr(other, field_name):
+            try:
+                oval = getattr(other, field_name)
+            except AttributeError:
+                if not nones_ok:
+                    return False
+                oval = None
+            if to_lower:
+                if isinstance(val, str):
+                    val = val.lower()
+                if isinstance(oval, str):
+                    oval = oval.lower()
+
+            if val != oval:
                 return False
         return True
 
@@ -115,7 +281,7 @@ class ExtendedDocument(Document):
             getattr(self, field_name) is None for field_name in self.Settings.equality_fields
         )
 
-    def match_query(self) -> Optional[dict[str, Any]]:
+    def match_query(self) -> dict[str, Any]:
         """
         Return a query that will match this document.
         """
@@ -150,6 +316,17 @@ class ExtendedDocument(Document):
             return None
         return await self.find_one(**params)
 
+    def pformat(
+        self: ET,
+        indent: int = 2,
+        exclude_none: bool = True,
+        **kwargs,
+    ) -> str:
+        """
+        Pretty format the document
+        """
+        return json.dumps(self.model_dump(exclude_none=True, **kwargs), indent=indent)
+
 
 setattr(Document, "upsert", ExtendedDocument.upsert)
 
@@ -173,7 +350,7 @@ class DocExtensions:
         ignore_revision: bool = False,
         save_kwargs: Optional[dict] = None,  # type: ignore
         pymongo_kwargs: Optional[dict] = None,
-        skip_actions: Optional[List[Union[ActionDirections, str]]] = None,
+        skip_actions: Optional[list[ActionDirections | str]] = None,
     ) -> DocType: ...
 
     @abstractmethod
@@ -185,3 +362,21 @@ class DocExtensions:
     @staticmethod
     @abstractmethod
     def get_base_url(url): ...
+
+    @classmethod
+    @abstractmethod
+    def from_str(cls, s: str): ...
+
+    @abstractmethod
+    def pformat(
+        self: ET,
+        indent: int = 2,
+        exclude_none: bool = True,
+        **kwargs,
+    ) -> str: ...
+
+
+def get_extended_documents(
+    cls: type["Document"] = ExtendedDocument,
+) -> list[type[Document] | type[View] | str]:
+    return list(extended_document_registry.values())

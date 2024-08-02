@@ -9,11 +9,11 @@ from typing import Any, ClassVar
 from bs4 import BeautifulSoup
 from pi_conf import Config
 from pi_log import getLogger
-from qai.core import Meta
+from qai.core import Meta, MetaFile
 
 from qai.scraper.processors.processor_factory import get_processor
 from qai.scraper.processors.processors import Processor
-from qai.scraper.scrapers.meta import WebObj
+# from qai.scraper.scrapers.meta import WebObj
 from qai.scraper.utils.bs_utils import make_soup as bs_util_make_soup
 from qai.scraper.utils.bs_utils import make_soup_from_file
 
@@ -62,7 +62,7 @@ class Filter:
         else:
             self.config = Config.from_dict(config)
         self.meta = meta
-        # self.subfolder = subfolder
+
         self.processer_configs = get_processor_config_map(config)
         self.default_ops: dict[str, Any] = config.get("default_options", {})
         self.default_pipeline = self.default_ops.get("pipeline")
@@ -79,7 +79,7 @@ class Filter:
 
     def process_file(
         self,
-        filename_or_webfile_name: WebObj | str | Path,
+        filename_or_webfile_name: MetaFile | str | Path,
         directory_info: DirectoryInfo = None,
     ) -> list[BeautifulSoup]:
         list_cfgs = self._get_matching_configs(filename_or_webfile_name)
@@ -92,36 +92,37 @@ class Filter:
         if isinstance(filename_or_webfile_name, Path):
             filename_or_webfile_name = str(filename_or_webfile_name)
         if isinstance(filename_or_webfile_name, str):
-            if self.meta:
-                uri = self.meta.relative_to(filename_or_webfile_name)
-            else:
-                uri = filename_or_webfile_name
-            filename_or_webfile_name = WebObj(
-                _uri=uri,
-                id=id,
-                source_uri=filename_or_webfile_name,
-                _meta=self.meta,
-                scrape_time=0,
+            # if self.meta:
+            #     uri = self.meta.relative_to(filename_or_webfile_name)
+            # else:
+            #     uri = filename_or_webfile_name
+            filename_or_webfile_name = MetaFile(
+                path=filename_or_webfile_name,
+                # source_uri=filename_or_webfile_name,
+                # _meta=self.meta,
             )
-        webfile: WebObj = filename_or_webfile_name
+        webfile: MetaFile = filename_or_webfile_name
         soups = []
         instance_info = InstanceInfo(
-            _uri=webfile._uri,
+            # _uri=webfile._uri,
             web_file=webfile,
-            meta=self.meta,
+            _meta=self.meta,
             directory_info=directory_info,
         )
+        instance_info._meta = self.meta
+
         for i, cfg in enumerate(list_cfgs):
             instance_info.config = cfg
             instance_info.config_index = i
-            soup = self.filter_html_file(webfile.full_path(), cfg, instance_info=instance_info)
+            # soup = self.filter_html_file(webfile.full_path(), cfg, instance_info=instance_info)
+            soup = self.filter_html_file(webfile.path, cfg, instance_info=instance_info)
             soups.append(soup)
         return soups
 
     def process_soup(self, soup: BeautifulSoup):
         return self.filter_soup(soup)
 
-    def _should_include(self, file_info: str | WebObj, config: dict[str, Any]) -> bool:
+    def _should_include(self, file_info: str | MetaFile, config: dict[str, Any]) -> bool:
         """
         Returns True if the file should be included,
         False if it should be excluded.
@@ -134,14 +135,20 @@ class Filter:
         ):
             ### Not specifying anything matches all files
             return True
+        @dataclass
+        class NameSource:
+            uri: str
+            source_uri: str
+
         if isinstance(file_info, (str, Path)):
             bn = os.path.basename(file_info)
-            file_info = WebObj(
-                _uri=bn, id=0, scrape_time=0, source_uri=file_info, local_file=file_info
-            )
-        for typ in ["source_uri", "_uri"]:
+            file_info = NameSource(uri=bn, source_uri=str(file_info))
+        else:
+            file_info = NameSource(uri=file_info.path, source_uri="")
+        
+        for typ in ["source_uri", "uri"]:
             to_match = getattr(file_info, typ)
-            typp = {"source_uri": "url", "_uri": "file"}[typ]
+            typp = {"source_uri": "url", "uri": "file"}[typ]
 
             include = f"{typp}_regex"
             exclude = f"exclude_{typp}_regex"
@@ -169,7 +176,7 @@ class Filter:
         if not in_group and not in_folder:
             raise ValueError("in_group or in_folder must be specified")
         if directory_info is None:
-            directory_info = DirectoryInfo(meta=self.meta, in_folder=in_folder)
+            directory_info = DirectoryInfo(_meta=self.meta, in_folder=str(in_folder))
 
         if in_group is None and in_folder:
             for f in glob.glob(f"{in_folder}/**"):
@@ -177,25 +184,26 @@ class Filter:
                 self.process_file(f, directory_info=directory_info)
         else:
             directory_info.in_folder = in_folder
-            for f in self.meta.get_files_meta(group=in_group, cls=WebObj):
-                log.debug(f"Filter:Processing {str(f._uri)}")
+            g = self.meta.get_dir(in_group)
+            files = list(self.meta.get_files(in_group))
+            for f in files:
+                print(f"Filter:Processing {str(f)}, len={len(files)}")
+                log.debug(f"Filter:Processing {str(f)}, len={len(files)}")
                 self.process_file(f, directory_info=directory_info)
-                    
 
-
-    def _subsitute_values(self, config: dict, filename: WebObj) -> dict:
+    def _subsitute_values(self, config: dict, filename: MetaFile) -> dict:
         for k, v in config.items():
             if isinstance(v, str):
                 try:
-                    v = v.replace("<filename>", filename._uri)
-                    v = v.replace("<basename>", os.path.basename(filename._uri))
+                    v = v.replace("<filename>", filename.path)
+                    v = v.replace("<basename>", filename.path.name)
                     # v = v.replace("<group>", self.subfolder)
                 except:
                     pass
                 config[k] = v
         return config
 
-    def _get_matching_configs(self, file_name: WebObj) -> list[dict[str, Any]]:
+    def _get_matching_configs(self, file_name: MetaFile) -> list[dict[str, Any]]:
         ## If we have a list of configs, then we need to match the file_name to the regex
         if "pipeline" in self.config:
             configs = []
@@ -212,10 +220,8 @@ class Filter:
         base_config = self.default_ops.copy()
         return [self._subsitute_values(base_config, filename=file_name)]
 
-    def _get_pipeline(
-        self, processor_names: list[str], config: dict[str, Any]
-    ) -> list[Processor]:
-        
+    def _get_pipeline(self, processor_names: list[str], config: dict[str, Any]) -> list[Processor]:
+
         pipeline = []
         for proc_name in processor_names:
             base_config = config.copy()
@@ -230,7 +236,7 @@ class Filter:
         proc_names = config.get("pipeline", self.default_pipeline)
         if not proc_names:
             raise ValueError(f"No pipeline found for inside config")
-        
+
         ### TODO: Need to handle multiple pipelines later
         if len(proc_names) > 0 and isinstance(proc_names[0], dict):
             proc_names = proc_names[0]
@@ -282,7 +288,7 @@ class Filter:
 
     @staticmethod
     def make_soup(html_str_or_path_or_fp: str, default_parser: str = "lxml") -> BeautifulSoup:
-        if isinstance(html_str_or_path_or_fp, WebObj):
+        if isinstance(html_str_or_path_or_fp, MetaFile):
             html_str_or_path_or_fp = str(html_str_or_path_or_fp)
         return bs_util_make_soup(html_str_or_path_or_fp, default_parser=default_parser)
 

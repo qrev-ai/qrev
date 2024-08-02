@@ -6,7 +6,6 @@ from hashlib import sha256
 from urllib.parse import urlsplit
 
 import undetected_chromedriver as uc
-
 from bs4 import BeautifulSoup
 
 from .scraper import Scraper

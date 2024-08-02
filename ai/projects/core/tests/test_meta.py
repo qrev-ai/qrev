@@ -1,344 +1,215 @@
 import json
-import os
-import tempfile
-import time
-import unittest
-from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import UUID
 
-from qai.core import Meta, MetaObj, MetaUri
+import pytest
+from pydantic import Field
 
-test_dir = Path(__file__).parent
-data_dir = (test_dir / "data").resolve()
-cur_dir = Path(os.curdir).absolute()
+from qai.core.meta import (
+    FileType,
+    Meta,
+    MetaBase,
+    MetaFloat,
+    MetaInt,
+    MetaPath,
+    MetaString,
+    SearchDepth,
+    MetaFile,
+    MetaDir
+)
 
 
-class TestMeta(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        pass
+class MetaDerived(MetaBase):
+    """
+    Derived metadata class
+    """
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        pass
+    extra_field: str = Field(default="")
 
-    def test_load_metadata(self):
-        root_dir, meta = Meta.get_folder_and_meta(data_dir / "websites/test_website")
-        self.assertEqual(Path(root_dir), data_dir / "websites/test_website/20231229-000000")
-        self.assertTrue(os.path.exists(meta))
-        self.assertTrue(os.path.exists(root_dir))
-        self.assertEqual(os.path.basename(meta), "metadata.json")
 
-    def test_get_meta_from_most_recent_dir(self):
-        pth = data_dir / "websites/test_website"
-        meta = Meta.from_most_recent(pth)
-        with open(pth / "20231229-000000" / "metadata.json") as f:
-            data = json.load(f)
-        self.assertEqual(meta.root, meta.abs(data["root"]))
 
-    def test_get_meta_from_directory(self):
-        pth = data_dir / "websites/test_website/20231229-000000"
-        meta = Meta.from_directory(pth)
-        self.assertEqual(meta.root, pth)
+@pytest.fixture
+def sample_meta_dir():
+    return MetaDir(
+        path=Path("/"),
+        files=[
+            MetaFile(path=Path("/file1.txt")),
+            MetaFile(path=Path("/file2.txt")),
+            MetaFile(path=Path("/dir7/dir9/file9.txt")),
+        ],
+        directories=[
+            MetaDir(
+                path=Path("/dir1"),
+                files=[MetaFile(path=Path("/dir1/file3.txt"))],
+                directories=[],
+            ),
+            MetaDir(
+                path=Path("/dir2"),
+                files=[],
+                directories=[
+                    MetaDir(
+                        path=Path("/dir2/dir3"),
+                        files=[MetaFile(path=Path("/dir2/dir3/file4.txt"))],
+                        directories=[],
+                    )
+                ],
+            ),
+        ],
+    )
 
-    def test_get_meta_get_file(self):
-        meta = Meta.from_most_recent(data_dir / "websites/test_website")
-        f = meta.get_file_meta("lorem.html", group="raw")
-        self.assertTrue(isinstance(f, MetaObj))
-        self.assertEqual(f._path, data_dir / "websites/test_website/20231229-000000/raw/lorem.html")
-        self.assertEqual(f.title, "Example")
+def test_meta_base_initialization():
+    meta = MetaBase(metadata={"key": "value"})
+    assert isinstance(meta.id, UUID)
+    assert meta.metadata == {"key": "value"}
+    assert meta.parent_id is None
+    assert meta.origin_ids is None
 
-    def test_meta_from_dict(self):
-        d = {"a": 1, "b": 2}
-        meta = Meta(**d)
-        self.assertEqual(meta["a"], 1)
-        self.assertEqual(meta["b"], 2)
-        self.assertIsNone(meta.root)
 
-    def test_meta_from_dict2(self):
-        d = {"a": 1, "b": 2}
-        meta = Meta(d)
-        self.assertEqual(meta["a"], 1)
-        self.assertEqual(meta["b"], 2)
-        self.assertIsNone(meta.root)
+def test_meta_base_serialization():
+    meta = MetaBase(class_name="TestClass")
+    serialized = meta.model_dump()
+    assert isinstance(serialized["id"], str)
+    assert "class_name" in serialized
 
-    def test_meta_from_dict_with_root(self):
-        d = {"a": 1, "b": 2}
-        root = "z"
-        meta = Meta(_root=root, **d)
-        self.assertEqual(meta["a"], 1)
-        self.assertEqual(meta["b"], 2)
-        self.assertEqual(str(meta.root), "z")
 
-    def test_from_directory(self):
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta_dir = f"{tmpdirname}/meta_root"
-            meta = Meta.from_directory(dir_path=meta_dir, create=True)
-            self.assertTrue(os.path.exists(meta.root))
-            self.assertTrue(os.path.exists(meta.meta_file))
-            meta["a"] = 1
-            meta.save()
-            meta2 = Meta.from_directory(meta_dir)
-            self.assertEqual(meta2["a"], 1)
-            self.assertEqual(meta.root, meta2.root)
-            self.assertEqual(meta.meta_file, meta2.meta_file)
+def test_meta_base_add_origin():
+    parent = MetaBase(class_name="Parent")
+    child = MetaBase(class_name="Child")
+    parent.add_origin(child)
+    assert child.id in parent.origin_ids
+    assert child in parent._origins
 
-    def test_from_most_recent_no_timestamp(self):
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta_dir = f"{tmpdirname}/meta_root"
-            meta = Meta.from_directory(dir_path=meta_dir, create=True)
-            self.assertTrue(os.path.exists(meta.root))
-            self.assertTrue(os.path.exists(meta.meta_file))
-            meta["a"] = 1
-            meta.save()
-            meta2 = Meta.from_directory(meta_dir)
-            self.assertEqual(meta2["a"], 1)
-            self.assertEqual(meta.root, meta2.root)
-            self.assertEqual(meta.meta_file, meta2.meta_file)
 
-    def test_from_most_recent_timestamp(self):
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta_dir = f"{tmpdirname}/meta_root"
-            meta = Meta.from_most_recent(dir_path=meta_dir, create=True)
-            self.assertTrue(os.path.exists(meta.root))
-            self.assertTrue(os.path.exists(meta.meta_file))
-            meta["a"] = 1
-            meta.save()
-            meta2 = Meta.from_most_recent(meta_dir)
-            self.assertEqual(meta2["a"], 1)
-            self.assertEqual(meta.root, meta2.root)
-            self.assertEqual(meta.meta_file, meta2.meta_file)
+def test_meta_base_get_sources():
+    parent = MetaBase(class_name="Parent")
+    child1 = MetaBase(class_name="Child1")
+    child2 = MetaBase(class_name="Child2")
+    parent.add_origin(child1)
+    parent.add_origin(child2)
+    sources = list(parent.get_sources(SearchDepth.all))
+    assert len(sources) == 2
+    assert child1 in sources
+    assert child2 in sources
 
-    def test_metaobj_subclassing(self):
-        @dataclass
-        class MyMeta(MetaObj):
-            a: int = 1
 
-        meta = MyMeta()
-        self.assertEqual(meta.__json__(), {"a": 1})
+def test_meta_path_initialization():
+    path = Path("/some/path")
+    meta_path = MetaDir(path=path)
+    assert meta_path.path == path
+    assert not meta_path.is_file
 
-    def test_metaobj_subclassing_default_no_default_value(self):
-        @dataclass
-        class MyMeta(MetaObj):
-            a: int
-            b: int = 1
 
-        meta = MyMeta(a=1)
-        self.assertEqual(meta.__json__(), {"a": 1, "b": 1})
+def test_meta_path_populate_from_directory(tmp_path):
+    dir_path = tmp_path / "test_dir"
+    dir_path.mkdir()
+    file_path = dir_path / "test_file.txt"
+    file_path.write_text("content")
 
-    def test_metauri_subclassing_default_no_default_value(self):
-        @dataclass
-        class MyMeta(MetaUri):
-            a: int
-            b: int = 1
+    meta = MetaDir(path=dir_path)
+    meta._populate_from_directory()
 
-        meta = MyMeta(_uri="a", a=1)
-        self.assertEqual(meta.__json__(), {"_uri": "a", "a": 1, "b": 1})
+    assert len(meta.files) == 1
+    assert len(meta.directories) == 0
+    assert meta.files[0].path == file_path
 
-    # def test_metauri_subclassing_default_no_default_extra_args(self):
-    #     @dataclass
-    #     class MyMeta(MetaUri):
-    #         a: int
-    #         b: int = 1
 
-    #     meta = MyMeta(_uri="a", a=1, c=1)
-    #     self.assertEqual(meta.__json__(), {"_group": None, "_uri": "a", "a": 1, "b": 1})
+def test_meta_creation_from_directory(tmp_path):
+    dir_path = tmp_path / "test_dir"
+    dir_path.mkdir()
+    file_path = dir_path / "test_file.txt"
+    file_path.write_text("content")
 
-    def test_metaobj_subclass(self):
-        @dataclass
-        class MyMeta(MetaUri):
-            a: int = 1
+    meta = Meta.create_from_directory(dir_path)
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.from_most_recent(tmpdirname, create=True)
-            self.assertTrue(os.path.exists(meta.root))
+    assert meta.path == dir_path
+    assert len(meta.files) == 1
+    assert meta.files[0].path == file_path
 
-            os.makedirs(f"{meta.root}/raw", exist_ok=True)
-            m = MyMeta(_uri="raw/a.json")
 
-            meta.add_file_meta("raw", m)
-            with open(f"{meta.root}/{m._uri}", "w") as f:
-                json.dump(m.__json__(), f)
-            self.assertTrue(os.path.exists(f"{meta.root}/metadata.json"))
-            self.assertTrue(os.path.exists(f"{meta.root}/raw/a.json"))
-            cls = MyMeta
-            o = cls(**{"_uri": "raw/a.json", "a": 1})
+def test_meta_save_load(tmp_path):
+    dir_path = tmp_path / "test_dir"
+    dir_path.mkdir()
+    file_path = dir_path / "test_file.txt"
+    file_path.write_text("content")
 
-            self.assertEqual(type(o), MyMeta)
+    meta = Meta.create_from_directory(dir_path)
+    dest = tmp_path / ".metadata.json"
+    meta.save(dest)
 
-    def test_metaobj_subclass_get_file_meta(self):
-        @dataclass(init=False)
-        class MyMeta(MetaUri):
-            a: int = 1
+    loaded_meta = Meta.load(dest)
+    assert loaded_meta.path == meta.path
+    assert loaded_meta.files[0].path == meta.files[0].path
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            # tmpdirname = "tmpdir"
-            meta = Meta.from_most_recent(tmpdirname, create=True)
-            self.assertTrue(os.path.exists(meta.root))
 
-            os.makedirs(f"{meta.root}/raw", exist_ok=True)
-            pth = str(Path(f"{meta.root}/raw/a.json").absolute())
-            m = MyMeta(_uri=pth)
+def test_meta_string_initialization():
+    meta_string = MetaString(value="test")
+    assert meta_string.value == "test"
 
-            meta.add_file_meta("raw", m)
-            with open(pth, "w") as f:
-                json.dump(m.__json__(), f)
-            self.assertTrue(os.path.exists(f"{meta.root}/metadata.json"))
-            self.assertTrue(os.path.exists(f"{meta.root}/raw/a.json"))
-            o = meta.get_file_meta("a.json", group="raw", cls=MyMeta)
-            self.assertEqual(type(o), MyMeta)
-            self.assertEqual(o._uri, pth)
-            self.assertEqual(o.a, 1)
 
-    def test_metaobj_subclass_get_file_meta_2(self):
-        @dataclass
-        class MyMeta(MetaUri):
-            a: int = 1
+def test_meta_int_initialization():
+    meta_int = MetaInt(value=42)
+    assert meta_int.value == 42
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.from_most_recent(tmpdirname, create=True)
-            self.assertTrue(os.path.exists(meta.root))
 
-            os.makedirs(f"{meta.root}/raw", exist_ok=True)
-            pth = str(Path(f"{meta.root}/raw/a.json").absolute())
-            m = MyMeta(_uri=pth)
+def test_meta_float_initialization():
+    meta_float = MetaFloat(value=3.14)
+    assert meta_float.value == 3.14
 
-            meta.add_file_meta("raw", m)
-            with open(pth, "w") as f:
-                json.dump(m.__json__(), f)
-            self.assertTrue(os.path.exists(f"{meta.root}/metadata.json"))
-            self.assertTrue(os.path.exists(f"{meta.root}/raw/a.json"))
-            o = meta.get_file_meta("a.json", group="raw", cls=MetaObj)
 
-            self.assertEqual(o._uri, pth)
-            self.assertEqual(o.a, 1)
+def test_meta_derived_save_load(tmp_path):
 
-    def test_metaobj_get_file(self):
-        @dataclass
-        class MyMeta(MetaUri):
-            a: int = 1
+    # Create an instance of MetaDerived
+    meta_derived = MetaDerived(extra_field="extra_value")
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.from_directory(tmpdirname, create=True)
-            self.assertTrue(os.path.exists(meta.root))
-            name = "f1.json"
-            with open(f"{meta.root}/{name}", "w") as f:
-                json.dump({}, f)
-            m = MyMeta(_uri=name)
-            meta.add_file(f"{meta.root}/{name}", group="raw", meta=m)
-            ## check to see if file is added
-            f = meta.get_file(name, group="raw")
-            self.assertEqual(str(f), str(f"{meta.root}/raw/{name}"))
-            self.assertTrue(os.path.exists(f))
-            ## check to see if file meta was returned
-            self.assertEqual(f.metadata.a, 1)
+    # Define the file path to save the metadata
+    dest = tmp_path / "meta_derived.json"
 
-    def test_metaobj_get_files(self):
-        """Test that files are returned"""
+    # Save the instance
+    with dest.open("w") as f:
+        json.dump(meta_derived.model_dump(exclude_none=True, mode="json"), f, indent=2)
 
-        @dataclass
-        class MyMeta(MetaUri):
-            a: int = 1
+    # Load the instance
+    with dest.open("r") as f:
+        data = json.load(f)
+        loaded_meta = MetaDerived.deserialize(data)
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.from_directory(tmpdirname, create=True)
-            self.assertTrue(os.path.exists(meta.root))
-            name = "f1.json"
-            with open(f"{meta.root}/{name}", "w") as f:
-                json.dump({}, f)
-            m = MyMeta(_uri=name)
-            meta.add_file(f"{meta.root}/{name}", group="raw", meta=m)
-            ## check to see if file is added
-            files = meta.get_files(group="raw")
-            self.assertEqual(len(files), 1)
-            f = files[0]
-            self.assertEqual(str(f), str(f"{meta.root}/raw/{name}"))
-            self.assertTrue(os.path.exists(f))
-            ## check to see if file meta was returned
-            self.assertEqual(f.metadata.a, 1)
+    # Ensure the loaded instance matches the original
+    assert loaded_meta.class_name == meta_derived.class_name
+    assert loaded_meta.extra_field == meta_derived.extra_field
+    assert loaded_meta.id == meta_derived.id
 
-    def test_metaobj_get_files_meta(self):
-        ## test that meta for each file is returned
-        @dataclass
-        class MyMeta(MetaUri):
-            a: int = 1
+def test_from_dir_create_true(tmp_path):
+    dir_path = tmp_path / "test_dir"
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.from_directory(tmpdirname, create=True)
-            self.assertTrue(os.path.exists(meta.root))
-            name = "f1.json"
-            with open(f"{meta.root}/{name}", "w") as f:
-                json.dump({}, f)
-            m = MyMeta(_uri=name)
-            meta.add_file(f"{meta.root}/{name}", group="raw", meta=m)
-            ## check to see if file is added
-            files = meta.get_files_meta(group="raw", cls=MyMeta)
-            self.assertEqual(len(files), 1)
-            f = files[0]
-            self.assertEqual(type(f), MyMeta)
-            self.assertEqual(f._uri, name)
-            self.assertEqual(f.a, 1)
+    meta = Meta.from_dir(dir_path, create=True)
+    assert meta.path == dir_path
 
-    def test_metaobj_get_files_with_subfolders(self):
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.from_directory(tmpdirname, create=True)
-            os.makedirs(f"{meta.root}/raw", exist_ok=True)
-            self.assertTrue(os.path.exists(meta.root))
-            name = "f1.json"
-            expected_uri = "a/f1.json"
-            file_path = f"{meta.root}/{name}"
-            with open(file_path, "w") as f:
-                json.dump({}, f)
-            m = MetaUri(_uri=expected_uri)
+def test_get_file_by_name(sample_meta_dir):
+    assert sample_meta_dir.get("file1.txt").path == Path("/file1.txt")
+    assert sample_meta_dir.get("file3.txt").path == Path("/dir1/file3.txt")
+    assert sample_meta_dir.get("file4.txt").path == Path("/dir2/dir3/file4.txt")
 
-            meta.add_file(file_path, group="raw", meta=m)
-            meta.save()
-            ## check to see if file is added
-            files = meta.get_files_meta(group="raw", cls=MetaUri, recursive=True)
-            self.assertEqual(len(files), 1)
-            f = files[0]
-            self.assertEqual(f._uri, expected_uri)
+def test_get_file_with_default(sample_meta_dir):
+    assert sample_meta_dir.get("file5.txt", default="Not Found") == "Not Found"
 
-    def test_metaobj_get_files_with_subfolders2(self):
+def test_get_directory_by_name(sample_meta_dir):
+    assert sample_meta_dir.get("dir3", is_dir=True).path == Path("/dir2/dir3")
+    assert sample_meta_dir.get("dir1", is_dir=True).path == Path("/dir1")
 
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.from_directory(tmpdirname, create=True)
-            os.makedirs(f"{meta.root}/raw", exist_ok=True)
-            self.assertTrue(os.path.exists(meta.root))
-            name = "f1.json"
-            expected_uri = "a/f1.json"
-            file_path = f"{meta.root}/{name}"
-            with open(file_path, "w") as f:
-                json.dump({}, f)
+def test_get_file_with_is_file_flag(sample_meta_dir):
+    assert sample_meta_dir.get("file2.txt", is_file=True).path == Path("/file2.txt")
+    assert sample_meta_dir.get("file1.txt", is_file=True).path == Path("/file1.txt")
 
-            meta.add_file(file_path, group="raw", uri=expected_uri)
-            meta.save()
-            ## check to see if file is added
-            files = meta.get_files_meta(group="raw", cls=MetaUri, recursive=True)
-            self.assertEqual(len(files), 1)
-            f = files[0]
-            self.assertEqual(f._uri, expected_uri)
+def test_non_recursive_search(sample_meta_dir):
+    assert sample_meta_dir.get("file3.txt", recursive=False, default="Not Found") == "Not Found"
 
-    def test_get_within_seconds(self):
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            meta = Meta.create_most_recent(tmpdirname)
-            time.sleep(1)
-            ## Test that metadata is created and not loaded
-            meta2 = Meta.from_within_seconds(tmpdirname, 0.5)
-            self.assertNotEqual(meta.root, meta2.root)
-
-            ## Test that metadata is loaded
-            meta2 = Meta.from_within_seconds(tmpdirname, 2)
-            self.assertEqual(meta.root, meta2.root)
-
+# def test_get_by_full_path(sample_meta_dir):
+#     assert sample_meta_dir.get_by_path("/dir1/file3.txt").path == Path("/dir1/file3.txt")
+#     assert sample_meta_dir.get_by_path("/dir2/dir3/file4.txt").path == Path("/dir2/dir3/file4.txt")
+#     assert sample_meta_dir.get_by_path("/dir2/dir4/file5.txt", default="Not Found") == "Not Found"
+#     assert sample_meta_dir.get_by_path("/dir7/dir9/file9.txt").path == Path("/dir7/dir9/file9.txt")
 
 if __name__ == "__main__":
-    testmethod = ""
-    if testmethod:
-        suite = unittest.TestSuite()
-        suite.addTest(TestMeta(testmethod))
-        runner = unittest.TextTestRunner()
-        runner.run(suite)
-    else:
-        unittest.main()
+    pytest.main()

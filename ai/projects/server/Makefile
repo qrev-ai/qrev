@@ -25,7 +25,7 @@ SCRIPT_DIR_NAME:=$(shell basename $(SCRIPT_DIR))
 
 ## Test Project
 test:: 
-	python -m unittest discover tests
+	pytest tests/*test_*.py
 
 ## Build the project
 .build:: test

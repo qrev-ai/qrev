@@ -17,6 +17,7 @@ class DivTable(Processor):
     columns: list[str] = None
     trs: list[str] = None
     column_headers: list[str] = None
+    
     # has_header: bool = Truet
 
     def process(

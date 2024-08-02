@@ -1,6 +1,6 @@
 import os
 
-import pkg_resources
+# import pkg_resources
 from pi_conf import load_config
 
 from qai.scraper.filters.filter import Filter as Filter
@@ -13,6 +13,8 @@ ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(ROOT_DIR, "..", "data")
 PARSE_CONFIG_DIR = os.path.join(ROOT_DIR, "..", "parse_configs")
 try:
-    VERSION = pkg_resources.get_distribution("qai.scraper").version
-except pkg_resources.DistributionNotFound:
+    import importlib.metadata
+    # VERSION = pkg_resources.get_distribution("qai.scraper").version
+    VERSION = importlib.metadata.version("qai.scraper")
+except Exception:
     VERSION = "0.0.0"

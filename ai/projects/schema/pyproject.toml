@@ -2,23 +2,36 @@
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
 
+[tool.mypy]
+ignore_missing_imports = true
+
 [tool.poetry]
 authors = ["parnell <3028114+parnell@users.noreply.github.com>"]
 description = ""
 name = "qai-schema"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.1"
+version = "0.6.2.1"
 
 [tool.poetry.dependencies]
-python = ">=3.11,<3.12"
-pydantic = {extras = ["email"], version = "^2.7.4"}
-nameparser = "^1.1.3"
+python = "^3.11"
+addressformatting = "^1.3.2"
 beanie = "^1.26.0"
+flexible-datetime = "^0.3.2"
+nameparser = "^1.1.3"
 phonenumbers = "^8.13.39"
+pi-conf = "^0.8.5"
+pyap = "^0.3.1"
+pycountry = "^24.6.1"
+pydantic = {extras = ["email"], version = "^2.7.4"}
+pydantic-settings = "^2.3.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.2.2"
+toml-sort = "^0.23.1"
+
+[tool.poetry.group.parsers.dependencies]
+postal = "^1.1.10"
 
 [tool.tomlsort]
 all = true

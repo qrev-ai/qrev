@@ -3,7 +3,7 @@ from logging import getLogger
 
 from llama_index.core.llms.llm import LLM
 from llama_index.core.tools.tool_spec.base import BaseToolSpec
-
+from typing import Optional
 from qai.agent import ROOT_DIR
 from qai.agent.models import OutreachType
 
@@ -17,7 +17,7 @@ class OutreachToolSpec(BaseToolSpec):
 
     spec_functions = ["find_outreach"]
 
-    def __init__(self, llm: LLM = None, *args, **kwargs):
+    def __init__(self, llm: Optional[LLM] = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.llm = llm
 

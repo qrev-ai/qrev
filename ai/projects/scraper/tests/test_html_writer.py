@@ -1,44 +1,25 @@
-# This is actually a markdown writer
+import sys
 import os
-import tempfile
-import unittest
-
+import pytest
 from bs4 import BeautifulSoup
-
 from qai.core import Meta
 from qai.scraper.processors.html_writer import HTMLWriter
 
 
-class TestHtmlWriter(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        pass
-
-    @classmethod
-    def tearDownClass(cls) -> None:
-        pass
-
-    def test_markdown_with_bold(self):
-        html_str = """
-            <h3>
-            A <em><b>B</b></em> C <i>D</i> E
-            F <b>G</b> H <i>I</i> J  .
-            </h3>
-        """
-        soup = BeautifulSoup(html_str, "html.parser")
-        meta = Meta.create_ephemeral()
-        file_path = meta.root / "simplified_testing.html"
-        proc = HTMLWriter(file_name=file_path, meta=meta)
-        proc.process(soup)
-        self.assertTrue(os.path.exists(meta.get_file("simplified_testing.html")))
+def test_html_write(tmp_path):
+    html_str = """
+        <h3>
+        A <em><b>B</b></em> C <i>D</i> E
+        F <b>G</b> H <i>I</i> J  .
+        </h3>
+    """
+    soup = BeautifulSoup(html_str, "html.parser")
+    meta = Meta.from_dir(tmp_path, create=True)
+    file_path = meta.path / "simplified_testing.html"
+    proc = HTMLWriter(file_name=file_path, meta=meta)
+    proc.process(soup)
+    assert os.path.exists(file_path)
+    assert os.path.exists(meta.get_file("simplified_testing.html").path)
 
 if __name__ == "__main__":
-    test_method = ""
-    if not test_method:
-        unittest.main()
-    else:
-        ## test one method
-        suite = unittest.TestSuite()
-        suite.addTest(TestHtmlWriter(test_method))
-        runner = unittest.TextTestRunner()
-        runner.run(suite)
+    pytest.main([sys.argv[0]])

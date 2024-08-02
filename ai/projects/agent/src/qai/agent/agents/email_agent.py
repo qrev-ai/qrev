@@ -3,6 +3,7 @@ import time
 from functools import partial
 from logging import getLogger
 from typing import Callable, List, Optional, Self, Type, Union
+from uuid import UUID, uuid4
 
 import requests
 from llama_index.agent.openai import OpenAIAgent
@@ -17,9 +18,9 @@ from llama_index.core.tools.tool_spec.base import BaseToolSpec
 from llama_index.core.tools.types import BaseTool
 from pydantic import BaseModel, Field
 from pymongo import MongoClient
-from uuid import UUID, uuid4
 
 from qai.agent import ROOT_DIR, cfg
+from pi_blink import blink
 from qai.agent.utils.distribute import adistribute
 from qai.agent.utils.schema_utils import get_name
 
@@ -71,6 +72,19 @@ class EmailModel(BaseModel):
 
     def dict(self):
         return {"subject": self.subject, "body": self.body, "email": self.email}
+
+
+class OnEmailCompleteEvent(BaseModel):
+    sequence_id: str
+    email: EmailModel
+    cancel: bool = False
+
+
+class OnAllEmailsCompletedEvent(BaseModel):
+    sequence_id: str
+    successes: int
+    errors: int
+    cancel: bool = False
 
 
 class EmailToolSpec(BaseToolSpec):
@@ -225,7 +239,7 @@ class EmailToolSpec(BaseToolSpec):
     @staticmethod
     def _create_emails(
         kwargs_list: list[dict],
-        on_complete: Optional[Callable] = None,
+        on_all_complete: Optional[Callable] = None,
         asynchronous: bool = True,
         email_tool_spec_cls: Self = Self,
     ) -> None | List[EmailModel]:
@@ -233,7 +247,7 @@ class EmailToolSpec(BaseToolSpec):
             adistribute(
                 email_tool_spec_cls._create_email,
                 kwargs_list=kwargs_list,
-                on_complete=on_complete,
+                on_all_complete=on_all_complete,
                 nprocs=4,
             )
         else:
@@ -248,8 +262,8 @@ class EmailToolSpec(BaseToolSpec):
                 except Exception as e:
                     log.exception(f"Error creating email: {e}")
                     errors += 1
-            if on_complete:
-                on_complete(successes, errors)
+            if on_all_complete:
+                on_all_complete(successes, errors)
             return emails
 
 
@@ -268,36 +282,11 @@ class EmailAgent(OpenAIAgent):
         return super().chat(message, chat_history, tool_choice)
 
     @staticmethod
-    def on_email_complete(sequence_id, email: EmailModel) -> None:
-        log.debug(f"Email completed: {sequence_id} {email}")
-        mongo = cfg.mongo
-        client = MongoClient(mongo.uri)
-        db = client[mongo.db]
-
-        collection = db[mongo.collection]
-        js = {
-            "sequence_id": sequence_id,
-            "prospect_email": email.email,
-            "prospect_name": email.name,
-            "prospect_phone": email.phone,
-            "message_subject": email.subject,
-            "message_body": email.body,
-            "is_message_generation_complete": True,
-        }
-        log.debug(f"Inserting into collection: {mongo.uri} {db} {collection.name} ")
-        result = collection.insert_one(js)
-        log.debug(f"Insert Result: {result}")
-
-    @staticmethod
-    def on_all_emails_complete(sequence_id: str, successes: int, errors: int) -> None:
-        log.debug(f"All Email completed: {successes} success, {errors} errors.")
-        url = cfg.email.on_complete_emails_url
-        log.debug(f"Sending call to {url}  sequence_id={sequence_id}")
-        delay = cfg.email.get("delay_complete_request", 0)
-        if delay:
-            time.sleep(delay)
-        r = requests.post(url, json={"sequence_id": sequence_id})
-        log.debug(r.json())
+    def _on_all_emails_complete(sequence_id: str, successes: int, errors: int) -> None:
+        event = OnAllEmailsCompletedEvent(
+            sequence_id=sequence_id, successes=successes, errors=errors
+        )
+        blink.send(event)
 
     def create_emails(
         self,
@@ -305,8 +294,8 @@ class EmailAgent(OpenAIAgent):
         from_person: dict,
         from_company: dict,
         to_people: dict,
-        to_companies: dict = None,
-        use_async_on: int = 1,
+        to_companies: Optional[dict] = None,
+        use_async_on: Optional[int] = None,
     ) -> List[EmailModel]:
         """
         Create the emails for the campaign.
@@ -351,12 +340,12 @@ class EmailAgent(OpenAIAgent):
             else:
                 async_emails_params.append(params)
         if async_emails_params:
-            f = partial(self.on_all_emails_complete, sequence_id)
+            f = partial(self._on_all_emails_complete, sequence_id)
             ## TODO resolve potential issue of async completing before
             # all sync emails are generated. and sending message before
             self.email_tool_spec_cls._create_emails(
                 kwargs_list=async_emails_params,
-                on_complete=f,
+                on_all_complete=f,
                 asynchronous=True,
                 email_tool_spec_cls=self.email_tool_spec_cls,
             )
@@ -364,14 +353,54 @@ class EmailAgent(OpenAIAgent):
         if email_params:
             f = None
             if not async_emails_params:
-                f = partial(self.on_all_emails_complete, sequence_id)
+                f = partial(self._on_all_emails_complete, sequence_id)
             emails = self.email_tool_spec_cls._create_emails(
                 kwargs_list=email_params,
-                on_complete=f,
+                on_all_complete=f,
                 asynchronous=False,
                 email_tool_spec_cls=self.email_tool_spec_cls,
             )
         return emails
+
+    @staticmethod
+    @blink.listener(OnEmailCompleteEvent)
+    def on_email_complete(event: OnEmailCompleteEvent) -> None:
+        sequence_id = event.sequence_id
+        email = event.email
+        log.debug(f"Email completed: {sequence_id} {email}")
+        mongo = cfg.mongo
+        client = MongoClient(mongo.uri)
+        db = client[mongo.db]
+
+        collection = db[mongo.collection]
+        js = {
+            "sequence_id": sequence_id,
+            "prospect_email": email.email,
+            "prospect_name": email.name,
+            "prospect_phone": email.phone,
+            "message_subject": email.subject,
+            "message_body": email.body,
+            "is_message_generation_complete": True,
+        }
+        log.debug(f"Inserting into collection: {mongo.uri} {db} {collection.name} ")
+        result = collection.insert_one(js)
+        log.debug(f"Insert Result: {result}")
+
+    @staticmethod
+    @blink.listener(OnAllEmailsCompletedEvent)
+    def on_all_emails_complete(event: OnAllEmailsCompletedEvent) -> None:
+        sequence_id = event.sequence_id
+        successes = event.successes
+        errors = event.errors
+        # log.debug(f"All Email completed: {successes} success, {errors} errors.")
+        print(f"!!!!!!!!!!!!!!!!!!! All Email completed: {successes} success, {errors} errors.")
+        # url = cfg.email.on_complete_emails_url
+        # log.debug(f"Sending call to {url}  sequence_id={sequence_id}")
+        # delay = cfg.email.get("delay_complete_request", 0)
+        # if delay:
+        #     time.sleep(delay)
+        # r = requests.post(url, json={"sequence_id": sequence_id})
+        # log.debug(r.json())
 
     @classmethod
     def create(

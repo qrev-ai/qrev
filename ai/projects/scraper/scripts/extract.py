@@ -40,7 +40,7 @@ def extract(
             site_path = f"~/data/websites/{site_name}"
         # base_dir = f"~/data/websites/{site_name}"
         print("Creating at ", site_path)
-        meta = Meta.create_most_recent(site_path)
+        meta = Meta.from_dir(site_path, create=True)
 
     if exclude_regexs is None:
         exclude_regexs = default_exclude_regexes.copy()
@@ -49,7 +49,8 @@ def extract(
 
     scraper.scrape(
         urls,
-        dest_dir=meta.get_group(dest_subfolder, create=True),
+        # dest_dir=meta.get_group(dest_subfolder, create=True),
+        dest_dir=meta.get_dir(subfolder, create=True),
         exclude_urls=exclude_urls,
         exclude_regexs=exclude_regexs,
         max_depth=max_depth,

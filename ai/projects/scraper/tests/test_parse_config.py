@@ -1,8 +1,9 @@
-import os
+import sys
 import tempfile
 import tomllib as toml
-import unittest
-from pprint import pprint
+
+import pytest
+
 
 cfg_str = """
 [[pipeline]]
@@ -37,25 +38,17 @@ url = "b.com"
 """
 
 
-class TestParseConfig(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        pass
+def test_parse_config():
+    with tempfile.TemporaryFile() as fp:
+        fp.write(cfg_str.encode())
+        fp.seek(0)
+        data = toml.load(fp)
+    a = data["urls"][0]
+    assert a["url"] == "a.com"
+    keys = list(a.keys())
+    keys[2] == "processors"
 
-    @classmethod
-    def tearDownClass(cls) -> None:
-        pass
-
-    def test_parse_config(self):
-        with tempfile.TemporaryFile() as fp:
-            fp.write(cfg_str.encode())
-            fp.seek(0)
-            data = toml.load(fp)
-        a = data["urls"][0]
-        self.assertEqual(a["url"], "a.com")
-        keys = list(a.keys())
-        self.assertEqual(keys[2], "processors")
 
 
 if __name__ == "__main__":
-    unittest.main()
+    pytest.main([sys.argv[0]])

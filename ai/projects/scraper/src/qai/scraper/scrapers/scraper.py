@@ -7,16 +7,17 @@ import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from logging import getLogger
-from typing import Any, Set, Union
+from typing import Any, Set, Union, Optional
 from urllib.parse import urlsplit
 
 # import chromedriver_autoinstaller
 import undetected_chromedriver as uc
 from bs4 import BeautifulSoup
+from qai.core import Meta, MetaBase, MetaDir, MetaFile, MetaPath
 
-from qai.core import Meta
-from qai.scraper.scrapers.meta import ScrapeMeta, WebObj
+from qai.scraper.scrapers.meta import ScrapeMeta
 from qai.scraper.utils.bs_utils import get_links, url_with_path
+from selenium.webdriver.chrome.webdriver import WebDriver
 
 log = getLogger(__name__)
 
@@ -34,8 +35,8 @@ user_agents = [
 ]
 
 
-@dataclass
-class ScrapeSession:
+
+class ScrapeSession(MetaBase):
     start_urls: list[str] = field(default_factory=list)
     dest_dir: str = None
     searched_urls: list[str] = field(default_factory=list)
@@ -48,9 +49,15 @@ class Scraper:
     count = 0
 
     def __init__(self, options=None, driver=None, offline=False):
-        self._new_driver(quit=False, options=options, driver=driver)
+        self.driver = self._new_driver(quit=False, options=options, driver=driver)
         self.scrape_sessions = []
         self.offline = offline
+        self.time_between_requests = 1
+        self.time_jitter_between_requests = 1
+        self.last_request_time = time.time()
+
+        if self.driver is None:
+            raise ValueError("Failed to create driver")
 
     def _new_driver(
         self,
@@ -59,7 +66,7 @@ class Scraper:
         driver=None,
         random_user_agent=False,
         version_main=None,  ## Specific version of chrome to use
-    ):
+    ) -> WebDriver:
         if quit:
             self.quit()
         if options is None:
@@ -70,7 +77,7 @@ class Scraper:
             try:
                 driver = uc.Chrome(use_subprocess=True, options=options, version_main=version_main)
             except Exception as e:
-                log.error("Failed to create driver, uc.version=", uc.__version__)
+                log.error(f"Failed to create driver, uc.version={uc.__version__}")
                 log.error(e)
 
                 return
@@ -84,9 +91,7 @@ class Scraper:
                 {"userAgent": agent},
             )
 
-        self.driver = driver
-        if self.driver is None:
-            raise ValueError("Failed to create driver")
+        return driver
 
     def _scrape(
         self,
@@ -99,12 +104,14 @@ class Scraper:
         exclude_regexs: Set[str] = None,
         scrape_session: ScrapeSession = None,
         exclude_parameters: bool = True,
+        submeta: MetaDir = None,
+        meta: Meta = None,
     ) -> ScrapeSession:
         if exclude_regexs is None:
             exclude_regexs = set()
         if exclude_urls is None:
             exclude_urls = set()
-        urimeta = scrape_session.meta.get_uri_meta(scrape_session.group)
+        # urimeta = scrape_session.meta.get_uri_meta(scrape_session.group)
 
         if exclude_parameters:
             url = url_with_path(url)
@@ -116,8 +123,8 @@ class Scraper:
             exclude_regexs = set()
         if not isinstance(exclude_regexs, set):
             exclude_regexs = set(exclude_regexs)
-        if scrape_session.meta is None:
-            raise ValueError("ScrapeSession.meta is None")
+        # if scrape_session.meta is None:
+        #     raise ValueError("ScrapeSession.meta is None")
         id = Scraper.count
         Scraper.count += 1
         if url in exclude_urls:
@@ -143,6 +150,21 @@ class Scraper:
         try:
             print("dest_dir", dest_dir, "hashed_name", hashed_name, "local_file", local_file)
             save_path = self.get_and_save(url, local_file, overwrite=overwrite)
+            if save_path:
+                # filemeta = MetaFile(path=local_file)
+                fmeta = {
+                    "hashed_name": hashed_name,
+                    "source_uri":url,
+                    "is_start_url": url in scrape_session.start_urls,
+                    "depth": current_depth,
+                    "type": "html_scrape",
+                    "category":"Unknown"
+                }
+                filemeta = MetaFile(
+                    path=local_file,
+                    metadata=fmeta
+                )
+                submeta.add_file(filemeta)
         except Exception as e:
             import sys
 
@@ -152,24 +174,11 @@ class Scraper:
             # print(e)
             logging.error(f"Failed to scrape {url}")
             return scrape_session
-        print("     ", get_links(url, local_file, exclude_parameters=exclude_parameters, depth=current_depth))
         print( "  " * current_depth, " ---- ")
+        
         if save_path:
-            bn = os.path.basename(save_path)
-            ## Save metadata
-            wo = WebObj(
-                _uri=hashed_name,
-                source_uri=url,
-                id=id,
-                scrape_time=datetime.utcnow().strftime("%Y%m%d-%H%M%S"),
-                is_start_url=url in scrape_session.start_urls,
-                local_file=hashed_name,
-                category="Unknown",
-                depth=current_depth,
-                type="html_scrape",
-            )
-            urimeta[wo._uri] = wo.__json__()
-            scrape_session.meta.save()
+            meta.save(overwrite=True)
+
 
         if max_depth and max_depth != -1 and current_depth + 1 >= max_depth:
             return scrape_session
@@ -191,20 +200,23 @@ class Scraper:
                 exclude_urls=exclude_urls,
                 exclude_regexs=exclude_regexs,
                 scrape_session=scrape_session,
+                submeta=submeta,
+                meta=meta
             )
+        return scrape_session
 
     def scrape(
         self,
         urls: Union[str, list[str]],
-        dest_dir: str,
+        dest_dir: str | MetaDir,
         current_depth: int = 0,
         max_depth: int = 4,
         overwrite: bool = False,
-        exclude_urls: Set[str] = None,
-        exclude_regexs: Set[str] = None,
-        scrape_session: ScrapeSession = None,
+        exclude_urls: Optional[set[str]] = None,
+        exclude_regexs: Optional[set[str]] = None,
+        scrape_session: Optional[ScrapeSession] = None,
         group: str = "raw",
-        meta: Meta = None,
+        meta: Optional[Meta] = None,
         exclude_parameters: bool = True,
     ) -> ScrapeSession:
         if isinstance(urls, str):
@@ -214,32 +226,40 @@ class Scraper:
             exclude_regexs = set()
         if exclude_urls is None:
             exclude_urls = set()
-
+        if isinstance(dest_dir, MetaDir):
+            dest_dir = str(dest_dir.path)
         if scrape_session is None:
             if meta is None:
-                meta = Meta.from_directory(os.path.dirname(dest_dir), create=True)
-            scrape_session = ScrapeSession(urls, dest_dir=dest_dir, group=group, meta=meta)
+                # meta = Meta.from_directory(os.path.dirname(dest_dir), create=True)
+                meta = Meta.from_dir(os.path.dirname(dest_dir), create=True)
+            scrape_session = ScrapeSession(start_urls=urls, dest_dir=dest_dir, group=group )
             self.scrape_sessions.append(scrape_session)
-        if scrape_session.meta is None:
-            if meta:
-                scrape_session.meta = meta
-            else:
-                raise ValueError("ScrapeSession.meta is None")
+            meta.add_metadata("scrape_session", self.scrape_sessions)
+            meta.save(overwrite=True)
+        if meta is None:
+            raise ValueError("Meta is None")
+        # if scrape_session.meta is None:
+        #     if meta:
+        #         scrape_session.meta = meta
+        #     else:
+        #         raise ValueError("ScrapeSession.meta is None")
 
-        submeta = meta.get_group_meta(group)
-        if "scrape_session" not in submeta:
-            submeta["scrape_session"] = []
+        # submeta = meta.get_group_meta(group)
+        submeta = meta.get_dir(group, create=True)
+        # if "scrape_session" not in submeta.metadata:
+        #     submeta.metadata["scrape_session"] = []
         scrape_meta = ScrapeMeta(
             subfolder=scrape_session.group,
             start_urls=urls,
-            dest_dir=meta.relative_to(dest_dir),
+            dest_dir=dest_dir,
             exclude_regexs=list(exclude_regexs),
             exclude_urls=list(exclude_urls),
             exclude_parameters=exclude_parameters,
             max_depth=max_depth,
         )
-        submeta["scrape_session"].append(scrape_meta.__json__())
-        scrape_session.submeta = submeta
+        # submeta.metadata["scrape_session"].append(scrape_meta.model_dump(mode="json")) ##TODO
+        # scrape_session.submeta = submeta
+        submeta.add_metadata("scrape_session", scrape_meta)
 
         for url in urls:
             self._scrape(
@@ -251,8 +271,10 @@ class Scraper:
                 exclude_urls=exclude_urls,
                 exclude_regexs=exclude_regexs,
                 scrape_session=scrape_session,
+                submeta=submeta,
+                meta=meta
             )
-
+        meta.save(overwrite=True)
         return scrape_session
 
     @staticmethod
@@ -271,16 +293,9 @@ class Scraper:
 
         base_url = url_with_path(url)
         base_url = re.sub(r"https?(://)?", "", base_url)
-        # base_url = re.sub("[^0-9a-zA-Z.]+", "_", base_url)
 
-        # if not "/" in base_url:
-        #     return base_url
-        # else:
         base_url = base_url.strip("/")
         return f"{base_url}/index.html"
-        if base_url.endswith("html"):
-            return f"{base_url}"
-        return f"{base_url}.html"
 
     def _wait_if_needed(self):
         random_wait = random.randint(
@@ -291,7 +306,7 @@ class Scraper:
         if dif > 0:
             time.sleep(dif)
 
-    def get_and_save(self, url, dest_path, overwrite=False) -> str:
+    def get_and_save(self, url, dest_path, overwrite=False) -> str | None:
         save_name = self.url_to_local_name(url)
 
         logging.debug(f"Scraper.get_and_save:{url}, {dest_path}")
@@ -302,10 +317,10 @@ class Scraper:
         text = str(BeautifulSoup(self.driver.page_source, "lxml"))
         if "Security check" in text and "RayID" in text:
             logging.error(f"Security Check Failed:{url}")
-            return False
+            return None
         if "Request unsuccessful. Incapsula incident ID" in text:
             logging.error(f"Incapsula incident ID:{url}")
-            return False
+            return None
         with open(dest_path, "w") as fp:
             fp.write(self.driver.page_source)
         return dest_path
