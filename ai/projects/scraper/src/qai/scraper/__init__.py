@@ -6,7 +6,7 @@ from pi_conf import load_config
 from qai.scraper.filters.filter import Filter as Filter
 from qai.scraper.scrapers.scraper import Scraper as Scraper
 
-cfg = load_config("qai-scraper")
+cfg = load_config("qrev-ai")
 cfg.to_env(ignore_complications=True)
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
