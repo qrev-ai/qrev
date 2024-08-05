@@ -33,7 +33,7 @@ qai-chat = "^0.6.0"
 qai-core = "^0.6.0"
 
 [tool.poetry.group.qai-scraper.dependencies]
-qai-scraper = "^0.6.0"
+qai-scraper = "^0.6.1"
 
 [tool.poetry.group.qai-storage.dependencies]
 qai-storage = "^0.6.1"

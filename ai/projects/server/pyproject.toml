@@ -31,6 +31,7 @@ torch = [
 ]
 pi-blink = "^1.0.3"
 opentelemetry-exporter-otlp-proto-grpc = "1.25.0"
+pi-conf = "^0.8.5.1"
 
 [tool.poetry.group.dev.dependencies]
 ecs-deploy = "^1.14.0"
