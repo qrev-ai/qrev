@@ -7,7 +7,7 @@ from qai.schema.models.campaign_model import (
     CampaignOptions,
     CampaignStep,
 )
-from qai.schema.models.company_model import Company
+from qai.schema.models.company_model import Company, CompanyType
 from qai.schema.models.contact_model import Contact, ContactList
 from qai.schema.models.email_model import Email, EmailType
 from qai.schema.models.existing_customer_model import ExistingCustomer
@@ -28,6 +28,7 @@ __all__ = [
     "CampaignOptions",
     "CampaignStep",
     "Company",
+    "CompanyType",
     "Contact",
     "ContactList",
     "Email",
