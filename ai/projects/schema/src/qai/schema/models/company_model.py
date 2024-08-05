@@ -1,7 +1,7 @@
+from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Optional, Self, cast
 
 from pydantic import Field, field_validator
-
 from qai.schema.models.addons import CreatedAtDoc, Deleteable, Labels, Taggable
 from qai.schema.models.address_model import Address
 from qai.schema.models.email_model import Email
@@ -12,6 +12,18 @@ from qai.schema.models.social_media_model import SocialMedia, SocialMediaType
 from qai.schema.utils.utils import clean_domain
 
 
+class CompanyType(StrEnum):
+    PUBLIC = "public"
+    PRIVATE = "private"
+    EDUCATIONAL = "educational"
+    NON_PROFIT = "non_profit"
+    GOVERNMENT = "government"
+    SELF_EMPLOYED = "self_employed"
+    PARTNERSHIP = "partnership"
+    SOLE_PROPRIETORSHIP = "sole_proprietorship"
+    OTHER = "other"
+
+
 class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
     name: str = Field(..., description="The name of the company")
     domains: list[str] = Field(default_factory=list, description="The websites of the company")
@@ -19,7 +31,11 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
         default=None,
         description="The official business name of the company, government registered.",
     )
+    company_type: Optional[CompanyType] = Field(
+        default=None, description="The type of the company"
+    )
     description: Optional[str] = Field(default=None, description="The description of the company")
+    tagline: Optional[str] = Field(default=None, description="The tagline of the company")
     parent_company: Optional[Self] = None
     linkedin_id: Optional[int] = Field(default=None, description="The LinkedIn ID of the company")
     people: list[Link[Person]] = Field(
@@ -97,6 +113,7 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
         if self.domains:
             return self.domains[0]
         raise ValueError(f"No website for company domains={self.domains}. ")
+
     @classmethod
     def find_by_linkedin_url(cls, linkedin_url: str) -> dict[str, Any]:
         return {"social_media.url": linkedin_url}
