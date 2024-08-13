@@ -1988,6 +1988,64 @@ export const saveSequenceStepMessageOpenAnalytic = functionWrapper(
     _saveSequenceStepMessageOpenAnalytic
 );
 
+async function _saveSequenceStepMessageReplyOpenAnalytic(
+    { ssmid, replyId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!ssmid) throw `invalid ssmid`;
+    if (!replyId) throw `invalid replyId`;
+
+    let queryObj = { _id: ssmid };
+    let spmsDoc = await SequenceProspectMessageSchedule.findOne(
+        queryObj
+    ).lean();
+    logg.info(`ssmDoc: ${JSON.stringify(spmsDoc)}`);
+    if (!spmsDoc) throw `spmsDoc not found for ssmid: ${ssmid}`;
+
+    // check if replyId is present in field: "replies" (structure: [{reply_id, replied_on, type, message, message_response}]) of spmsDoc
+    let replies = spmsDoc.replies || [];
+    let replyObj = false;
+    for (let i = 0; i < replies.length; i++) {
+        let reply = replies[i];
+        if (reply && reply.reply_id === replyId) {
+            replyObj = reply;
+            break;
+        }
+    }
+
+    if (!replyObj) {
+        logg.info(`replyId is not present in spmsDoc.replies`);
+        return [true, null];
+    }
+
+    let [saveReplyOpenResp, saveReplyOpenErr] =
+        await AnalyticUtils.storeCampaignAutoMessageReplyOpenAnalytic(
+            {
+                sessionId: spmsDoc.analytic_session_id,
+                spmsId: ssmid,
+                accountId: spmsDoc.account,
+                sequenceId: spmsDoc.sequence,
+                contactId: spmsDoc.contact,
+                sequenceStepId: spmsDoc.sequence_step,
+                sequenceProspectId: spmsDoc.sequence_prospect,
+                replyId,
+                replyObj,
+            },
+            { txid }
+        );
+    if (saveReplyOpenErr) throw saveReplyOpenErr;
+
+    logg.info(`ended`);
+    return [saveReplyOpenResp, null];
+}
+
+export const saveSequenceStepMessageReplyOpenAnalytic = functionWrapper(
+    fileName,
+    "saveSequenceStepMessageReplyOpenAnalytic",
+    _saveSequenceStepMessageReplyOpenAnalytic
+);
+
 /*
     response structure:[
         {
@@ -2394,7 +2452,7 @@ async function _getSequenceProspects(
         status: {
             label: "Status",
             type: "chip",
-            values: ["pending", "sent", "bounced"],
+            values: ["pending", "sent", "bounced", "skipped"],
             order: 6,
         },
     };
@@ -2465,7 +2523,7 @@ async function _getAllSequenceEmails(
         status: {
             label: "Status",
             type: "chip",
-            values: ["pending", "sent", "bounced"],
+            values: ["pending", "sent", "bounced", "skipped"],
             order: 5,
         },
         sender_email: {
@@ -2650,6 +2708,8 @@ async function _getProspectActivityTimeline(
             str = `${messageType} sent at ${dateTimeStr}`;
         } else if (actionType === "sent_bounced") {
             str = `${messageType} sent but bounced at ${dateTimeStr}`;
+        } else if (actionType === "sent_skipped") {
+            str = `${messageType} skipped at ${dateTimeStr}`;
         } else if (actionType === "opened") {
             str = `${messageType} opened at ${dateTimeStr}`;
         } else if (actionType === "replied") {
