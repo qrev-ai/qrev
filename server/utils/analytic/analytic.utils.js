@@ -403,3 +403,541 @@ export const getSequenceAnalytics = functionWrapper(
     "getSequenceAnalytics",
     _getSequenceAnalytics
 );
+
+async function _storeCampaignMessageReplyAnalytic(
+    {
+        sessionId,
+        spmsId,
+        accountId,
+        sequenceId,
+        contactId,
+        sequenceStepId,
+        sequenceProspectId,
+        messageId,
+        messageDetails,
+        repliedOnDate,
+        isFailed,
+        replyToUserId,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    let analyticMetadataObj = {
+        message_id: messageId,
+        message_details: messageDetails,
+        has_bounced: isFailed ? true : false,
+    };
+    if (replyToUserId) {
+        analyticMetadataObj.reply_to_user_id = replyToUserId;
+    }
+    let analytic = new VisitorAnalytics({
+        session_id: sessionId,
+        app_type: AnalyticAppTypes.campaign,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        analytic_metadata: analyticMetadataObj,
+        sequence_prospect_message: spmsId,
+        account: accountId,
+        sequence: sequenceId,
+        contact: contactId,
+        sequence_step: sequenceStepId,
+        sequence_prospect: sequenceProspectId,
+        created_on: repliedOnDate || new Date(),
+        updated_on: repliedOnDate || new Date(),
+    });
+
+    let saveResp = await analytic.save();
+
+    logg.info(`saveResp: ` + JSON.stringify(saveResp));
+    logg.info(`ended`);
+    return [saveResp, null];
+}
+
+export const storeCampaignMessageReplyAnalytic = functionWrapper(
+    fileName,
+    "storeCampaignMessageReplyAnalytic",
+    _storeCampaignMessageReplyAnalytic
+);
+
+async function _storeCampaignMessageUnsubscribeAnalytic(
+    {
+        sessionId,
+        spmsId,
+        accountId,
+        sequenceId,
+        contactId,
+        sequenceStepId,
+        sequenceProspectId,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    let analytic = new VisitorAnalytics({
+        session_id: sessionId,
+        app_type: AnalyticAppTypes.campaign,
+        action_type: AnalyticActionTypes.campaign_message_unsubscribe,
+        sequence_prospect_message: spmsId,
+        account: accountId,
+        sequence: sequenceId,
+        contact: contactId,
+        sequence_step: sequenceStepId,
+        sequence_prospect: sequenceProspectId,
+    });
+
+    let saveResp = await analytic.save();
+
+    logg.info(`saveResp: ` + JSON.stringify(saveResp));
+    logg.info(`ended`);
+    return [saveResp, null];
+}
+
+export const storeCampaignMessageUnsubscribeAnalytic = functionWrapper(
+    fileName,
+    "storeCampaignMessageUnsubscribeAnalytic",
+    _storeCampaignMessageUnsubscribeAnalytic
+);
+
+/*
+* This will return an array of below structure:
+    [{sequence_prospect,prospect_email,prospect_name,count,last_opened_on}]
+* If sequenceStepId is not provided, then it will return the analytics for all the sequence steps.
+* Else, it will return the analytics for the provided sequence step.
+*/
+async function _getSequenceOpenAnalytics(
+    { accountId, sequenceId, sequenceStepId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId not found`;
+    if (!sequenceId) throw `sequenceId not found`;
+
+    let queryObj = {
+        account: accountId,
+        sequence: sequenceId,
+        action_type: AnalyticActionTypes.campaign_message_open,
+    };
+    if (sequenceStepId) {
+        queryObj.sequence_step = sequenceStepId;
+    }
+
+    let analytics = await VisitorAnalytics.find(queryObj)
+        .populate("contact", "email first_name last_name")
+        .sort("created_on")
+        .lean();
+
+    logg.info(`analytics length: ${analytics.length}`);
+    if (!analytics || !analytics.length) {
+        logg.info(`no open analytics found. So returning empty array`);
+        return [[], null];
+    }
+
+    let sequenceProspectIdMap = {};
+    let result = [];
+    for (const analytic of analytics) {
+        let sequenceProspectId = analytic.sequence_prospect;
+        if (!sequenceProspectIdMap[sequenceProspectId]) {
+            let firstName = analytic.contact.first_name;
+            let lastName = analytic.contact.last_name;
+            let prospectName = firstName || "";
+            if (lastName) prospectName = prospectName + " " + lastName;
+            prospectName = prospectName.trim();
+
+            sequenceProspectIdMap[sequenceProspectId] = {
+                sequence_prospect: sequenceProspectId,
+                prospect_email: analytic.contact.email,
+                prospect_name: prospectName,
+                count: 0,
+                last_opened_on: null,
+            };
+        }
+
+        let sequenceProspectData = sequenceProspectIdMap[sequenceProspectId];
+        sequenceProspectData.count++;
+        let openedOnDate = new Date(analytic.created_on).getTime();
+        if (!sequenceProspectData.last_opened_on) {
+            sequenceProspectData.last_opened_on = openedOnDate;
+        } else if (openedOnDate > sequenceProspectData.last_opened_on) {
+            sequenceProspectData.last_opened_on = openedOnDate;
+        }
+    }
+
+    for (const sequenceProspectId in sequenceProspectIdMap) {
+        result.push(sequenceProspectIdMap[sequenceProspectId]);
+    }
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getSequenceOpenAnalytics = functionWrapper(
+    fileName,
+    "getSequenceOpenAnalytics",
+    _getSequenceOpenAnalytics
+);
+
+/*
+* This will return an array of below structure:
+    [{sequence_prospect_message,prospect_email,prospect_name,reply,replied_on}]
+* If sequenceStepId is not provided, then it will return the analytics for all the sequence steps.
+* Else, it will return the analytics for the provided sequence step.
+*/
+async function _getSequenceReplyAnalytics(
+    { accountId, sequenceId, sequenceStepId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId not found`;
+    if (!sequenceId) throw `sequenceId not found`;
+
+    let queryObj = {
+        account: accountId,
+        sequence: sequenceId,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        "analytic_metadata.has_bounced": { $ne: true },
+    };
+    if (sequenceStepId) {
+        queryObj.sequence_step = sequenceStepId;
+    }
+
+    let analytics = await VisitorAnalytics.find(queryObj)
+        .populate("contact", "email first_name last_name")
+        .sort("created_on")
+        .lean();
+
+    logg.info(`analytics length: ${analytics.length}`);
+    if (!analytics || !analytics.length) {
+        logg.info(`no reply analytics found. So returning empty array`);
+        return [[], null];
+    }
+
+    // sort ascending order
+    analytics = analytics.sort((a, b) => {
+        let aReplyDate = getReplyAnalyticDate({ analytic: a }, { txid });
+        let bReplyDate = getReplyAnalyticDate({ analytic: b }, { txid });
+
+        if (!aReplyDate) {
+            aReplyDate = new Date(a.created_on).getTime();
+        }
+        if (!bReplyDate) {
+            bReplyDate = new Date(b.created_on).getTime();
+        }
+
+        return aReplyDate - bReplyDate;
+    });
+
+    let result = [];
+    let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
+
+    for (const analytic of analytics) {
+        let sequenceProspectMessageId = analytic.sequence_prospect_message;
+
+        if (repliedMessageMap[sequenceProspectMessageId]) {
+            continue;
+        }
+
+        repliedMessageMap[sequenceProspectMessageId] = true;
+
+        let firstName = analytic.contact.first_name;
+        let lastName = analytic.contact.last_name;
+        let prospectName = firstName || "";
+        if (lastName) prospectName = prospectName + " " + lastName;
+        prospectName = prospectName.trim();
+
+        let formattedMessage = formatEmail(
+            { message: analytic.analytic_metadata.message_details },
+            { txid }
+        );
+
+        let item = {
+            sequence_prospect_message: sequenceProspectMessageId,
+            prospect_email: analytic.contact.email,
+            prospect_name: prospectName,
+            reply: formattedMessage,
+            replied_on: new Date(analytic.created_on).getTime(),
+        };
+
+        result.push(item);
+    }
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getSequenceReplyAnalytics = functionWrapper(
+    fileName,
+    "getSequenceReplyAnalytics",
+    _getSequenceReplyAnalytics
+);
+
+function getReplyAnalyticDate({ analytic: a }, { txid }) {
+    const funcName = `getReplyAnalyticDate`;
+    const logg = logger.child({ txid, funcName });
+    // logg.info(`started`);
+
+    let aHeaders =
+        a &&
+        a.analytic_metadata &&
+        a.analytic_metadata.message_details &&
+        a.analytic_metadata.message_details.payload &&
+        a.analytic_metadata.message_details.payload.headers;
+
+    let dateMillis = null;
+    if (aHeaders && aHeaders.length) {
+        let aDateHeader = aHeaders.find((x) => x.name === "Date");
+        if (aDateHeader) {
+            let dateStr = aDateHeader.value;
+            try {
+                dateMillis = new Date(dateStr).getTime();
+            } catch (e) {
+                logg.error(`failed to parse dateStr: ${dateStr}`);
+            }
+        }
+    }
+
+    logg.info(`dateMillis: ${dateMillis}`);
+    // logg.info(`ended`);
+    return dateMillis;
+}
+
+function formatEmail({ message }, { txid }) {
+    const funcName = `formatEmail`;
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started`);
+    let formattedMessage = message;
+    if (!message) {
+        logg.info(`message is empty`);
+        return "";
+    }
+
+    let messageSnippet = message.snippet || "";
+
+    formattedMessage = messageSnippet;
+
+    logg.info(`formattedMessage: ${formattedMessage}`);
+    logg.info(`ended`);
+    return formattedMessage;
+}
+
+async function _hasSequenceMessgeBounced({ spmsId }, { txid, logg, funcName }) {
+    logg.info(`started`);
+    if (!spmsId) throw `spmsId not found`;
+
+    let queryObj = {
+        sequence_prospect_message: spmsId,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        "analytic_metadata.has_bounced": true,
+    };
+    logg.info(`queryObj: ${JSON.stringify(queryObj)}`);
+    let analytics = await VisitorAnalytics.find(queryObj).lean();
+    logg.info(`analytics length: ${analytics.length}`);
+    if (analytics.length < 20) {
+        logg.info(`analytics: ${JSON.stringify(analytics)}`);
+    }
+
+    let hasBounced = false;
+
+    if (analytics && analytics.length) {
+        hasBounced = true;
+    }
+
+    logg.info(`hasBounced: ${hasBounced}`);
+    logg.info(`ended`);
+    return [hasBounced, null];
+}
+
+export const hasSequenceMessgeBounced = functionWrapper(
+    fileName,
+    "hasSequenceMessgeBounced",
+    _hasSequenceMessgeBounced
+);
+
+/*
+    return data structure: {
+        sequence_step_id: {
+            opened: {
+                total_count: 0,
+                unique_count: 0,
+                prospects: [{ email, count, last_opened_on }]
+            }
+            replied: {
+                total_count: 0,
+                prospects: [{ email, replied_on, reply }]
+            }
+        }
+    }
+*/
+async function _getSequenceStepAnalyticsForOpenAndReply(
+    { sequenceId, accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId not found`;
+    if (!accountId) throw `accountId not found`;
+
+    let openQueryObj = {
+        account: accountId,
+        sequence: sequenceId,
+        action_type: AnalyticActionTypes.campaign_message_open,
+    };
+
+    let openAnalytics = await VisitorAnalytics.find(openQueryObj)
+        .populate("contact", "email")
+        .sort("created_on")
+        .lean();
+
+    // check for replies with has_bounced not true
+    let replyQueryObj = {
+        account: accountId,
+        sequence: sequenceId,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        "analytic_metadata.has_bounced": { $ne: true },
+    };
+
+    let replyAnalytics = await VisitorAnalytics.find(replyQueryObj)
+        .populate("contact", "email")
+        .sort("created_on")
+        .lean();
+
+    let result = {};
+
+    let emptyObj = {
+        opened: {
+            total_count: 0,
+            unique_count: 0,
+            prospects: [],
+        },
+        replied: {
+            total_count: 0,
+            prospects: [],
+        },
+    };
+    for (const openAnalytic of openAnalytics) {
+        let sequenceStepId = openAnalytic.sequence_step;
+
+        if (!result[sequenceStepId]) {
+            // deep copy emptyObj
+            result[sequenceStepId] = JSON.parse(JSON.stringify(emptyObj));
+        }
+
+        let contactEmail = openAnalytic.contact.email;
+        let analyticDate = new Date(openAnalytic.created_on).getTime();
+
+        let openedObj = result[sequenceStepId].opened;
+        openedObj.total_count++;
+        if (!openedObj.prospects.find((obj) => obj.email === contactEmail)) {
+            openedObj.unique_count++;
+            openedObj.prospects.push({
+                email: contactEmail,
+                count: 1,
+                last_opened_on: analyticDate,
+            });
+        } else {
+            let prospect = openedObj.prospects.find(
+                (obj) => obj.email === contactEmail
+            );
+            prospect.count++;
+            if (analyticDate > prospect.last_opened_on) {
+                prospect.last_opened_on = analyticDate;
+            }
+        }
+    }
+
+    let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
+
+    for (const replyAnalytic of replyAnalytics) {
+        let spmsId = replyAnalytic.sequence_prospect_message;
+        if (repliedMessageMap[spmsId]) {
+            continue;
+        }
+        repliedMessageMap[spmsId] = true;
+
+        let sequenceStepId = replyAnalytic.sequence_step;
+
+        if (!result[sequenceStepId]) {
+            result[sequenceStepId] = JSON.parse(JSON.stringify(emptyObj));
+        }
+
+        let contactEmail = replyAnalytic.contact.email;
+        let analyticDate = new Date(replyAnalytic.created_on).getTime();
+
+        let repliedObj = result[sequenceStepId].replied;
+        repliedObj.total_count++;
+        let formattedMessage = formatEmail(
+            { message: replyAnalytic.analytic_metadata.message_details },
+            { txid }
+        );
+        repliedObj.prospects.push({
+            email: contactEmail,
+            replied_on: analyticDate,
+            reply: formattedMessage,
+        });
+    }
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getSequenceStepAnalyticsForOpenAndReply = functionWrapper(
+    fileName,
+    "getSequenceStepAnalyticsForOpenAndReply",
+    _getSequenceStepAnalyticsForOpenAndReply
+);
+
+async function _checkIfAnySequenceMessageOpensFound(
+    { sequenceId, accountId, sequenceStepIds, spmsIds, returnOpenMap = false },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId not found`;
+    if (!accountId) throw `accountId not found`;
+
+    let openQueryObj = {
+        account: accountId,
+        sequence: sequenceId,
+        action_type: AnalyticActionTypes.campaign_message_open,
+    };
+    if (sequenceStepIds && sequenceStepIds.length) {
+        openQueryObj.sequence_step = { $in: sequenceStepIds };
+    }
+    if (spmsIds && spmsIds.length) {
+        openQueryObj.sequence_prospect_message = { $in: spmsIds };
+    }
+
+    let openAnalytics = await VisitorAnalytics.find(openQueryObj);
+    let openAnalyticsCount = openAnalytics.length;
+    logg.info(`openAnalyticsCount: ${openAnalyticsCount}`);
+
+    let hasOpens = openAnalyticsCount > 0;
+
+    if (!returnOpenMap) {
+        logg.info(`ended`);
+        return [hasOpens, null];
+    }
+
+    if (!hasOpens) {
+        logg.info(`ended`);
+        return [null, null];
+    }
+
+    let openMap = {}; // map of spmsId -> count
+    for (const openAnalytic of openAnalytics) {
+        let spmsId = openAnalytic.sequence_prospect_message;
+        if (!openMap[spmsId]) {
+            openMap[spmsId] = 0;
+        }
+        openMap[spmsId]++;
+    }
+
+    logg.info(`ended`);
+    return [openMap, null];
+}
+
+export const checkIfAnySequenceMessageOpensFound = functionWrapper(
+    fileName,
+    "checkIfAnySequenceMessageOpensFound",
+    _checkIfAnySequenceMessageOpensFound
+);
