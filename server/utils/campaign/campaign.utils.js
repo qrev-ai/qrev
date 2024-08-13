@@ -3674,3 +3674,272 @@ async function _checkIfMessageSentForPrevSteps(
     }
     return [result, null];
 }
+
+const checkIfMessageSentForPrevSteps = functionWrapper(
+    fileName,
+    "checkIfMessageSentForPrevSteps",
+    _checkIfMessageSentForPrevSteps
+);
+
+async function _sendReplyToMessage(
+    { accountId, spmsId, spmsDoc, contactDoc },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+
+    if (!spmsDoc && spmsId) {
+        let spmsQueryObj = { _id: spmsId, account: accountId };
+        spmsDoc = await SequenceProspectMessageSchedule.findOne(spmsQueryObj)
+            .populate("contact")
+            .lean();
+    }
+
+    if (!spmsDoc) throw `spmsDoc is invalid for spmsId: ${spmsId}`;
+
+    if (!contactDoc && spmsDoc.contact && spmsDoc.contact._id) {
+        contactDoc = spmsDoc.contact;
+    }
+
+    if (!contactDoc) throw `contactDoc is invalid`;
+
+    let contactFirstName = contactDoc.first_name || contactDoc.last_name || "";
+    let contactEmail = contactDoc.email;
+    if (!contactFirstName && contactEmail) {
+        contactFirstName = contactEmail.split("@")[0];
+    }
+
+    let replyId = uuidv4();
+
+    let htmlBody = `Any thoughts, ${contactFirstName}?`;
+
+    let finalHtmlBody = convertToHtmlAndAddTags(
+        {
+            emailBody: htmlBody,
+            campaignProspectId: spmsId,
+            replyId,
+        },
+        { txid }
+    );
+
+    let senderUserId = spmsDoc.sender;
+    let [senderAuthObj, authObjErr] = await GoogleUtils.refreshOrReturnToken(
+        { userId: senderUserId, returnBackAuthObj: true },
+        { txid }
+    );
+    if (authObjErr) throw authObjErr;
+
+    let threadId = spmsDoc.message_response.email_thread_id;
+    logg.info(`threadId: ${threadId}`);
+
+    let subject = spmsDoc.message_subject || "";
+
+    let [sendResp, sendErr] = await GoogleUtils.sendReplyToThread(
+        {
+            senderAuthObj,
+            threadId,
+            subject,
+            replyMessage: finalHtmlBody,
+            toEmailId: contactEmail,
+        },
+        { txid }
+    );
+    if (sendErr) throw sendErr;
+
+    // update replies in spmsDoc db
+    let replyObj = {
+        reply_id: replyId,
+        replied_on: new Date().toISOString(),
+        reply: htmlBody,
+        message_response: sendResp,
+    };
+    let updateObj = { $addToSet: { replies: replyObj } };
+    let spmsUpdateResp = await SequenceProspectMessageSchedule.updateOne(
+        { _id: spmsId, account: accountId },
+        updateObj
+    );
+    logg.info(`spmsUpdateResp: ${JSON.stringify(spmsUpdateResp)}`);
+
+    // store the reply in the analytics
+    let [replyAnalyticResp, replyAnalyticErr] =
+        await AnalyticUtils.storeAutoCampaignMessageReplyAnalytic(
+            {
+                sessionId: spmsDoc.analytic_session_id,
+                spmsId,
+                accountId,
+                sequenceId: spmsDoc.sequence,
+                contactId: contactDoc._id,
+                sequenceStepId: spmsDoc.sequence_step,
+                sequenceProspectId: spmsDoc.sequence_prospect,
+                replyId,
+                replyObj,
+                repliedOnDate: new Date(),
+            },
+            { txid }
+        );
+    if (replyAnalyticErr) throw replyAnalyticErr;
+
+    logg.info(`ended`);
+    return [sendResp, null];
+}
+
+export const sendReplyToMessage = functionWrapper(
+    fileName,
+    "sendReplyToMessage",
+    _sendReplyToMessage
+);
+
+function checkIfItIsRepliedMessage({ spmsDoc, messageId }, { txid }) {
+    const funcName = "checkIfItIsRepliedMessage";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started`);
+
+    if (!messageId) throw `messageId is invalid`;
+    if (!spmsDoc) {
+        logg.info(`spmsDoc is invalid. So returning false`);
+        return false;
+    }
+
+    let replies = spmsDoc.replies || [];
+    let isRepliedMessage = false;
+
+    for (let i = 0; i < replies.length; i++) {
+        let reply = replies[i];
+        let messageResponse = reply && reply.message_response;
+        let replyMessageId = messageResponse && messageResponse.id;
+        if (replyMessageId === messageId) {
+            logg.info(
+                `found replied message for replyObj: ${JSON.stringify(reply)}`
+            );
+            isRepliedMessage = true;
+            break;
+        }
+    }
+
+    logg.info(`isRepliedMessage: ${isRepliedMessage}`);
+    return isRepliedMessage;
+}
+
+/*
+    * Logic reference doc: https://www.notion.so/thetrackapp/Auto-Reply-feature-when-prospects-open-the-message-46795b175da5487d8b372538f3d1b4e3
+   
+*/
+async function _sendReplyAndDelayEmail(
+    { spmsDoc, spmsId, accountId, contactDoc },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    let sequenceId = spmsDoc.sequence;
+
+    let sequenceDoc = await SequenceModel.findOne({
+        _id: sequenceId,
+        account: accountId,
+    }).lean();
+    if (!sequenceDoc) {
+        throw `failed to find sequenceDoc for sequenceId: ${sequenceId}`;
+    }
+
+    let currSeqProspectId = spmsDoc.sequence_prospect;
+    let seqProspectQueryObj = { account: accountId, _id: currSeqProspectId };
+    let seqProspectDoc = await SequenceProspect.findOne(
+        seqProspectQueryObj
+    ).lean();
+    if (!seqProspectDoc) {
+        throw `failed to find seqProspectDoc for currSeqProspectId: ${currSeqProspectId}`;
+    }
+
+    // 1. Check if any previous sequence-step message is sent to the prospect within the same campaign.
+    let [prevMsgSentResp, prevMsgSentErr] =
+        await checkIfMessageSentForPrevSteps(
+            {
+                currentSequenceStepId: spmsDoc.sequence_step,
+                sequenceId,
+                sequenceProspectId: spmsDoc.sequence_prospect,
+                returnBackSpmsDocs: true,
+            },
+            { txid }
+        );
+    if (prevMsgSentErr) throw prevMsgSentErr;
+
+    let { hasPrevMessageSent, prevSpmsDocs } = prevMsgSentResp;
+
+    if (!hasPrevMessageSent) {
+        logg.info(
+            `no previous message sent. So no need to send reply & delaying.`
+        );
+        return [{ messageDelayed: false }, null];
+    } else {
+        logg.info(`previous messages were sent. So continuing.`);
+    }
+
+    let prevSpmsIds = prevSpmsDocs.map((x) => x._id);
+
+    // 2. Check if any of the previous sequence-step messages were opened.
+    let [prevMsgOpenMap, hasPrevMessagesOpenedErr] =
+        await AnalyticUtils.checkIfAnySequenceMessageOpensFound(
+            {
+                sequenceId,
+                accountId,
+                spmsIds: prevSpmsIds,
+                returnOpenMap: true,
+            },
+            { txid }
+        );
+    if (hasPrevMessagesOpenedErr) throw hasPrevMessagesOpenedErr;
+
+    // prevMsgOpenMap format:  map of spmsId (key) -> count of opens (value)
+    if (!prevMsgOpenMap || !Object.keys(prevMsgOpenMap).length) {
+        logg.info(
+            `no previous message opened. So no need to send reply & delaying.`
+        );
+        return [{ messageDelayed: false }, null];
+    } else {
+        logg.info(`previous messages were opened. So continuing.`);
+    }
+
+    // 3. Check if we have already sent an ‘Any thoughts, <<first_name>>?’ reply to any of the previous sequence-step messages.
+    let [autoReplyAlreadySent, autoReplyCheckErr] =
+        await AnalyticUtils.checkIfAutoReplyAlreadySent(
+            { sequenceId, accountId, spmsIds: prevSpmsIds },
+            { txid }
+        );
+    if (autoReplyCheckErr) throw autoReplyCheckErr;
+
+    if (autoReplyAlreadySent) {
+        logg.info(
+            `auto reply already sent. So no need to send reply & delaying.`
+        );
+        return [{ messageDelayed: false }, null];
+    } else {
+        logg.info(`auto reply not sent. So continuing.`);
+    }
+
+    // 4. Out of all the previous sequence-step messages sent, select the most opened sequence-step and then reply with ‘Any thoughts, <<first_name>>?’ in the same thread with the tracking tag.
+    let mostOpenedSpmsId = getMostOpenedSpmsId(
+        { prevMsgOpenMap, prevSpmsDocs },
+        { txid }
+    );
+    if (!mostOpenedSpmsId) throw `mostOpenedSpmsId is invalid`;
+
+    let [sendReplyResp, sendReplyErr] = await sendReplyToMessage(
+        { accountId, spmsId: mostOpenedSpmsId, contactDoc },
+        { txid }
+    );
+    if (sendReplyErr) throw sendReplyErr;
+
+    // 5. Delay sending the current message and all the future sequence-step messages in the campaign to a later date such that it follows strict scheduling rules.
+    let [delayResp, delayErr] = await delaySequenceProspectMessages(
+        { spmsDoc, spmsId, accountId, contactDoc, sequenceDoc, seqProspectDoc },
+        { txid }
+    );
+    if (delayErr) throw delayErr;
+
+    logg.info(`ended`);
+    return [{ messageDelayed: true }, null];
+}
+
+export const sendReplyAndDelayEmail = functionWrapper(
+    fileName,
+    "sendReplyAndDelayEmail",
+    _sendReplyAndDelayEmail
+);
