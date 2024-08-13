@@ -11,11 +11,18 @@ import { SequenceStep } from "../../models/campaign/sequence.step.model.js";
 import { IntermediateProspectData } from "../../models/campaign/intermediate.prospect.data.model.js";
 import { SequenceProspect } from "../../models/campaign/sequence.prospect.model.js";
 import * as CrmContactUtils from "../crm/contact.utils.js";
-import * as SlotGen_utils from "../slot/open_link_free_slots_1.js";
+import * as SlotGen_utils from "../slot/open_link_free_slots.js";
 import { SequenceProspectMessageSchedule } from "../../models/campaign/sequence.prospect.message_schedule.model.js";
 import { CampaignConfig } from "../../models/campaign/campaign.config.model.js";
 import * as AnalyticUtils from "../analytic/analytic.utils.js";
 import * as ProspectVerifyUtils from "../prospect_verify/prospect.verify.utils.js";
+import * as IntegrationUtils from "../integration/integration.utils.js";
+import { CampaignEmailUnsubscribeList } from "../../models/campaign/campaign.unsubscribe.list.model.js";
+import * as FileUtils from "../std/file.utils.js";
+import { BevyTempSequenceAutoReplies } from "../../models/campaign/bevy/bevy.temp.sequence.auto.replies.js";
+import { AccountMap } from "../../config/account.info.config.js";
+import { IntermediateProspectMessage } from "../../models/campaign/intermediate.prospect.message.model.js";
+import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
 
 const fileName = "Campaign Utils";
 
@@ -98,7 +105,7 @@ export const updateSequenceMessages = functionWrapper(
 
 async function _setupCampaignFromQai(
     {
-        campaignSequenceId,
+        sequenceDetails,
         accountId,
         userId,
         userQuery,
@@ -108,16 +115,20 @@ async function _setupCampaignFromQai(
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
-    if (!campaignSequenceId) throw `campaignSequenceId is invalid`;
+    if (!sequenceDetails) throw `sequenceDetails is invalid`;
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
+
+    let campaignSequenceId = sequenceDetails.id;
+    if (!campaignSequenceId) throw `campaignSequenceId is invalid`;
+    let sequenceName = sequenceDetails.name || `QAi: ${userQuery}`;
 
     let [sequenceDoc, sequenceDocErr] = await createCampaignSequence(
         {
             campaignSequenceId,
             accountId,
             userId,
-            name: `QAi: ${userQuery}`,
+            name: sequenceName,
             conversationId,
             uploadedData,
         },
@@ -125,37 +136,23 @@ async function _setupCampaignFromQai(
     );
     if (sequenceDocErr) throw sequenceDocErr;
 
-    let [sequenceStepDoc, sequenceStepDocErr] =
-        await createCampaignSequenceStepFromQAi(
-            { campaignSequenceId, accountId, userId },
+    let stepsInfo = sequenceDetails.steps;
+    if (!stepsInfo || !stepsInfo.length) {
+        throw `stepsInfo is invalid or empty for campaignSequenceId: ${campaignSequenceId}`;
+    }
+
+    let [sequenceStepDocs, sequenceStepDocErr] =
+        await createCampaignSequenceStepsFromQAi(
+            { campaignSequenceId, accountId, userId, stepsInfo },
             { txid }
         );
     if (sequenceStepDocErr) throw sequenceStepDocErr;
-    let sequenceStepId = sequenceStepDoc && sequenceStepDoc._id;
-    if (!sequenceStepId) throw `sequenceStepId is invalid`;
-
-    let [prospects, prospectsErr] =
-        await createCampaignSequenceProspectsFromQAi(
-            {
-                campaignSequenceId,
-                accountId,
-                userId,
-                conversationId,
-                uploadedData,
-            },
-            { txid }
-        );
-    if (prospectsErr) throw prospectsErr;
-
-    let [sspmDocs, sspmDocsErr] =
-        await createCampaignSequenceProspectMessagesFromQAi(
-            { campaignSequenceId, accountId, sequenceStepId, prospects },
-            { txid }
-        );
-    if (sspmDocsErr) throw sspmDocsErr;
+    if (!sequenceStepDocs || !sequenceStepDocs.length) {
+        throw `sequenceStepDocs is empty for campaignSequenceId: ${campaignSequenceId}`;
+    }
 
     logg.info(`ended`);
-    return [sspmDocs, null];
+    return [{ sequenceDoc, sequenceStepDocs }, null];
 }
 
 export const setupCampaignFromQai = functionWrapper(
@@ -179,8 +176,7 @@ async function _createCampaignSequence(
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
     if (!campaignSequenceId) {
-        logg.info(`since sequenceId is empty, generating new sequenceId`);
-        campaignSequenceId = uuidv4();
+        throw `campaignSequenceId is invalid`;
     }
     if (!name) {
         logg.info(`since name is empty, setting default name`);
@@ -192,12 +188,12 @@ async function _createCampaignSequence(
         name,
         account: accountId,
         created_by: userId,
-        conversation: conversationId,
         status: "created",
     };
     if (uploadedData && uploadedData.file_name) {
         obj.uploaded_file_name = uploadedData.file_name;
     }
+    if (conversationId) obj.conversation = conversationId;
 
     let sequenceDocResp = await SequenceModel.insertMany([obj]);
     let sequenceDoc = sequenceDocResp && sequenceDocResp[0];
@@ -213,43 +209,88 @@ const createCampaignSequence = functionWrapper(
     _createCampaignSequence
 );
 
-async function _createCampaignSequenceStepFromQAi(
-    { campaignSequenceId, accountId, userId },
+async function _createCampaignSequenceStepsFromQAi(
+    { campaignSequenceId, accountId, userId, stepsInfo },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
     if (!campaignSequenceId) throw `campaignSequenceId is invalid`;
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
+    if (!stepsInfo || !stepsInfo.length) {
+        throw `stepsInfo is invalid or empty for campaignSequenceId: ${campaignSequenceId}`;
+    }
 
-    let sequenceStepId = uuidv4();
-    let obj = {
-        _id: sequenceStepId,
-        sequence: campaignSequenceId,
-        account: accountId,
-        created_by: userId,
-        type: "email",
-        subject: "",
-        body: "",
-        time_of_dispatch: {
-            type: "from_prospect_added_time",
-            value: { time_value: 1, time_unit: "day" },
+    /*
+    * stepsInfo structure: 
+    [
+        {
+            "id": "6a130fe1-a43c-4703-ab53-058330600738",
+            "type": "ai_generated_email",
+            "time_of_dispatch": {
+                "time_value": 1,
+                "time_unit": "day"
+            }
         },
-        active: true,
-        order: 1,
-    };
-    let sequenceStepDocResp = await SequenceStep.insertMany([obj]);
-    let sequenceStepDoc = sequenceStepDocResp && sequenceStepDocResp[0];
-    logg.info(`sequenceStepDoc: ${JSON.stringify(sequenceStepDoc)}`);
+        {
+            "id": "df83d08e-4441-4bf5-a20c-ced9ed952bf9",
+            "type": "ai_generated_email",
+            "time_of_dispatch": {
+                "time_value": 3,
+                "time_unit": "day"
+            }
+        }
+    ]
+    */
 
+    let sequenceStepDocs = [];
+    for (let i = 0; i < stepsInfo.length; i++) {
+        let stepInfo = stepsInfo[i];
+        let sequenceStepId = stepInfo.id;
+        if (!sequenceStepId) throw `sequenceStepId is invalid for index: ${i}`;
+
+        let seqStepTimeOfDispatch = stepInfo.time_of_dispatch;
+        if (!seqStepTimeOfDispatch) {
+            throw `seqStepTimeOfDispatch is invalid for sequenceStepId: ${sequenceStepId}`;
+        }
+
+        let obj = {
+            _id: sequenceStepId,
+            sequence: campaignSequenceId,
+            account: accountId,
+            created_by: userId,
+            // type: "email",
+            subject: "",
+            body: "",
+            // draft_type: "ai_generated",
+            time_of_dispatch: {
+                type: "from_prospect_added_time",
+                value: seqStepTimeOfDispatch,
+            },
+            active: true,
+            order: i + 1,
+        };
+
+        if (stepInfo.type === "ai_generated_email") {
+            obj.type = "email";
+            obj.draft_type = "ai_generated";
+        } else {
+            throw `stepInfo.type is invalid for sequenceStepId: ${sequenceStepId}`;
+        }
+
+        sequenceStepDocs.push(obj);
+    }
+
+    let sequenceStepDocsResp = await SequenceStep.insertMany(sequenceStepDocs);
+    logg.info(`sequenceStepDocsResp: ${JSON.stringify(sequenceStepDocsResp)}`);
     logg.info(`ended`);
-    return [sequenceStepDoc, null];
+    return [sequenceStepDocsResp, null];
 }
 
-const createCampaignSequenceStepFromQAi = functionWrapper(
+const createCampaignSequenceStepsFromQAi = functionWrapper(
     fileName,
-    "createCampaignSequenceStepFromQAi",
-    _createCampaignSequenceStepFromQAi
+    "createCampaignSequenceStepsFromQAi",
+    _createCampaignSequenceStepsFromQAi
 );
 
 async function _createCampaignSequenceProspectsFromQAi(
@@ -394,6 +435,7 @@ const createCampaignSequenceProspectsFromQAi = functionWrapper(
     _createCampaignSequenceProspectsFromQAi
 );
 
+// ! not used anymore
 async function _createCampaignSequenceProspectMessagesFromQAi(
     { campaignSequenceId, accountId, sequenceStepId, prospects },
     { txid, logg, funcName }
@@ -452,7 +494,7 @@ const createCampaignSequenceProspectMessagesFromQAi = functionWrapper(
     _createCampaignSequenceProspectMessagesFromQAi
 );
 
-async function _setupSequenceProspectMessageTime(
+async function _executeSequenceConfirmation(
     { sequenceId, accountId, userId, userTimezone },
     { txid, logg, funcName }
 ) {
@@ -466,62 +508,77 @@ async function _setupSequenceProspectMessageTime(
     if (!sequenceDoc)
         throw `sequenceDoc is invalid for sequenceId: ${sequenceId}`;
 
-    if (
-        sequenceDoc.status === "messages_scheduled" ||
-        sequenceDoc.status === "messages_scheduling"
-    )
-        throw `sequenceId: ${sequenceId} already has messages_scheduled status`;
+    let isExecuteSequenceConfirmationFound = checkActivity(
+        {
+            activities: sequenceDoc.activities,
+            type: "execute_sequence_confirmation",
+        },
+        { txid }
+    );
 
-    // update sequence status to "messages_scheduling"
-    // this is to avoid multiple calls to this function at the same time
-    let seqStatusUpdateResp = await SequenceModel.updateOne(seqQueryObj, {
-        status: "messages_scheduling",
-    });
-    logg.info(`seqStatusUpdateResp: ${JSON.stringify(seqStatusUpdateResp)}`);
-
-    let sequenceStepQueryObj = { sequence: sequenceId };
-    let sequenceStepDocs = await SequenceStep.find(sequenceStepQueryObj).lean();
-    logg.info(`sequenceStepDocs: ${JSON.stringify(sequenceStepDocs)}`);
-    if (!sequenceStepDocs || !sequenceStepDocs.length) {
-        throw `sequenceStepDocs is empty for sequenceId: ${sequenceId}`;
+    if (isExecuteSequenceConfirmationFound) {
+        logg.info(
+            `since execute_sequence_confirmation is found, throwing error`
+        );
+        throw `sequenceId: ${sequenceId} is already executed`;
     }
 
-    let sequenceStepIds = sequenceStepDocs.map((x) => x._id);
-    let sequenceStepId = sequenceStepIds[0];
+    // * Update the sequence with the activity "execute_sequence_confirmation"
+    let updateData = {
+        $push: {
+            activities: {
+                type: "execute_sequence_confirmation",
+                time: new Date(),
+                txid,
+            },
+        },
+        default_timezone: userTimezone,
+    };
+    sequenceDoc = await SequenceModel.findOneAndUpdate(
+        seqQueryObj,
+        updateData,
+        { new: true }
+    );
+    logg.info(`updated sequenceDoc: ${JSON.stringify(sequenceDoc)}`);
 
-    let seqProspectQueryObj = { sequence: sequenceId, status: "pending" };
-    let prospects = await SequenceProspect.find(seqProspectQueryObj).lean();
+    let sequenceSteps = await SequenceStep.find({ sequence: sequenceId })
+        .sort("order")
+        .lean();
+    logg.info(`sequenceSteps: ${JSON.stringify(sequenceSteps)}`);
+    if (!sequenceSteps || !sequenceSteps.length) {
+        throw `sequenceSteps is empty for sequenceId: ${sequenceId}`;
+    }
 
     let [scheduleResp, scheduleErr] =
-        await scheduleTimeForCampaignProspectsFromQAi(
+        await scheduleTimeForSequenceIfNotAlreadyDone(
             {
-                campaignSequenceId: sequenceId,
+                sequenceId,
+                sequenceDoc,
                 accountId,
                 userId,
-                sequenceStepId,
-                prospects,
-                defaultTimezone: userTimezone,
+                sequenceSteps,
             },
             { txid }
         );
     if (scheduleErr) throw scheduleErr;
 
-    // update sequence status to "messages_scheduled"
-    let seqStatusUpdateResp2 = await SequenceModel.updateOne(seqQueryObj, {
-        status: "messages_scheduled",
-    });
-    logg.info(`seqStatusUpdateResp2: ${JSON.stringify(seqStatusUpdateResp2)}`);
+    let [setupWebhookResp, setupWebhookErr] = await setupEmailReplyWebhook(
+        { accountId, userId, ignoreIfAlreadyExists: true },
+        { txid }
+    );
+    if (setupWebhookErr) throw setupWebhookErr;
 
     logg.info(`ended`);
     return [scheduleResp, null];
 }
 
-export const setupSequenceProspectMessageTime = functionWrapper(
+export const executeSequenceConfirmation = functionWrapper(
     fileName,
-    "setupSequenceProspectMessageTime",
-    _setupSequenceProspectMessageTime
+    "executeSequenceConfirmation",
+    _executeSequenceConfirmation
 );
 
+// ! not used anymore
 async function _scheduleTimeForCampaignProspectsFromQAi(
     {
         campaignSequenceId,
@@ -530,6 +587,7 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
         sequenceStepId,
         prospects,
         defaultTimezone,
+        campaignConfigDoc,
     },
     { txid, logg, funcName }
 ) {
@@ -543,8 +601,16 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
         return [true, null];
     }
 
+    if (!campaignConfigDoc) {
+        let cConfigQueryObj = { account: accountId };
+        campaignConfigDoc = await CampaignConfig.findOne(
+            cConfigQueryObj
+        ).lean();
+        logg.info(`campaignConfigDoc: ${JSON.stringify(campaignConfigDoc)}`);
+    }
+
     let [senderList, senderListErr] = await getSendersList(
-        { accountId },
+        { accountId, userId },
         { txid }
     );
     if (senderListErr) throw senderListErr;
@@ -565,6 +631,11 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
         { txid }
     );
 
+    let replyToUser =
+        campaignConfigDoc && campaignConfigDoc.reply_to_user
+            ? campaignConfigDoc.reply_to_user.toString()
+            : null;
+
     let scheduleList = scheduleTimeForSequenceProspects(
         {
             prospects,
@@ -578,6 +649,9 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
             prospectLastScheduleTimeMap: {},
             defaultTimezone,
             prevStepTimeValue: null,
+            scheduleTimeHours:
+                campaignConfigDoc && campaignConfigDoc.message_schedule_window,
+            replyToUser,
         },
         { txid }
     );
@@ -611,9 +685,20 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
             sender_email,
             message_scheduled_time,
             message_status,
+            reply_to,
         } = x;
 
         let sender = senderIdMap[sender_email];
+
+        let updateObj = {
+            sender_email,
+            message_scheduled_time,
+            message_status,
+            sender,
+        };
+        if (reply_to) {
+            updateObj.reply_to = reply_to;
+        }
 
         return {
             updateOne: {
@@ -624,12 +709,7 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
                     sequence_step,
                     sequence_prospect,
                 },
-                update: {
-                    sender_email,
-                    message_scheduled_time,
-                    message_status,
-                    sender,
-                },
+                update: updateObj,
             },
         };
     });
@@ -637,7 +717,7 @@ async function _scheduleTimeForCampaignProspectsFromQAi(
     let bulkWriteResp = await SequenceProspectMessageSchedule.bulkWrite(
         updateData
     );
-    // logg.info(`bulkWriteResp: ${JSON.stringify(bulkWriteResp)}`);
+    logg.info(`bulkWriteResp: ${JSON.stringify(bulkWriteResp)}`);
 
     logg.info(`ended`);
     return [scheduleList, null];
@@ -649,7 +729,10 @@ const scheduleTimeForCampaignProspectsFromQAi = functionWrapper(
     _scheduleTimeForCampaignProspectsFromQAi
 );
 
-async function _getSendersList({ accountId }, { txid, logg, funcName }) {
+async function _getSendersList(
+    { accountId, userId },
+    { txid, logg, funcName }
+) {
     logg.info(`started`);
     if (!accountId) throw `accountId is invalid`;
 
@@ -660,11 +743,19 @@ async function _getSendersList({ accountId }, { txid, logg, funcName }) {
 
     let senderList = campaignConfigDoc && campaignConfigDoc.email_senders;
     logg.info(`senderList: ${JSON.stringify(senderList)}`);
-    // let senderEmails = senderList.map((x) => x.email);
-    // senderEmails = senderEmails.filter((x) => x);
-    // senderEmails = senderEmails.map((x) => x.trim().toLowerCase());
-    // senderEmails = [...new Set(senderEmails)];
-    // logg.info(`senderEmails: ${JSON.stringify(senderEmails)}`);
+
+    if (!senderList || !senderList.length) {
+        // ! This is a temporary fix. Need to remove this once the sender list is available in campaign config in QDA UI
+        let [userDoc, userDocErr] = await UserUtils.getUserById(
+            { id: userId },
+            { txid }
+        );
+        if (userDocErr) throw userDocErr;
+        if (!userDoc) throw `userDoc is empty for userId: ${userId}`;
+        let userEmail = userDoc.email;
+        senderList = [{ email: userEmail, user_id: userId }];
+    }
+
     if (!senderList || !senderList.length) throw `senderList is empty`;
     logg.info(`ended`);
     return [senderList, null];
@@ -713,6 +804,8 @@ function scheduleTimeForSequenceProspects(
         prospectLastScheduleTimeMap,
         defaultTimezone,
         prevStepTimeValue,
+        ignoreSchedulingBeforeTimes,
+        replyToUser,
     },
     { txid }
 ) {
@@ -720,7 +813,10 @@ function scheduleTimeForSequenceProspects(
     const logg = logger.child({ txid, funcName });
     logg.info(`started`);
     let senderCount = senderList.length;
-    if (!scheduleTimeHours) {
+    if (!scheduleTimeHours || JSON.stringify(scheduleTimeHours) === "{}") {
+        logg.info(
+            `since scheduleTimeHours is empty, setting default scheduleTimeHours (mon-friday 9am-5pm)`
+        );
         scheduleTimeHours = {
             sun: [],
             mon: [{ start: "09:00", end: "17:00" }],
@@ -730,6 +826,12 @@ function scheduleTimeForSequenceProspects(
             fri: [{ start: "09:00", end: "17:00" }],
             sat: [],
         };
+    }
+
+    let ignoreSchedulingBeforeTime = null;
+    if (ignoreSchedulingBeforeTimes && ignoreSchedulingBeforeTimes.length) {
+        // find the highest value from ignoreSchedulingBeforeTimes
+        ignoreSchedulingBeforeTime = Math.max(...ignoreSchedulingBeforeTimes);
     }
 
     let tzGroupedProspects = groupProspectsByTimezone(
@@ -745,6 +847,7 @@ function scheduleTimeForSequenceProspects(
     }
 
     let scheduleList = [];
+
     for (let timezone in tzGroupedProspects) {
         let currProspects = tzGroupedProspects[timezone];
         let currScheduleList = scheduleTimeForProspects(
@@ -762,6 +865,8 @@ function scheduleTimeForSequenceProspects(
                 prospectSenderMap,
                 prospectLastScheduleTimeMap,
                 prevStepTimeValue,
+                ignoreSchedulingBeforeTime,
+                replyToUser,
             },
             { txid }
         );
@@ -803,6 +908,8 @@ function scheduleTimeForProspects(
         prospectSenderMap,
         prospectLastScheduleTimeMap,
         prevStepTimeValue,
+        ignoreSchedulingBeforeTime,
+        replyToUser,
     },
     { txid }
 ) {
@@ -820,14 +927,50 @@ function scheduleTimeForProspects(
 
     let initialRangeTime = new Date().getTime();
 
-    if (!isFirstSequenceStep) {
-        let { time_value, time_unit } = sequenceStepTimeValue;
-        let timeValueMillis = time_value * 24 * 60 * 60 * 1000;
-        if (time_unit === "hour") timeValueMillis = time_value * 60 * 60 * 1000;
-        initialRangeTime = initialRangeTime + timeValueMillis;
+    if (!isFirstSequenceStep && sequenceStepTimeValue && prevStepTimeValue) {
+        /*
+        * Old disabled code on 18th July 2024.
+        * Now we are using TimeValue of the current step and the previous step to calculate the time difference
+        * Then we add this difference to the initialRangeTime
+        * This is to ensure that the time between the current step and the previous step is maintained
+
+            let { time_value, time_unit } = sequenceStepTimeValue;
+            let timeValueMillis = time_value * 24 * 60 * 60 * 1000;
+            if (time_unit === "hour") timeValueMillis = time_value * 60 * 60 * 1000;
+            initialRangeTime = initialRangeTime + timeValueMillis;
+        */
+        let { time_value: timeValue, time_unit: timeUnit } =
+            sequenceStepTimeValue;
+
+        let stepValueMillis = convertTimeStepValueToMillis(
+            { timeValue, timeUnit },
+            { txid }
+        );
+
+        let { time_value: prevTimeValue, time_unit: prevTimeUnit } =
+            prevStepTimeValue;
+
+        let prevStepValueMillis = convertTimeStepValueToMillis(
+            { timeValue: prevTimeValue, timeUnit: prevTimeUnit },
+            { txid }
+        );
+
+        let differenceStepValueMillis = stepValueMillis - prevStepValueMillis;
+
+        initialRangeTime = initialRangeTime + differenceStepValueMillis;
     }
 
-    let endRangeTime = initialRangeTime + 14 * 24 * 60 * 60 * 1000;
+    if (ignoreSchedulingBeforeTime) {
+        // if initialRangeTime is less than ignoreSchedulingBeforeTime, then set initialRangeTime to ignoreSchedulingBeforeTime
+        if (initialRangeTime < ignoreSchedulingBeforeTime) {
+            logg.info(
+                `initialRangeTime[${initialRangeTime}] is less than ignoreSchedulingBeforeTime[${ignoreSchedulingBeforeTime}]. So Setting initialRangeTime to ignoreSchedulingBeforeTime`
+            );
+            initialRangeTime = ignoreSchedulingBeforeTime;
+        }
+    }
+
+    let endRangeTime = initialRangeTime + 30 * 24 * 60 * 60 * 1000;
 
     let scheduleTimes =
         SlotGen_utils.createFreeFromBusySlotsOpenLinkNewCustomHours(
@@ -839,7 +982,8 @@ function scheduleTimeForProspects(
                 duration: 60,
                 custom_hours: scheduleTimeHours,
             },
-            false
+            false,
+            timezone
         );
     // ignore slots which are less than 1 hour from now
     let currTime = new Date().getTime();
@@ -847,9 +991,23 @@ function scheduleTimeForProspects(
         (x) => x.startTime > currTime + 1 * 60 * 60 * 1000
     );
 
+    if (ignoreSchedulingBeforeTime) {
+        // ignore slots which are less than ignoreSchedulingBeforeTime
+        scheduleTimes = scheduleTimes.filter(
+            (x) => x.startTime > ignoreSchedulingBeforeTime
+        );
+    }
+
+    // logg.info(`scheduleTimes: ${JSON.stringify(scheduleTimes)}\n\n`);
+
     scheduleTimes = scheduleTimes.map((x) => {
         return { start: x.startTime, end: x.endTime };
     });
+
+    let temp = scheduleTimes.map((x) => {
+        return momenttz(x.start).tz(timezone).format("YYYY-MM-DD HH:mm, ddd");
+    });
+    logg.info(`formatted scheduleTimes: ${JSON.stringify(temp)}`);
 
     let scheduleMap = {};
     let domainScheduleMap = {};
@@ -974,6 +1132,11 @@ function scheduleTimeForProspects(
             prospect_timezone: timezone,
             // sender_account_type:
         };
+        if (replyToUser) {
+            replyToUser = replyToUser.toString();
+            item.reply_to = { user_id: replyToUser };
+        }
+
         scheduleList.push(item);
     }
 
@@ -1124,15 +1287,25 @@ function convertTimeStepValueToMillis({ timeValue, timeUnit }, { txid }) {
     const logg = logger.child({ txid, funcName });
     // logg.info(`started`);
 
+    if (!timeValue) throw `timeValue is invalid`;
+    if (!timeUnit) throw `timeUnit is invalid`;
+
+    timeUnit = timeUnit.toLowerCase().trim();
     let stepValueMillis = null;
-    if (timeUnit === "hour") stepValueMillis = timeValue * 60 * 60 * 1000;
-    else if (timeUnit === "day")
+    let hourValidUnits = ["hour", "hours", "hr", "hrs", "h"];
+    let dayValidUnits = ["day", "days", "d"];
+    let weekValidUnits = ["week", "weeks", "w"];
+    let monthValidUnits = ["month", "months"];
+    let yearValidUnits = ["year", "years", "y"];
+    if (hourValidUnits.includes(timeUnit))
+        stepValueMillis = timeValue * 60 * 60 * 1000;
+    else if (dayValidUnits.includes(timeUnit))
         stepValueMillis = timeValue * 24 * 60 * 60 * 1000;
-    else if (timeUnit === "week")
+    else if (weekValidUnits.includes(timeUnit))
         stepValueMillis = timeValue * 7 * 24 * 60 * 60 * 1000;
-    else if (timeUnit === "month")
+    else if (monthValidUnits.includes(timeUnit))
         stepValueMillis = timeValue * 30 * 24 * 60 * 60 * 1000;
-    else if (timeUnit === "year")
+    else if (yearValidUnits.includes(timeUnit))
         stepValueMillis = timeValue * 365 * 24 * 60 * 60 * 1000;
     else throw `time_unit: ${timeUnit} is invalid`;
 
@@ -1330,10 +1503,11 @@ async function _execCampaignSequencesStepMessagesForSender(
     if (!senderAuthObj)
         throw `senderAuthObj is invalid for senderEmail: ${senderEmail}`;
 
-    // initial wait time is 0.5 sec
-    let waitTime = 500;
+    // initial wait time is 5 sec
+    let waitTime = 5000;
     let promises = [];
-    for (const spmsDoc of spmsDocs) {
+    for (let i = 0; i < spmsDocs.length; i++) {
+        const spmsDoc = spmsDocs[i];
         // make use of function "executeCampaignSequenceStep" for each spmsDoc
         let promise = executeCampaignSequenceStep(
             { spmsDoc },
@@ -1341,11 +1515,13 @@ async function _execCampaignSequencesStepMessagesForSender(
         );
         promises.push(promise);
 
-        //wait for minimum of waitTime or 2 sec
-        await new Promise((resolve) =>
-            setTimeout(resolve, Math.min(waitTime, 2000))
-        );
-        waitTime += 500;
+        //wait for minimum of waitTime or 12 sec (if this not the last spmsDoc)
+        if (i < spmsDocs.length - 1) {
+            await new Promise((resolve) =>
+                setTimeout(resolve, Math.min(waitTime, 12000))
+            );
+            waitTime += 200;
+        }
     }
 
     let resp = await Promise.allSettled(promises);
@@ -1381,6 +1557,36 @@ async function _executeCampaignSequenceStep(
         throw `failed to find spmsDoc for spmsId: ${spmsId}`;
     }
 
+    let accountId = spmsDoc.account;
+    let contactId = spmsDoc.contact;
+
+    let [contactDoc, contactErr] = await CrmContactUtils.getContactById(
+        { contactId, accountId },
+        { txid }
+    );
+
+    if (contactErr) throw contactErr;
+    if (!contactDoc) throw `contactDoc is invalid`;
+    if (!contactDoc.email) throw `contactDoc.email is invalid`;
+
+    let [sendReplyAndDelayResp, sRADErr] = await sendReplyAndDelayEmail(
+        { spmsDoc, spmsId, accountId, contactDoc },
+        { txid, sendErrorMsg: true }
+    );
+    if (sRADErr) {
+        logg.error(`sRADErr: ${sRADErr}`);
+        logg.info(`even though got sendReplyAndDelay error, continuing...`);
+    }
+
+    let messageDelayed =
+        sendReplyAndDelayResp && sendReplyAndDelayResp.messageDelayed;
+
+    if (messageDelayed) {
+        logg.info(`message is delayed. so skipping this sending the message`);
+        logg.info(`ended`);
+        return [true, null];
+    }
+
     let [hasRepliedToPrevStep, repliedErr] =
         await hasProspectRepliedToPreviousStep(
             {
@@ -1388,7 +1594,7 @@ async function _executeCampaignSequenceStep(
                 sequenceProspectId: spmsDoc.sequence_prospect,
                 currentSpmsId: spmsId,
                 currentSequenceStepId: spmsDoc.sequence_step,
-                accountId: spmsDoc.account,
+                accountId,
             },
             { txid, sendErrorMsg: true }
         );
@@ -1398,8 +1604,7 @@ async function _executeCampaignSequenceStep(
         );
     }
 
-    let messageResponse = null,
-        hasEmailBounced = false;
+    let messageResponse = null;
     let failed = false;
 
     if (hasRepliedToPrevStep) {
@@ -1411,7 +1616,7 @@ async function _executeCampaignSequenceStep(
         };
     } else {
         let [resp, err] = await executeCampaignStepUtil(
-            { spmsDoc, spmsId },
+            { spmsDoc, spmsId, contactDoc },
             { txid, sendErrorMsg: true }
         );
         if (err) {
@@ -1426,14 +1631,12 @@ async function _executeCampaignSequenceStep(
             };
         } else {
             messageResponse = resp && resp.messageResponse;
-            hasEmailBounced = resp && resp.hasEmailBounced;
         }
     }
 
     let messageStatus = "";
     if (hasRepliedToPrevStep) messageStatus = "skipped";
     else if (failed) messageStatus = "failed";
-    else if (hasEmailBounced) messageStatus = "bounced";
     else messageStatus = "sent";
 
     let queryObj = { _id: spmsId };
@@ -1480,6 +1683,39 @@ async function _executeCampaignSequenceStep(
         logg.info(`updateResp: ${JSON.stringify(updateResp)}`);
     }
 
+    // * Push Lead and Email activity to User connected CRMs
+    let [integrationActivities, crmErr] =
+        await IntegrationUtils.sequenceStepMessageSend(
+            {
+                accountId,
+                contactDoc,
+                messageStatus,
+                emailSubject: spmsDoc.message_subject,
+                emailBody: spmsDoc.message_body,
+                emailSentTime: new Date(),
+                senderEmail: spmsDoc.sender_email,
+            },
+            { txid, sendErrorMsg: true }
+        );
+    if (crmErr) {
+        logg.error(`Got CRM error. But continuing... crmErr: ${crmErr}`);
+    } else if (integrationActivities && integrationActivities.length) {
+        // adding integration activities to the spmsDoc
+        let integrationActivitiesObj = {
+            integration_activities: integrationActivities,
+        };
+        let integActivitiesUpdateResp =
+            await SequenceProspectMessageSchedule.updateOne(
+                queryObj,
+                integrationActivitiesObj
+            );
+        logg.info(
+            `integActivitiesUpdateResp: ${JSON.stringify(
+                integActivitiesUpdateResp
+            )}`
+        );
+    }
+
     logg.info(`ended`);
     return [true, null];
 }
@@ -1491,7 +1727,7 @@ const executeCampaignSequenceStep = functionWrapper(
 );
 
 async function _executeCampaignStepUtil(
-    { spmsDoc, spmsId },
+    { spmsDoc, spmsId, contactDoc },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -1510,6 +1746,7 @@ async function _executeCampaignStepUtil(
         message_subject,
         message_body,
         is_message_generation_complete,
+        reply_to: replyToObj,
     } = spmsDoc;
 
     if (message_status !== "pending") {
@@ -1520,14 +1757,11 @@ async function _executeCampaignStepUtil(
         throw `message is not generated yet`;
     }
 
-    let prospect_email = "";
-    let [contactDoc, contactErr] = await CrmContactUtils.getContactById(
-        { contactId: contact, accountId: account },
-        { txid }
-    );
-    if (contactErr) throw contactErr;
     if (!contactDoc) throw `contactDoc is invalid`;
     if (!contactDoc.email) throw `contactDoc.email is invalid`;
+
+    let prospect_email = "";
+
     prospect_email = contactDoc.email;
 
     let [senderAuthObj, authObjErr] = await GoogleUtils.refreshOrReturnToken(
@@ -1546,6 +1780,19 @@ async function _executeCampaignStepUtil(
         );
     }
 
+    let replyToEmailId = null;
+    if (replyToObj && replyToObj.user_id) {
+        logg.info(`getting replyToUser for user id: ${replyToObj.user_id}`);
+        let [replyToUserDoc, replyToUserErr] = await UserUtils.getUserById(
+            { id: replyToObj.user_id },
+            { txid }
+        );
+        if (replyToUserErr) throw replyToUserErr;
+        if (!replyToUserDoc) throw `replyToUserDoc is invalid`;
+
+        replyToEmailId = replyToUserDoc.email;
+    }
+
     let [sendResp, sendEmailErr] = await GoogleUtils.sendEmail(
         {
             senderEmailId: sender_email,
@@ -1553,6 +1800,7 @@ async function _executeCampaignStepUtil(
             toEmailId: prospect_email,
             subject: message_subject,
             body: message_body,
+            replyToEmailId,
         },
         { txid }
     );
@@ -1567,34 +1815,6 @@ async function _executeCampaignStepUtil(
     emailThreadId = sendResp && sendResp.threadId;
     emailLabelIds = sendResp && sendResp.labelIds;
 
-    let [hasEmailBounced, hasBouncedErr] = await GoogleUtils.hasEmailBounced(
-        { emailThreadId, senderAuthObj, waitTime: 1500 },
-        { txid, sendErrorMsg: true }
-    );
-    if (hasBouncedErr) {
-        logg.error(`failed to check hasEmailBounced: ${hasBouncedErr}`);
-        logg.error(`but continuing with the process`);
-        hasEmailBounced = null;
-    }
-    logg.info(`hasEmailBounced1: ${hasEmailBounced}`);
-
-    if (hasEmailBounced === false) {
-        let [hasEmailBounced2, hasBouncedErr2] =
-            await GoogleUtils.hasEmailBounced(
-                { emailThreadId, senderAuthObj, waitTime: 1500 },
-                { txid, sendErrorMsg: true }
-            );
-        if (hasBouncedErr2) {
-            logg.error(`failed to check hasEmailBounced: ${hasBouncedErr}`);
-            logg.error(`but continuing with the process`);
-            hasEmailBounced2 = null;
-        }
-        logg.info(`hasEmailBounced2: ${hasEmailBounced2}`);
-        hasEmailBounced = hasEmailBounced2;
-    }
-
-    if (!hasEmailBounced) hasEmailBounced = false;
-
     let messageResponse = {
         email_sent_id: emailSentId,
         email_thread_id: emailThreadId,
@@ -1602,7 +1822,7 @@ async function _executeCampaignStepUtil(
     };
 
     logg.info(`ended`);
-    return [{ messageResponse, hasEmailBounced }, null];
+    return [{ messageResponse }, null];
 }
 
 const executeCampaignStepUtil = functionWrapper(
@@ -1697,6 +1917,43 @@ async function _saveSequenceStepMessageOpenAnalytic(
     logg.info(`ssmDoc: ${JSON.stringify(spmsDoc)}`);
     if (!spmsDoc) throw `spmsDoc not found for ssmid: ${ssmid}`;
 
+    let [hasBounced, repliedErr] = await AnalyticUtils.hasSequenceMessgeBounced(
+        { spmsId: ssmid },
+        { txid, sendErrorMsg: true }
+    );
+    if (repliedErr) {
+        logg.error(
+            `got repliedErr. but continuing... repliedErr: ${repliedErr}`
+        );
+    }
+
+    if (hasBounced) {
+        logg.info(
+            `since prospect message failed to deliver, skip storing open analytic`
+        );
+        return [true, null];
+    }
+
+    // just to be sure, check in real time if there is a bounced reply from GMail API
+    let [hasBounceMessage, bounceErr] = await GoogleUtils.hasBouncedMessage(
+        {
+            senderUserId: spmsDoc.sender,
+            senderEmail: spmsDoc.sender_email,
+            emailThreadId: spmsDoc.message_response.email_thread_id,
+        },
+        { txid, sendErrorMsg: true }
+    );
+    if (bounceErr) {
+        logg.error(`got bounceErr. but continuing... bounceErr: ${bounceErr}`);
+    }
+
+    if (hasBounceMessage) {
+        logg.info(
+            `since prospect message failed to deliver, skip storing open analytic`
+        );
+        return [true, null];
+    }
+
     let [analyticResp, analyticErr] =
         await AnalyticUtils.storeCampaignMessageOpenAnalytic(
             {
@@ -1711,6 +1968,15 @@ async function _saveSequenceStepMessageOpenAnalytic(
             { txid }
         );
     if (analyticErr) throw analyticErr;
+
+    // * added below code on 18th July 2024
+    let [replyResp, replyErr] = await sendReplyIfNotSentBefore(
+        { spmsDoc },
+        { txid, sendErrorMsg: true }
+    );
+    if (replyErr) {
+        logg.error(`got replyErr. but continuing... replyErr: ${replyErr}`);
+    }
 
     logg.info(`ended`);
     return [analyticResp, null];
