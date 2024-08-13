@@ -3219,3 +3219,121 @@ const addProspectToUnsubscribeList = functionWrapper(
     "addProspectToUnsubscribeList",
     _addProspectToUnsubscribeList
 );
+
+/*
+ * Created on 16th June 2024
+ * This will return headers and data for the sequence open analytics
+ * headers will be like sequence_prospect (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), count (Num of times opened), last_opened_on (Last Opened On)
+ * data will be array of objects with above headers as keys
+ */
+async function _getSequenceOpenAnalytics(
+    { accountId, sequenceId, sequenceStepId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+
+    const headers = {
+        sequence_prospect: {
+            label: "Prospect ID",
+            type: "string",
+            hidden: true,
+            order: 0,
+        },
+        prospect_email: {
+            label: "Prospect Email",
+            type: "string",
+            order: 1,
+        },
+        prospect_name: {
+            label: "Prospect Name",
+            type: "string",
+            order: 2,
+        },
+        count: {
+            label: "Num of times opened",
+            type: "number",
+            order: 3,
+        },
+        last_opened_on: {
+            label: "Last Opened On",
+            type: "datetime_millis",
+            order: 4,
+        },
+    };
+
+    let [data, dataErr] = await AnalyticUtils.getSequenceOpenAnalytics(
+        { accountId, sequenceId, sequenceStepId },
+        { txid }
+    );
+    if (dataErr) throw dataErr;
+
+    logg.info(`ended`);
+    return [{ headers, data }, null];
+}
+
+export const getSequenceOpenAnalytics = functionWrapper(
+    fileName,
+    "getSequenceOpenAnalytics",
+    _getSequenceOpenAnalytics
+);
+
+/*
+ * Created on 16th June 2024
+ * This will return headers and data for the sequence reply analytics
+ * headers will be like sequence_prospect_message (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), reply (Reply), replied_on (Replied On)
+ * data will be array of objects with above headers as keys
+ */
+async function _getSequenceReplyAnalytics(
+    { accountId, sequenceId, sequenceStepId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+
+    const headers = {
+        sequence_prospect_message: {
+            label: "Sequence Prospect Message ID",
+            type: "string",
+            hidden: true,
+            order: 0,
+        },
+        prospect_email: {
+            label: "Prospect Email",
+            type: "string",
+            order: 1,
+        },
+        prospect_name: {
+            label: "Prospect Name",
+            type: "string",
+            order: 2,
+        },
+        reply: {
+            label: "Reply",
+            type: "string",
+            order: 3,
+        },
+        replied_on: {
+            label: "Replied On",
+            type: "datetime_millis",
+            order: 4,
+        },
+    };
+
+    let [data, dataErr] = await AnalyticUtils.getSequenceReplyAnalytics(
+        { accountId, sequenceId, sequenceStepId },
+        { txid }
+    );
+    if (dataErr) throw dataErr;
+
+    logg.info(`ended`);
+    return [{ headers, data }, null];
+}
+
+export const getSequenceReplyAnalytics = functionWrapper(
+    fileName,
+    "getSequenceReplyAnalytics",
+    _getSequenceReplyAnalytics
+);
