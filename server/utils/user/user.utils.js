@@ -1,4 +1,5 @@
 import { User } from "../../models/user/user.model.js";
+
 import { functionWrapper } from "../../std/wrappers.js";
 
 const fileName = "User Utils";
@@ -17,7 +18,7 @@ async function _getUserObjByEmail(
     } else {
         userObj = await User.findOne({ email }).lean();
     }
-    logg.info(`userObj`, userObj);
+    logg.info(`userObj:` + JSON.stringify(userObj));
     logg.info(`ended`);
     return [userObj, null];
 }
