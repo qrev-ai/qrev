@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "gmail-api-parse-message": "^2.1.2"
+  }
+}
