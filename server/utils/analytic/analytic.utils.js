@@ -172,6 +172,8 @@ async function _getCampaignMessageAnalytics(
     logg.info(`analytics length: ${analytics.length}`);
 
     let result = {};
+    let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
+
     for (const analytic of analytics) {
         let seqId = analytic.sequence;
         seqId = typeof seqId === "object" ? seqId.toString() : seqId;
@@ -187,11 +189,29 @@ async function _getCampaignMessageAnalytics(
 
         let actionType = analytic.action_type;
         if (actionType === AnalyticActionTypes.campaign_message_send) {
-            result[seqId].contacted++;
+            if (
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.message_status === "skipped"
+            ) {
+                // do not count as contacted
+            } else {
+                result[seqId].contacted++;
+            }
         } else if (actionType === AnalyticActionTypes.campaign_message_open) {
             result[seqId].opened++;
         } else if (actionType === AnalyticActionTypes.campaign_message_reply) {
-            result[seqId].replied++;
+            if (
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.has_bounced
+            ) {
+                // do not count as replied
+            } else {
+                let spmsId = analytic.sequence_prospect_message;
+                if (!repliedMessageMap[spmsId]) {
+                    result[seqId].replied++;
+                    repliedMessageMap[spmsId] = true;
+                }
+            }
         }
         // else if (actionType === AnalyticActionTypes.link_open) {
         //     result[seqId].clicked++;
@@ -212,6 +232,8 @@ async function _getCampaignMessageAnalytics(
         }
     }
 
+    // logg.info(`result: ${JSON.stringify(result)}`);
+    logg.info(`ended`);
     return [result, null];
 }
 
@@ -235,6 +257,7 @@ async function _getSequenceProspectAnalytics(
     if (analyticsErr) throw analyticsErr;
 
     let result = [];
+    let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
     if (!formatInfo) {
         result = analytics;
     } else {
@@ -243,28 +266,42 @@ async function _getSequenceProspectAnalytics(
             let messageStatus =
                 analytic.analytic_metadata &&
                 analytic.analytic_metadata.message_status;
+
+            let actionStr = "";
             if (actionType === AnalyticActionTypes.campaign_message_send) {
-                if (messageStatus === "bounced") {
-                    actionType = "sent_bounced";
-                } else if (messageStatus === "skipped") {
-                    actionType = "sent_skipped";
+                if (messageStatus === "skipped") {
+                    actionStr = "sent_skipped";
                 } else {
-                    actionType = "sent";
+                    actionStr = "sent";
                 }
             } else if (
                 actionType === AnalyticActionTypes.campaign_message_open
             ) {
-                actionType = "opened";
+                actionStr = "opened";
             } else if (
                 actionType === AnalyticActionTypes.campaign_message_reply
             ) {
-                actionType = "replied";
+                if (
+                    analytic.analytic_metadata &&
+                    analytic.analytic_metadata.has_bounced
+                ) {
+                    actionStr = "sent_bounced";
+                } else {
+                    let spmsId = analytic.sequence_prospect_message;
+                    if (!repliedMessageMap[spmsId]) {
+                        actionStr = "replied";
+                        repliedMessageMap[spmsId] = true;
+                    }
+                }
             }
-            let item = {
-                date_time: new Date(analytic.created_on).getTime(),
-                action_type: actionType,
-            };
-            result.push(item);
+
+            if (actionStr) {
+                let item = {
+                    date_time: new Date(analytic.created_on).getTime(),
+                    action_type: actionStr,
+                };
+                result.push(item);
+            }
         }
     }
 
@@ -294,7 +331,10 @@ async function _getSequenceAnalytics(
 
     logg.info(`analytics length: ${analytics.length}`);
 
+    let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
+
     let result = {};
+
     for (const analytic of analytics) {
         let seqStepId = analytic.sequence_step;
         seqStepId =
@@ -302,33 +342,54 @@ async function _getSequenceAnalytics(
 
         if (!result[seqStepId]) {
             result[seqStepId] = {
+                contacted: 0,
                 delivered: 0,
                 bounced: 0,
                 opened: 0,
                 skipped: 0,
+                replied: 0,
             };
         }
 
         let actionType = analytic.action_type;
         if (actionType === AnalyticActionTypes.campaign_message_send) {
+            // if (
+            //     analytic.analytic_metadata &&
+            //     analytic.analytic_metadata.message_status === "bounced"
+            // ) {
+            //     // this is for backward compactibility where bounced was stored in "campaign_message_send" action type
+            //     result[seqStepId].bounced++;
+            // } else
             if (
-                analytic.analytic_metadata &&
-                analytic.analytic_metadata.message_status === "bounced"
-            ) {
-                result[seqStepId].bounced++;
-            } else if (
                 analytic.analytic_metadata &&
                 analytic.analytic_metadata.message_status === "skipped"
             ) {
                 result[seqStepId].skipped++;
             } else {
-                result[seqStepId].delivered++;
+                result[seqStepId].contacted++;
             }
         } else if (actionType === AnalyticActionTypes.campaign_message_open) {
             result[seqStepId].opened++;
         } else if (actionType === AnalyticActionTypes.campaign_message_reply) {
-            result[seqStepId].replied++;
+            if (
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.has_bounced
+            ) {
+                result[seqStepId].bounced++;
+            } else {
+                let spmsId = analytic.sequence_prospect_message;
+                if (!repliedMessageMap[spmsId]) {
+                    result[seqStepId].replied++;
+                    repliedMessageMap[spmsId] = true;
+                }
+            }
         }
+    }
+
+    // calculate delivered using contacted - bounced - skipped
+    for (const seqStepId in result) {
+        let seqStepData = result[seqStepId];
+        seqStepData.delivered = seqStepData.contacted - seqStepData.bounced;
     }
 
     logg.info(`result: ${JSON.stringify(result)}`);
