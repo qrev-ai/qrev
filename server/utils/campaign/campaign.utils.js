@@ -2842,3 +2842,221 @@ export const handleGooglePubSubWebhook = functionWrapper(
     "handleGooglePubSubWebhook",
     _handleGooglePubSubWebhook
 );
+
+/*
+ * get all the spmsDocs for the messages with matching "message_response.email_thread_id" with sender as userId
+ * messages structure: [{ threadId, messageId }]
+ * response structure: [{ threadId, messageId, spmsDoc}]
+ */
+async function _getSpmsDocsForMessages(
+    { messages, userId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!messages || !messages.length) throw `messages is invalid`;
+    if (!userId) throw `userId is invalid`;
+
+    let emailThreadIds = messages
+        .filter((x) => x.threadId)
+        .map((x) => x.threadId);
+
+    let emailMessageIds = messages
+        .filter((x) => x.messageId)
+        .map((x) => x.messageId);
+
+    /*
+     * get all the spmsDocs for the messages with matching "message_response.email_thread_id" with sender as userId
+     * but the message should not be in emailMessageIds. because we are looking for replies and replies will have different messageId
+     */
+    let spmsQueryObj = {
+        sender: userId,
+        "message_response.email_thread_id": { $in: emailThreadIds },
+        "message_response.email_sent_id": { $nin: emailMessageIds },
+    };
+    let spmsDocs = await SequenceProspectMessageSchedule.find(
+        spmsQueryObj
+    ).lean();
+
+    logg.info(`spmsDocs.length: ${spmsDocs.length}`);
+    if (spmsDocs.length < 20) {
+        logg.info(`spmsDocs: ${JSON.stringify(spmsDocs)}`);
+    }
+
+    let matchingMessageData = [];
+    let notMatchingMessages = [];
+    for (let i = 0; i < messages.length; i++) {
+        let message = messages[i];
+        let threadId = message.threadId;
+        let spmsDoc = spmsDocs.find(
+            (x) =>
+                x.message_response &&
+                x.message_response.email_thread_id === threadId
+        );
+        let isRepliedMessage = checkIfItIsRepliedMessage(
+            { spmsDoc, messageId: message.messageId },
+            { txid }
+        );
+        if (!spmsDoc) {
+            logg.info(`no spmsDoc found for threadId: ${threadId}`);
+            notMatchingMessages.push(message);
+            continue;
+        }
+
+        if (isRepliedMessage) {
+            logg.info(
+                `this is a replied message. So skipping. spmsId: ${spmsDoc._id}`
+            );
+            continue;
+        }
+
+        let item = { ...message, spmsDoc };
+        matchingMessageData.push(item);
+    }
+
+    logg.info(`matchingMessageData.length: ${matchingMessageData.length}`);
+    if (matchingMessageData.length < 20) {
+        logg.info(
+            `matchingMessageData: ${JSON.stringify(matchingMessageData)}`
+        );
+    }
+
+    logg.info(`ended`);
+
+    return [{ matchingMessageData, notMatchingMessages }, null];
+}
+
+const getSpmsDocsForMessages = functionWrapper(
+    fileName,
+    "getSpmsDocsForMessages",
+    _getSpmsDocsForMessages
+);
+
+/*
+ * messages structure: [{ threadId, messageId, spmsDoc, messageData, isFailed }]
+ */
+async function _updateMessageReplies({ messages }, { txid, logg, funcName }) {
+    logg.info(`started`);
+    if (!messages || !messages.length) throw `messages is invalid`;
+
+    let updatePromises = [];
+    for (let i = 0; i < messages.length; i++) {
+        let message = messages[i];
+        let { threadId, messageId, spmsDoc, messageData, isFailed } = message;
+        let promise = updateSequenceStepMessageReply(
+            { threadId, messageId, spmsDoc, messageData, isFailed },
+            { txid, sendErrorMsg: true }
+        );
+        updatePromises.push(promise);
+    }
+
+    let updateResults = await Promise.all(updatePromises);
+
+    // if any of the update fails, then log the error and count the number of failures
+    let numOfFailures = 0;
+    for (let i = 0; i < updateResults.length; i++) {
+        let [updateResp, updateErr] = updateResults[i];
+        if (updateErr) {
+            logg.error(`${i}: updateErr: ${updateErr}`);
+            numOfFailures++;
+        }
+    }
+
+    logg.info(`numOfFailures: ${numOfFailures}`);
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+const updateMessageReplies = functionWrapper(
+    fileName,
+    "updateMessageReplies",
+    _updateMessageReplies
+);
+
+async function _updateSequenceStepMessageReply(
+    { threadId, messageId, spmsDoc, messageData, isFailed },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!threadId) throw `threadId is invalid`;
+    if (!messageId) throw `messageId is invalid`;
+    if (!spmsDoc) throw `spmsDoc is invalid`;
+    if (!messageData) throw `messageData is invalid`;
+
+    let spmsUpdateObj = { updated_on: new Date() };
+
+    let spmsQueryObj = { _id: spmsDoc._id };
+
+    if (isFailed) {
+        spmsUpdateObj.message_status = "bounced";
+    } else {
+        spmsQueryObj.has_message_been_replied = true;
+    }
+
+    let spmsUpdateResp = await SequenceProspectMessageSchedule.updateOne(
+        spmsQueryObj,
+        spmsUpdateObj
+    );
+    logg.info(`spmsUpdateResp: ${JSON.stringify(spmsUpdateResp)}`);
+
+    let messageHeaders =
+        messageData && messageData.payload && messageData.payload.headers;
+    let repliedOnDate = new Date();
+    if (messageHeaders && messageHeaders.length) {
+        /*
+        * Date Header to be found:
+        {
+            "name": "Date",
+            "value": "Thu, 6 Jun 2024 12:22:12 +0530"
+        }
+        */
+        let dateHeader = messageHeaders.find((x) => x.name === "Date");
+        if (dateHeader) {
+            let dateStr = dateHeader.value;
+            try {
+                repliedOnDate = new Date(dateStr);
+            } catch (e) {
+                logg.error(`failed to parse dateStr: ${dateStr}`);
+            }
+        }
+    }
+
+    let [ReplyAnalyticResp, ReplyAnalyticErr] =
+        await AnalyticUtils.storeCampaignMessageReplyAnalytic(
+            {
+                sessionId: spmsDoc.analytic_session_id,
+                spmsId: spmsDoc._id,
+                accountId: spmsDoc.account,
+                sequenceId: spmsDoc.sequence,
+                contactId: spmsDoc.contact,
+                sequenceStepId: spmsDoc.sequence_step,
+                sequenceProspectId: spmsDoc.sequence_prospect,
+                messageId,
+                messageDetails: messageData,
+                repliedOnDate,
+                isFailed,
+            },
+            { txid }
+        );
+    if (ReplyAnalyticErr) throw ReplyAnalyticErr;
+
+    if (isFailed) {
+        // update SequenceProspect.status to "bounced"
+        let spQueryObj = { _id: spmsDoc.sequence_prospect };
+        let spUpdateObj = { status: "bounced" };
+        let spUpdateResp = await SequenceProspect.updateOne(
+            spQueryObj,
+            spUpdateObj
+        );
+        logg.info(`bounce-spUpdateResp: ${JSON.stringify(spUpdateResp)}`);
+    }
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+const updateSequenceStepMessageReply = functionWrapper(
+    fileName,
+    "updateSequenceStepMessageReply",
+    _updateSequenceStepMessageReply
+);
