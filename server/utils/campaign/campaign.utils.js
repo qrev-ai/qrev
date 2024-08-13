@@ -5225,3 +5225,59 @@ const scheduleTimeForSequenceIfNotAlreadyDone = functionWrapper(
     "scheduleTimeForSequenceIfNotAlreadyDone",
     _scheduleTimeForSequenceIfNotAlreadyDone
 );
+async function _getCampaignDefaults(
+    { accountId, setDefaultIfNotFound = false },
+    { txid, logg, funcName }
+) {
+    // get the campaign defaults for the accountId in "CampaignConfig" collection
+    // if found, then return the campaign defaults
+    // if not found, but setDefaultIfNotFound is true, then create the campaign defaults and return this
+    // if not found and setDefaultIfNotFound is false, then return null
+
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+
+    let defaultQueryObj = { account: accountId };
+    let campaignDefaults = await CampaignConfig.findOne(defaultQueryObj).lean();
+
+    if (!setDefaultIfNotFound && !campaignDefaults) {
+        logg.info(`campaignDefaults not found. setDefaultIfNotFound is false.`);
+        logg.info(`ended`);
+        return [null, null];
+    }
+
+    let exclude_domains = campaignDefaults && campaignDefaults.exclude_domains;
+    if (!exclude_domains) {
+        exclude_domains = [];
+    }
+
+    let sequence_steps_template =
+        campaignDefaults && campaignDefaults.sequence_steps_template;
+    if (!sequence_steps_template) {
+        sequence_steps_template = [];
+    }
+    if (!sequence_steps_template.length && setDefaultIfNotFound) {
+        sequence_steps_template = CampaignDefaults.sequence_steps_template;
+        // update the sequence_steps_template in the CampaignConfig collection
+        let seqStepTemplateUpdateResp = await CampaignConfig.updateOne(
+            defaultQueryObj,
+            { sequence_steps_template }
+        );
+        logg.info(
+            `seqStepTemplateUpdateResp: ${JSON.stringify(
+                seqStepTemplateUpdateResp
+            )}`
+        );
+    }
+
+    let result = { exclude_domains, sequence_steps_template };
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getCampaignDefaults = functionWrapper(
+    fileName,
+    "getCampaignDefaults",
+    _getCampaignDefaults
+);
