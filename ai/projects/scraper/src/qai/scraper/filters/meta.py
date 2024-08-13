@@ -1,17 +1,17 @@
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
-from qai.core import Meta, MetaUri, MetaObj
-from qai.scraper.scrapers.meta import WebObj
+from qai.core import Meta, MetaPath, MetaFile
+# from qai.scraper.scrapers.meta import WebFile
+from pydantic import BaseModel
 
-class DirectoryInfo(MetaObj):
-    in_folder: str = None
-    meta: Meta = None
+class DirectoryInfo(BaseModel):
+    in_folder: Optional[str] = None
+    _meta: Optional[Meta] = None
 
-@dataclass
-class InstanceInfo(MetaUri):
-    web_file: WebObj = None
-    meta: Meta = None
+class InstanceInfo(BaseModel):
+    web_file: MetaFile = None
+    _meta: Meta = None
     config: dict[str, Any] = None
     config_index: int = None
     directory_info: DirectoryInfo = None

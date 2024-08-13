@@ -1,0 +1,68 @@
+## Node
+node_modules
+
+## logs
+rejections.log
+exception.log
+
+## Ignore workspace information
+projects/*/.venv
+projects/*/poetry.toml
+
+## App
+results
+.private
+
+## Docker Staging Directories
+docker_staging*
+
+## System
+.env
+
+## Poetry
+.poetry.toml
+
+## Python
+__pycache__
+.installed.cfg
+*.egg
+*.egg-info
+*.py[co]
+bin
+build
+develop-eggs
+dist
+eggs
+parts
+sdist
+var
+
+## Installer logs
+pip-log.txt
+
+## Unit test / coverage reports
+.coverage
+.tox
+
+## lockfiles
+*.lock
+poetry.lock
+
+## caches
+cachedir
+.cache
+.mypy_cache
+.pytest_cache
+
+## Mac
+.DS_Store
+
+## temp files
+*.bk.*
+test_retrieval_*
+tempdb
+t.csv
+errors.txt
+
+## vscode
+.vscode

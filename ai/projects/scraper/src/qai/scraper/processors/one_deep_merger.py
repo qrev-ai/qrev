@@ -21,7 +21,7 @@ class OneDeepMerger(Writer):
         
         if url is None:
             if instance_info is not None and instance_info.web_file is not None:
-                url = instance_info.web_file._uri
+                url = instance_info.web_file.uri
             else:
                 raise ValueError("No web_file in instance_info. Base URL must be specified")
         if self.in_folder is None:

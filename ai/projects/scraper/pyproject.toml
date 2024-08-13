@@ -8,37 +8,44 @@ description = "QAI Web Scraper"
 name = "qai-scraper"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.2.1"
+version = "0.6.1"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
 beautifulsoup4 = "^4.12.2"
 bs4 = "^0.0.2"
-chromadb = "^0.4.22"
+chromadb = "^0.5.5"
 flask = "^3.0.0"
 ftfy = "^6.1.1"
 html2text = "^2020.1.16"
 langchain = "^0.1.0"
+lxml = "^5.2.1"
+lxml-html-clean = "^0.1.1"
 markdownify = "^0.11.6"
 pandas = "^2.1.0"
-pi-conf = "^0.7.6.6"
+pi-conf = "^0.8.5.1"
 pi-log = "^0.5.8.1"
-qai-core = {version = "^0.5"}
-selenium = "^4.15.2"
+qai-core = "^0.6.0"
+selenium = "^4.21.0"
 spacy = "^3.7.2"
 undetected-chromedriver = "^3.5.5"
 validators = "^0.21.2"
-lxml = "^5.2.1"
-lxml-html-clean = "^0.1.1"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^2.2.1"
+pytest = "^8.2.1"
 toml-sort = "^0.23.1"
 
 [tool.poetry.group.db]
 
 [tool.poetry.group.db.dependencies]
 nest-asyncio = "^1.5.8"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.2.2"
+
+[tool.pytest.ini_options]
+filterwarnings = ["ignore:::.*undetected_chromedriver*"]
 
 [tool.tomlsort]
 all = true

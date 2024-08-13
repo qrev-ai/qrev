@@ -1,11 +1,17 @@
 from collections import defaultdict
 from typing import Callable, Optional
 
-from qai.agent.agents.email_agent import EmailAgent, EmailModel, EmailToolSpec
+from qai.agent.agents.email_agent import (
+    EmailAgent,
+    EmailModel,
+    EmailToolSpec,
+    OnAllEmailsCompletedEvent,
+)
+from pi_blink import blink, EventPriority
 
-## Global dict
-# {"sequence_id": {"function" : int}}
+## Global dict, sequence_dict, to track the number of times the functions are called
 sequence_dict: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+
 
 class MockEmailToolSpec(EmailToolSpec):
     def __init__(self, *args, **kwargs):
@@ -37,8 +43,8 @@ class MockEmailToolSpec(EmailToolSpec):
 
 
 class MockEmailAgent(EmailAgent):
-    def __init__(self,  *args, **kwargs):
-        super().__init__( *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     @staticmethod
     def on_email_complete(sequence_id, email: EmailModel) -> None:
@@ -46,6 +52,11 @@ class MockEmailAgent(EmailAgent):
         sequence_dict[sequence_id]["on_email_complete"] += 1
 
     @staticmethod
-    def on_all_emails_complete(sequence_id: str, successes: int, errors: int) -> None:
+    @blink.listener(OnAllEmailsCompletedEvent, priority=EventPriority.EARLY)
+    def on_all_emails_complete(event: OnAllEmailsCompletedEvent) -> None:
+        # event.cancel = True
+        sequence_id = event.sequence_id
+        successes = event.successes
+        errors = event.errors
         print(f"MockEmailAgent: on_all_emails_complete: {sequence_id}, {successes}, {errors}")
         sequence_dict[sequence_id]["on_all_emails_complete"] += 1

@@ -2,14 +2,15 @@ import atexit
 import multiprocessing
 import threading
 import traceback
+import logging
 from logging import getLogger
-from queue import Queue
+from queue import Queue, Empty
 from typing import Any, Callable
 from multiprocessing import Value
 from ctypes import c_bool
-
+logging.basicConfig(level=logging.DEBUG)
 log = getLogger(__name__)
-pool_id = 0
+pool_id_counter = multiprocessing.Value("i", 0)
 
 pool_handlers: dict[int, "PoolHandler"] = {}
 
@@ -57,10 +58,13 @@ class Worker:
             log.error(f"Worker: Error Processing {self.func} args={args} with kwargs={kwargs}")
             return None
         finally:
+            log.debug(f"Worker: Finally {self.func} args={args} with kwargs={kwargs}")
             if self.on_complete:
-                ncompleted = self.results_queue.qsize() + self.error_queue.qsize()
 
-                if self.on_complete and self.nexpected_results == ncompleted:
+                ncompleted = self.results_queue.qsize() + self.error_queue.qsize()
+                log.debug(f"Worker: ncompleted={ncompleted} nexpected_results={self.nexpected_results}")
+                if self.nexpected_results == ncompleted:
+                    log.debug(f"Worker: Calling on_complete { self._on_complete}" )
                     self._on_complete()
 
 
@@ -87,14 +91,20 @@ class PoolHandler:
     def close(self):
         self.pool.close()
         self.pool.join()
-        pool_handlers.pop(self.pool_id, None)
+        with threading.Lock():
+            pool_handlers.pop(self.pool_id, None)
 
     def _get_results(self):
         while not self.results_queue.empty():
-            a = self.results_queue.get()
-            self.results.append(a)
+            try:
+                self.results.append(self.results_queue.get_nowait())
+            except Empty:
+                break
         while not self.error_queue.empty():
-            self.errors.append(self.error_queue.get())
+            try:
+                self.errors.append(self.error_queue.get_nowait())
+            except Empty:
+                break
         return self.results, self.errors
 
     def get_results(self):
@@ -175,9 +185,7 @@ def adistribute(
     )
 
     with threading.Lock():
-        global pool_id
         pool_handlers[pool_handler.pool_id] = pool_handler
-        pool_id += 1
     return pool_handler
 
 
@@ -240,6 +248,10 @@ def _distribute(
             callback=callback,
             error_callback=error_callback,
         )
+    with pool_id_counter.get_lock():
+        pool_id = pool_id_counter.value
+        pool_id_counter.value += 1
+
     ph = PoolHandler(pool_id, pool, results_queue, error_queue, manager)
     return ph
 

@@ -13,11 +13,11 @@ from llama_index.core.llms import ChatMessage
 from llama_index.core.tools import BaseTool
 from llama_index.core.tools.tool_spec.base import BaseToolSpec
 from llama_index.core.tools.types import BaseTool
+from qai.schema import OutreachType
 
 from qai.agent import cfg
 from qai.agent.agents.email_agent import EmailAgent, EmailModel
 from qai.agent.agents.sqlquery_agent import RefineSQLQuery, StepModel
-from qai.agent.models import OutreachType
 
 log = getLogger(__name__)
 
@@ -124,7 +124,7 @@ class CampaignAgent(OpenAIAgent):
         # A dict of companies to generate a campaign for.
         self.companies: dict = {}
         # The type of outreach to use for the campaign.
-        self.outreach_types: list[OutreachType] = [OutreachType.email]
+        self.outreach_types: list[OutreachType] = [OutreachType.EMAIL]
         # The URL to call when the emails are completed.
         self.on_complete_emails_url: Optional[str] = None
 

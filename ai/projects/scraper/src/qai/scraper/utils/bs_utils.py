@@ -129,7 +129,7 @@ def get_tags_and_links(
     soup = make_soup(file_or_soup)
     original_url = original_url.replace("www.", "")
     url_is_https = original_url.startswith("https")
-    url_is_http = not url_is_https and link.startswith("http")
+    url_is_http = not url_is_https and original_url.startswith("http")
     url_without_http =  "/" + re.sub(r'^https?:\/\/', '', original_url)
     b_url = base_url(original_url)
     # print(f"{original_url} -> b_url=", b_url)

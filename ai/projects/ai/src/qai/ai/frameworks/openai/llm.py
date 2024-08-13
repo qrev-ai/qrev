@@ -1,28 +1,18 @@
-import collections
-import copy
-import json
-import logging
-import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
-from pprint import pprint
-from typing import Any
 
+import openai
 import requests
-from dotenv import load_dotenv
+from openai import OpenAI
+from openai.types.chat import ChatCompletion
 from qai.ai import Query, QueryReturn
 from qai.ai.config import cfg
 from qai.ai.llm import LLM
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 
-import openai
-from openai import OpenAI
-from openai.types.chat import ChatCompletion
-
 date = datetime.now().strftime("%m%d%Y_%H:%M:%S")
 
 sentinel = object()
-
 
 
 @retry(wait=wait_random_exponential(multiplier=1, max=40), stop=stop_after_attempt(3))
@@ -88,7 +78,7 @@ class OpenAILLM(LLM):
         if system_message:
             messages.insert(0, {"role": "system", "content": system_message})
         if query:
-            messages.insert(0, {"role": "user", "content": query})        
+            messages.insert(0, {"role": "user", "content": query})
         if not query or isinstance(query, str):
             query = Query(
                 query=query,
@@ -142,7 +132,7 @@ class OpenAILLM(LLM):
             try:
                 if validate:
                     qr.validate(required_fields=required_fields)
-                break                    
+                break
             except Exception as e:
                 if i >= nrepeats - 1:
                     raise e

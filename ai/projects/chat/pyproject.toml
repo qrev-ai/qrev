@@ -8,7 +8,7 @@ description = ""
 name = "qai-chat"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.1"
+version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
@@ -17,17 +17,18 @@ llama-index = "^0.10.30"
 llama-index-llms-openai = "^0.1.16"
 llama-index-vector-stores-chroma = "^0.1.6"
 openai = "^1.23.2"
-pi-conf = "^0.7.7.4"
-pi-log = "^0.5.7.3"
+pi-conf = "^0.8.5.1"
+pi-log = "^0.5.8.1"
 python-dotenv = "^1.0.1"
+qai-ai = "^0.6.0"
+qai-core = "^0.6.0"
 torch = [
-  {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},
-  {platform = "darwin", source = "pypi", version = "^2.3.0"},
-  {platform = "linux", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
-  {platform = "win32", source = "pytorch-cpu-src", version = "=2.3.0+cpu"}
+    {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},
+    {platform = "darwin", source = "pypi", version = "^2.3.0"},
+    {platform = "linux", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
+    {platform = "win32", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
 ]
-qai-ai = "^0.5.0"
-qai-core = "^0.5.1"
+qai-agent = "^0.6.1"
 
 [tool.poetry.dev-dependencies]
 autoflake = "^2.2.1"
@@ -39,7 +40,6 @@ req = "src.cli:main"
 [[tool.poetry.source]]
 name = "PyPI"
 priority = "primary"
-
 
 [[tool.poetry.source]]
 name = "pytorch-cpu-src"

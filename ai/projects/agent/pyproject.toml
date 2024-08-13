@@ -2,22 +2,29 @@
 build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
 
+[tool.mypy]
+disable_error_code = "import-untyped"
+files = ["pi_blink", "tests"]
+pretty = true
+python_version = "3.11"
+show_error_codes = true
+
 [tool.poetry]
 authors = ["parnell <152523161+leeparnell@users.noreply.github.com>"]
 description = "Qai Agents for the Qai AI Platform"
 name = "qai-agent"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.5.2.5"
+version = "0.6.1"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-install = "^1.3.5"
-llama-index-agent-openai = "^0.2.3"
-llama-index-core = "^0.10.30"
+instructor = "^1.3.2"
+llama-index-agent-openai = "^0.2.5"
+llama-index-core = "^0.10.37"
 llama-index-embeddings-huggingface = "^0.2.0"
 llama-index-embeddings-openai = "^0.1.7"
-llama-index-llms-openai = "^0.1.14"
+llama-index-llms-openai = "^0.1.19"
 llama-index-llms-replicate = "^0.1.3"
 llama-index-program-openai = ">=0.1.5"
 llama-index-tools-database = "^0.1.3"
@@ -27,28 +34,32 @@ multiprocess = "^0.70.16"
 mysql-connector-python = "^8.4.0"
 openai = "^1.23.2"
 pandas = "^2.2.1"
-pi-conf = "^0.7.7.5"
+pdl-api = "^0.1.2"
+pi-blink = "^1.0.3"
+pi-conf = "^0.8.5.1"
 pi-log = "^0.5.8.1"
 pip = "^24.0"
 pydantic = "^2.7.0"
 pymongo = "^4.6.3"
 python-dateutil = "2.8.2"
 python-dotenv = "^1.0.1"
-qai-ai = "0.5.2.3"
-qai-core = "^0.5.1"
+qai-ai = "^0.6.0"
+qai-core = "^0.6.0"
+qai-schema = "^0.6.2.1"
 sqlalchemy = "^2.0.29"
-torch = [
-    {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},
-    {platform = "darwin", source = "pypi", version = "^2.3.0"},
-    {platform = "linux", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
-    {platform = "win32", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
-]
 
 [tool.poetry.group.dev.dependencies]
 accelerate = "^0.29.3"
 bitsandbytes = "^0.42.0"
+pytest-asyncio = "^0.23.7"
 toml-sort = "^0.23.1"
 transformers = "^4.40.1"
+types-requests = "^2.32.0.20240602"
+
+[[tool.poetry.source]]
+name = "pytorch-gpu-src"
+priority = "explicit"
+url = "https://download.pytorch.org/whl/cu118"
 
 [[tool.poetry.source]]
 name = "pytorch-cpu-src"
@@ -58,7 +69,4 @@ url = "https://download.pytorch.org/whl/cpu"
 [tool.tomlsort]
 all = true
 in_place = true
-spaces_before_inline_comment = 2  # Match Python PEP 8
-spaces_indent_inline_array = 4  # Match Python PEP 8
-trailing_comma_inline_array = true
 overrides."tool.poetry.dependencies".first = ["python"]

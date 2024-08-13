@@ -3,7 +3,7 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self, Optional
 
 import pandas as pd
 from openai.types.chat import ChatCompletion
@@ -28,20 +28,20 @@ class Query:
         prompt_token_limit: int
     """
 
-    query: str = None
-    messages: list[dict] = None
-    params: dict[str, Any] = None
-    company_name: str = None
-    model: str = None
-    tools: list[str] = None
-    tool_choice: str | dict = None
+    query: Optional[str] = None
+    messages: Optional[list[dict]] = None
+    params: Optional[dict[str, Any]] = None
+    company_name: Optional[str] = None
+    model: Optional[str] = None
+    tools: Optional[list[str]] = None
+    tool_choice: Optional[str | dict] = None
     sources: list[str] = field(default_factory=list)
-    history: list[dict[str, str]] = None
-    temperature: float = None
+    history: Optional[list[dict[str, str]]] = None
+    temperature: Optional[float] = None
     kwargs: dict[str, Any] = field(default_factory=dict)
     prompt_config: PromptConfig = field(default_factory=PromptConfig)
-    guid: str = None
-    _instance_id: int = None
+    guid: Optional[str] = None
+    _instance_id: Optional[int] = None
     _instance_count: ClassVar[int] = 0
     use_context: bool = True
 
@@ -78,18 +78,18 @@ class Query:
 
 @dataclass
 class QueryReturn:
-    query: Query = None
-    data: ChatCompletion = None
-    model: str = None
+    query: Optional[Query] = None
+    data: Optional[ChatCompletion] = None
+    model: Optional[str] = None
     messages: list[dict[str, Any]] = field(default_factory=list)
     found_answer: bool = False
     not_found_token: str = "-1"
     is_impossible: bool = False
     category: str = ""
     company_name: str = ""
-    temperature: float = None
+    temperature: Optional[float] = None
 
-    def arguments(self) -> dict[str, Any]:
+    def arguments(self) -> dict[str, Any] | None:
         try:
             d = json.loads(self.data.choices[0].message.tool_calls[0].function.arguments)
         except Exception as e:

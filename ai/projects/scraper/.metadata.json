@@ -1,0 +1,85 @@
+{
+  "id": "bc32c273-28f6-4168-925d-cace32bafb4b",
+  "class_name": "qai.core.meta.Meta",
+  "metadata": {
+    "scrape_session": [
+      {
+        "id": "bf7bd028-4765-4aba-abe9-8cb47c8c8be7",
+        "class_name": "qai.scraper.scrapers.scraper.ScrapeSession",
+        "start_urls": [],
+        "dest_dir": "/var/folders/dk/76w9s2x559d5c_c2hyr8bgyr0000gp/T/tmp9e8qt7k1/testgroup",
+        "searched_urls": [],
+        "group": "testgroup"
+      }
+    ]
+  },
+  "path": "/var/folders/dk/76w9s2x559d5c_c2hyr8bgyr0000gp/T/tmp9e8qt7k1",
+  "files": [],
+  "directories": [
+    {
+      "id": "79359e29-550e-4aeb-bd14-b497b357e0ce",
+      "parent_id": "bc32c273-28f6-4168-925d-cace32bafb4b",
+      "class_name": "qai.core.meta.MetaDir",
+      "metadata": {
+        "scrape_session": {
+          "id": "ac8a865f-cb22-4ae1-8f71-b03485650488",
+          "class_name": "qai.scraper.scrapers.meta.ScrapeMeta",
+          "subfolder": "testgroup",
+          "start_urls": [
+            "http://localhost:8003/test.html"
+          ],
+          "dest_dir": "/var/folders/dk/76w9s2x559d5c_c2hyr8bgyr0000gp/T/tmp9e8qt7k1/testgroup",
+          "exclude_regexs": [],
+          "exclude_urls": [],
+          "exclude_parameters": true,
+          "max_depth": -1
+        }
+      },
+      "path": "testgroup",
+      "files": [
+        {
+          "id": "fb9d1b13-bb85-4c9e-a40e-d4f5ec5a7bb5",
+          "parent_id": "79359e29-550e-4aeb-bd14-b497b357e0ce",
+          "class_name": "qai.core.meta.MetaFile",
+          "metadata": {
+            "web_obj": {
+              "id": null,
+              "class_name": "qai.scraper.scrapers.meta.WebObj",
+              "scrape_time": "20240528-190853",
+              "source_uri": "http://localhost:8003/test.html",
+              "is_start_url": false,
+              "local_file": "localhost:8003/test.html/index.html",
+              "category": "Unknown",
+              "depth": 0,
+              "type": "html_scrape"
+            }
+          },
+          "path": "localhost:8003/test.html/index.html"
+        },
+        {
+          "id": "642648a1-1a2c-4371-b6c0-563ecd541dd3",
+          "parent_id": "79359e29-550e-4aeb-bd14-b497b357e0ce",
+          "class_name": "qai.core.meta.MetaFile",
+          "metadata": {
+            "web_obj": {
+              "id": "1",
+              "class_name": "qai.scraper.scrapers.meta.WebObj",
+              "scrape_time": "20240528-190853",
+              "source_uri": "http://localhost:8003/a.html",
+              "is_start_url": false,
+              "local_file": "localhost:8003/a.html/index.html",
+              "category": "Unknown",
+              "depth": 1,
+              "type": "html_scrape"
+            }
+          },
+          "path": "localhost:8003/a.html/index.html"
+        }
+      ],
+      "directories": []
+    }
+  ],
+  "metas": [],
+  "created_at": "2024-05-28T19:08:53.255380Z",
+  "updated_at": "2024-05-28T19:08:53.255383Z"
+}

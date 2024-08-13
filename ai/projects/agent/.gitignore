@@ -22,19 +22,19 @@ docker_staging*
 .poetry.toml
 
 ## Python
-*.py[co]
 __pycache__
+.installed.cfg
 *.egg
 *.egg-info
+*.py[co]
+bin
 build
+develop-eggs
+dist
 eggs
 parts
-bin
-var
 sdist
-develop-eggs
-.installed.cfg
-dist
+var
 
 ## Installer logs
 pip-log.txt
@@ -50,12 +50,14 @@ poetry.lock
 ## caches
 cachedir
 .cache
+.mypy_cache
 .pytest_cache
 
 ## Mac
 .DS_Store
 
 ## temp files
+.private
 *.bk.*
 test_retrieval_*
 tempdb
