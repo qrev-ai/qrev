@@ -51,3 +51,29 @@ async function _deleteFile({ filePath }, { txid, logg, funcName }) {
 }
 
 export const deleteFile = functionWrapper(fileName, "deleteFile", _deleteFile);
+
+async function _writeJsonArrayToCsvFile(
+    { csvPath, data },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    // convert array of objects to csv string
+    let csvData = null;
+    try {
+        csvData = Papa.unparse(data);
+        await fs.promises.writeFile(csvPath, csvData);
+    } catch (err) {
+        logg.error(`error: ${err}`);
+        throw err;
+    }
+
+    logg.info(`ended`);
+    return [csvData, null];
+}
+
+export const writeJsonArrayToCsvFile = functionWrapper(
+    fileName,
+    "writeJsonArrayToCsvFile",
+    _writeJsonArrayToCsvFile
+);

@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "gmail-api-parse-message": "^2.1.2"
+    "gmail-api-parse-message": "^2.1.2",
+    "papaparse": "^5.4.1"
   }
 }
