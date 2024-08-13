@@ -173,7 +173,7 @@ export const addSessionToContact = functionWrapper(
 );
 
 async function _getAllContacts(
-    { accountId, addFullName },
+    { accountId, formatData },
     { txid, funcName, logg }
 ) {
     logg.info(`started`);
@@ -182,10 +182,31 @@ async function _getAllContacts(
     let contacts = await Contact.find({ account: accountId }).lean();
     logg.info(`contacts: ${contacts.length}`);
 
-    if (addFullName) {
+    if (formatData) {
         contacts = contacts.map((c) => {
-            c.name = `${c.first_name} ${c.last_name}`;
-            return c;
+            let name = c.first_name || "";
+            if (c.last_name) {
+                name += ` ${c.last_name}`;
+            }
+            let item = {
+                name: name,
+                email: c.email,
+                phone_number: c.phone_number || "",
+                company_name: c.company_name || "",
+                company_url: c.company_url || "",
+                job_title: c.job_title || "",
+                linkedin_url: c.linkedin_url || "",
+                timezone: c.timezone || "",
+            };
+            if (c.last_contacted_on) {
+                let lcn = new Date(c.last_contacted_on).toISOString();
+                // format it to format like "2021-09-01 12:00"
+                lcn = lcn.replace("T", " ").split(".")[0];
+
+                item.last_contacted_on = lcn;
+            }
+
+            return item;
         });
     }
     logg.info(`ended`);
