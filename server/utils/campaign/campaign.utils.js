@@ -19,8 +19,6 @@ import * as ProspectVerifyUtils from "../prospect_verify/prospect.verify.utils.j
 import * as IntegrationUtils from "../integration/integration.utils.js";
 import { CampaignEmailUnsubscribeList } from "../../models/campaign/campaign.unsubscribe.list.model.js";
 import * as FileUtils from "../std/file.utils.js";
-import { BevyTempSequenceAutoReplies } from "../../models/campaign/bevy/bevy.temp.sequence.auto.replies.js";
-import { AccountMap } from "../../config/account.info.config.js";
 import { IntermediateProspectMessage } from "../../models/campaign/intermediate.prospect.message.model.js";
 import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
 
@@ -4835,14 +4833,6 @@ async function _sendReplyIfNotSentBefore(
     let sequenceId = spmsDoc.sequence;
     let accountId = spmsDoc.account;
     let contactId = spmsDoc.contact;
-
-    let fAccountId = accountId.toString();
-    if (fAccountId === AccountMap.bevy) {
-        // ! manually added this code on 20th July 2024
-        // ! Bevy manually asked us to not send any emails. So we are not sending any emails that are part of Bevy Campaign
-        logg.info(`Bevy account. So not sending any emails.`);
-        return [{ messageSent: false }, null];
-    }
 
     let spmsDocs = await SequenceProspectMessageSchedule.find({
         sequence: sequenceId,
