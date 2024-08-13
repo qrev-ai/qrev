@@ -6,6 +6,7 @@ import { functionWrapper } from "../../std/wrappers.js";
 import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { reportErrorToQRevTeam } from "../../std/report.error.js";
+import Papa from "papaparse";
 
 const fileName = "File Utils";
 
