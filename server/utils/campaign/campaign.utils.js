@@ -2622,3 +2622,223 @@ const hasProspectRepliedToPreviousStep = functionWrapper(
     "hasProspectRepliedToPreviousStep",
     _hasProspectRepliedToPreviousStep
 );
+
+async function _setupEmailReplyWebhook(
+    { accountId, userId, ignoreIfAlreadyExists = false },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+
+    let [userObj, userErr] = await UserUtils.getUserById(
+        { id: userId },
+        { txid }
+    );
+    if (userErr) throw userErr;
+
+    let userEmail = userObj.email;
+    let userAccountType = userObj.account_type;
+
+    if (!userAccountType || userAccountType === "google") {
+        let [googleResp, googleErr] = await setupGoogleEmailReplyWebhook(
+            { userEmail, accountId, ignoreIfAlreadyExists },
+            { txid }
+        );
+        if (googleErr) throw googleErr;
+
+        logg.info(`ended`);
+        return [googleResp, null];
+    } else {
+        throw `accountType: ${userAccountType} is not supported`;
+    }
+}
+
+export const setupEmailReplyWebhook = functionWrapper(
+    fileName,
+    "setupEmailReplyWebhook",
+    _setupEmailReplyWebhook
+);
+
+async function _setupGoogleEmailReplyWebhook(
+    { userEmail, accountId, ignoreIfAlreadyExists = false },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!userEmail) throw `userEmail is invalid`;
+    if (!accountId) throw `accountId is invalid`;
+
+    let isGPubSubEnabled = GoogleUtils.isGooglePubSubEnabled(
+        { userEmail },
+        { txid }
+    );
+    if (!isGPubSubEnabled) {
+        logg.info(`Google PubSub is not enabled for userEmail: ${userEmail}`);
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    let [authObj, authObjErr] = await GoogleUtils.refreshOrReturnToken(
+        { email: userEmail, returnBackAuthObj: true },
+        { txid }
+    );
+    if (authObjErr) throw authObjErr;
+
+    let [watchResp, watchErr] = await GoogleUtils.setupWatchEmailReplyWebhook(
+        {
+            authObj,
+            accountId,
+            storeInDb: true,
+            userEmail,
+            ignoreIfAlreadyExists,
+        },
+        { txid }
+    );
+    if (watchErr) throw watchErr;
+
+    logg.info(`ended`);
+    return [watchResp, null];
+}
+
+const setupGoogleEmailReplyWebhook = functionWrapper(
+    fileName,
+    "setupGoogleEmailReplyWebhook",
+    _setupGoogleEmailReplyWebhook
+);
+
+async function _handleGooglePubSubWebhook(
+    {
+        userEmail,
+        historyId,
+        pubSubMessageId,
+        pubSubPublishTime,
+        subscriptionName,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!userEmail) throw `userEmail is invalid`;
+    if (!historyId) throw `historyId is invalid`;
+    if (!pubSubMessageId) throw `pubSubMessageId is invalid`;
+    if (!pubSubPublishTime) throw `pubSubPublishTime is invalid`;
+    if (!subscriptionName) throw `subscriptionName is invalid`;
+
+    let [authObj, authObjErr] = await GoogleUtils.refreshOrReturnToken(
+        { email: userEmail, returnBackAuthObj: true },
+        { txid }
+    );
+    if (authObjErr) throw authObjErr;
+
+    let isGPubSubEnabled = GoogleUtils.isGooglePubSubEnabled(
+        { userEmail },
+        { txid }
+    );
+    if (!isGPubSubEnabled) {
+        logg.info(`Google PubSub is not enabled for userEmail: ${userEmail}`);
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    let [prevHistoryId, updateHistoryErr] =
+        await GoogleUtils.updateHistoryIdForUser(
+            {
+                userEmail,
+                historyId,
+                pubSubMessageId,
+                pubSubPublishTime,
+                returnPrevHistoryId: true,
+            },
+            { txid }
+        );
+    if (updateHistoryErr) throw updateHistoryErr;
+
+    let [userInfo, userInfoErr] = await UserUtils.getUserObjByEmail(
+        { email: userEmail },
+        { txid }
+    );
+    if (userInfoErr) throw userInfoErr;
+
+    let userId = userInfo._id;
+    userId = typeof userId === "string" ? userId : userId.toString();
+
+    let [messages, messagesErr] = await GoogleUtils.getHistoryMessages(
+        { authObj, historyId: prevHistoryId, getMessageDetails: true },
+        { txid }
+    );
+    if (messagesErr) throw messagesErr;
+
+    /*
+     * messages structure: [{ threadId, messageId }]
+     */
+
+    if (!messages || !messages.length) {
+        logg.info(`no messages found for historyId: ${historyId}`);
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    let [{ matchingMessageData, notMatchingMessages }, spsmErr] =
+        await getSpmsDocsForMessages({ messages, userId }, { txid });
+    if (spsmErr) throw spsmErr;
+    /*
+     * matchingMessageData structure: [{ threadId, messageId, spmsDoc}]
+     * notMatchingMessages structure: [{ threadId, messageId }]
+     *  * We will use notMatchingMessages to further check whether the message was sent by 1 sender but since the message had "Reply-To" header, it was sent to another email.
+     *  * So we will further check this using "notMatchingMessages"
+     */
+
+    let [replyToMsgResp, replyToMsgErr] =
+        await checkIfRepliedToMessagesSentByAnotherSender(
+            { messages: notMatchingMessages, userInfo, userAuthObj: authObj },
+            { txid, sendErrorMsg: true }
+        );
+
+    if (!matchingMessageData || !matchingMessageData.length) {
+        logg.info(`no replies found for messages sent by QRev campaigns`);
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    let [messageDetailsResp, messageDetailsErr] =
+        await GoogleUtils.getEmailMessageDetails(
+            {
+                authObj,
+                messages: matchingMessageData,
+                addDetailsToMessages: true,
+            },
+            { txid }
+        );
+    if (messageDetailsErr) throw messageDetailsErr;
+
+    /*
+     * matchingMessageData structure: [{ threadId, messageId, spmsDoc, messageData }]
+     */
+
+    let result = GoogleUtils.markMessagesWithValidReply(
+        { messages: matchingMessageData },
+        { txid }
+    );
+
+    if (!result || !result.length) {
+        logg.info(
+            `no actual replies found for messages sent by QRev campaigns`
+        );
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    let [updateResp, updateErr] = await updateMessageReplies(
+        { messages: result, userId },
+        { txid }
+    );
+    if (updateErr) throw updateErr;
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const handleGooglePubSubWebhook = functionWrapper(
+    fileName,
+    "handleGooglePubSubWebhook",
+    _handleGooglePubSubWebhook
+);
