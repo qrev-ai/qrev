@@ -2376,6 +2376,7 @@ async function _executeCampaignCronJob({}, { txid, logg, funcName }) {
             $lt: now,
         },
         is_message_generation_complete: true,
+        is_under_execution: { $ne: true },
     };
     logg.info(`queryObj: ${JSON.stringify(queryObj)}`);
 
@@ -2385,6 +2386,18 @@ async function _executeCampaignCronJob({}, { txid, logg, funcName }) {
         logg.info(`no spmsDocs found`);
         return;
     }
+
+    logg.info(`spmsDocs.length: ${spmsDocs.length}`);
+    logg.info(`spmsDocs: ${JSON.stringify(spmsDocs)}`);
+
+    // update is_under_execution to true for all spmsDocs
+    let spmsIds = spmsDocs.map((x) => x._id);
+    let updateObj = { is_under_execution: true };
+    let statusUpdateResp = await SequenceProspectMessageSchedule.updateMany(
+        { _id: { $in: spmsIds } },
+        updateObj
+    );
+    logg.info(`statusUpdateResp: ${JSON.stringify(statusUpdateResp)}`);
 
     let [execResp, execErr] = await executeCampaignSequenceStepMessages(
         { spmsDocs },
