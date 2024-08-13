@@ -25,7 +25,7 @@ export async function sendCampaignApi(req, res, next) {
     if (!sequenceId) throw `Missing sequence_id in body`;
 
     let [campCreateResp, campErr] =
-        await CampaignUtils.setupSequenceProspectMessageTime(
+        await CampaignUtils.executeSequenceConfirmation(
             { sequenceId, accountId, userId, userTimezone },
             { txid }
         );
@@ -38,6 +38,7 @@ export async function sendCampaignApi(req, res, next) {
     });
 }
 
+// ! old API. not valid as 23rd July 2024. Check below function "sequenceAsyncCallbackApi"
 export async function updateCampaignSequenceMessagesApi(req, res, next) {
     const txid = req.id;
     const funcName = "updateCampaignSequenceMessagesApi";
@@ -69,6 +70,76 @@ export async function updateCampaignSequenceMessagesApi(req, res, next) {
     });
 }
 
+/*
+ * Created on 23rd July 2024
+ * WHAT THIS FUNCTION DOES:
+ *   - This function is used to handle the async callback from the AI bot server after AI server gives instructions to create Sequence.
+ *
+ * When does this function get called:
+ *  - Reference doc: https://www.notion.so/thetrackapp/Multi-Step-Sequence-Creation-through-QAi-589e5dc4b8b74d2c85b5ea135d502120
+ *  - When a QRev user asks QAi bot to create a campaign, the AI server will give instructions to Backend server create a sequence.
+ *  - Hence, AI server will provide sequence_id and step_ids to Backend server. Backend server will then create the sequence and steps in the database.
+ *  - Then, AI server will start generating prospects for the sequence. Once the prospects are generated, AI server will send an async callback to this API with request body defined in https://www.notion.so/thetrackapp/Backend-Sequence-Step-Personalized-Messages-Generation-Confirmation-Async-Callback-API-b86284c2c6b0432aaa111f26defd4f6d
+ *  - Then, Ai server will start generating personalized messages for each prospect step by step. Once the messages are generated, AI server will send an async callback to this API with request body defined in https://www.notion.so/thetrackapp/Backend-Sequence-Step-Personalized-Messages-Generation-Confirmation-Async-Callback-API-b86284c2c6b0432aaa111f26defd4f6d
+ */
+export async function sequenceAsyncCallbackApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "sequenceAsyncCallbackApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let {
+        secretKey,
+        type,
+        sequence_id: sequenceId,
+        sequence_step_id: sequenceStepId,
+    } = req.query;
+
+    let serverSecretKey = process.env.AI_BOT_SERVER_TOKEN;
+    if (!secretKey) throw `Missing secretKey in query`;
+    if (secretKey !== serverSecretKey) {
+        logg.info(`ended unsuccessfully`);
+        throw `Invalid secretKey`;
+    }
+
+    if (!type) throw `Missing type in query`;
+    if (!sequenceId) throw `Missing sequence_id in query`;
+
+    let acceptedTypeValues = [
+        "prospect_generation_completion",
+        "sequence_step_personalized_messages",
+    ];
+    if (!acceptedTypeValues.includes(type)) {
+        logg.info(`ended unsuccessfully`);
+        throw `Invalid type`;
+    }
+
+    if (type === "sequence_step_personalized_messages") {
+        if (!sequenceStepId) throw `Missing sequence_step_id in query`;
+
+        let [updateResp, updateErr] =
+            await CampaignUtils.updateSequenceStepProspectMessages(
+                { sequenceId, sequenceStepId },
+                { txid }
+            );
+        if (updateErr) throw updateErr;
+    } else {
+        let [updateResp, updateErr] =
+            await CampaignUtils.updateSequenceProspects(
+                { sequenceId },
+                { txid }
+            );
+        if (updateErr) throw updateErr;
+    }
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+    });
+}
+
 export async function saveCampaignEmailOpen(req, res, next) {
     const txid = req.id;
     const funcName = "saveCampaignEmailOpen";
@@ -77,15 +148,24 @@ export async function saveCampaignEmailOpen(req, res, next) {
     logg.info(`started with query:` + JSON.stringify(req.query));
     logg.info(`started with headers:` + JSON.stringify(req.headers));
 
-    let { ssmid } = req.query;
+    let { ssmid, reply_id: replyId } = req.query;
     if (!ssmid) throw `invalid ssmid`;
 
-    let [saveAnalyticResp, saveAnalyticErr] =
-        await CampaignUtils.saveSequenceStepMessageOpenAnalytic(
-            { ssmid },
-            { txid }
-        );
-    if (saveAnalyticErr) throw saveAnalyticErr;
+    if (replyId) {
+        let [saveMessageReplyResp, saveMessageReplyErr] =
+            await CampaignUtils.saveSequenceStepMessageReplyOpenAnalytic(
+                { ssmid, replyId },
+                { txid }
+            );
+        if (saveMessageReplyErr) throw saveMessageReplyErr;
+    } else {
+        let [saveAnalyticResp, saveAnalyticErr] =
+            await CampaignUtils.saveSequenceStepMessageOpenAnalytic(
+                { ssmid, replyId },
+                { txid }
+            );
+        if (saveAnalyticErr) throw saveAnalyticErr;
+    }
 
     const relativePath = "./data/empty_img.png";
     const absolutePath = path.resolve(relativePath);
@@ -418,5 +498,181 @@ export async function campaignProspectBounceWebhookApi(req, res, next) {
     return res.json({
         success: true,
         message: `${funcName} executed successfully`,
+    });
+}
+
+export async function unsubscribeCampaignApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "unsubscribeCampaignApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let { ssmid } = req.query;
+    if (!ssmid) throw `Missing ssmid in query`;
+
+    let [resp, err] = await CampaignUtils.prospectClickedUnsubscribeLink(
+        { ssmid },
+        { txid }
+    );
+    if (err) throw err;
+
+    const relativePath = "./views/unsubscribe_email.html";
+    const absolutePath = path.resolve(relativePath);
+    logg.info(`ended successfully`);
+    return res.sendFile(absolutePath);
+}
+
+export async function campaignUnsubscribeConfirmApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "campaignUnsubscribeConfirmApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let { ssmid } = req.query;
+    if (!ssmid) throw `Missing ssmid in query`;
+
+    let [resp, err] = await CampaignUtils.prospectConfirmedUnsubscribeLink(
+        { ssmid },
+        { txid }
+    );
+    if (err) throw err;
+
+    const relativePath = "./views/unsubscribe_email_confirmation.html";
+    const absolutePath = path.resolve(relativePath);
+    logg.info(`ended successfully`);
+    return res.sendFile(absolutePath);
+}
+
+export async function getSequenceOpenAnalyticsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceOpenAnalyticsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let { account_id: accountId, sequence_id: sequenceId } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+
+    let [result, err] = await CampaignUtils.getSequenceOpenAnalytics(
+        { accountId, sequenceId },
+        { txid }
+    );
+    if (err) throw err;
+    /*
+     * "result" will return headers and data for the sequence open analytics
+     * headers will be like sequence_prospect (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), count (Num of times opened), last_opened_on (Last Opened On)
+     * data will be array of objects with above headers as keys
+     */
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
+export async function getSequenceStepOpenAnalyticsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceStepOpenAnalyticsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let {
+        account_id: accountId,
+        sequence_id: sequenceId,
+        sequence_step_id: sequenceStepId,
+    } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+    if (!sequenceStepId) throw `Missing sequence_step_id`;
+
+    let [result, err] = await CampaignUtils.getSequenceOpenAnalytics(
+        { accountId, sequenceId, sequenceStepId },
+        { txid }
+    );
+    if (err) throw err;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
+export async function getSequenceReplyAnalyticsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceReplyAnalyticsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let { account_id: accountId, sequence_id: sequenceId } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+
+    let [result, err] = await CampaignUtils.getSequenceReplyAnalytics(
+        { accountId, sequenceId },
+        { txid }
+    );
+    if (err) throw err;
+    /*
+     * Created on 16th June 2024
+     * "result" will return headers and data for the sequence reply analytics
+     * headers will be like sequence_prospect_message (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), reply (Reply), replied_on (Replied On)
+     * data will be array of objects with above headers as keys
+     *
+     */
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
+export async function getSequenceStepReplyAnalyticsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceStepReplyAnalyticsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let {
+        account_id: accountId,
+        sequence_id: sequenceId,
+        sequence_step_id: sequenceStepId,
+    } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+    if (!sequenceStepId) throw `Missing sequence_step_id`;
+
+    let [result, err] = await CampaignUtils.getSequenceReplyAnalytics(
+        { accountId, sequenceId, sequenceStepId },
+        { txid }
+    );
+    if (err) throw err;
+    /*
+     * Created on 16th June 2024
+     * "result" will return headers and data for the sequence step reply analytics
+     * headers will be like sequence_prospect_message (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), reply (Reply), replied_on (Replied On)
+     * data will be array of objects with above headers as keys
+     */
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
     });
 }

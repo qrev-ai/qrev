@@ -10,6 +10,9 @@ export const FreeRoutes = [
     "/api/campaign/update_sequence_messages",
     "/api/campaign/email_open",
     "/api/campaign/sequence/prospect/bounce_webhook",
+    "/api/google/message/recieve_webhook",
+    "/api/campaign/unsubscribe",
+    "/api/campaign/confirm_unsubscribe",
 ];
 
 export const isFreeRoute = (path) => {
