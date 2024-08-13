@@ -3337,3 +3337,340 @@ export const getSequenceReplyAnalytics = functionWrapper(
     "getSequenceReplyAnalytics",
     _getSequenceReplyAnalytics
 );
+
+/*
+result columns: 
+    "campaign name"
+    "email name" (seq step number) (Ex: "Email 1")
+    "contacted"
+    "delivered"
+    "delivered %"
+    "opens"
+    "unique opens"
+    "unique opens %"
+    "replies"
+    "failed delivery"
+    "failed delivery %"
+    "email id of who opened"
+    "actual replies"
+*/
+async function _generateSequencesAnalyticsCsv(
+    { sequenceIds, accountId, csvFilePath },
+    { txid, logg, funcName }
+) {
+    if (!sequenceIds || !sequenceIds.length) throw `sequenceIds is invalid`;
+    if (!accountId) throw `accountId is invalid`;
+
+    let result = [];
+    for (let i = 0; i < sequenceIds.length; i++) {
+        let sequenceId = sequenceIds[i];
+        let [sequenceAnalytics, sequenceAnalyticsErr] =
+            await generateSequenceAnalytics(
+                { sequenceId, accountId },
+                { txid }
+            );
+        if (sequenceAnalyticsErr) throw sequenceAnalyticsErr;
+
+        result = result.concat(sequenceAnalytics);
+    }
+
+    if (result.length && csvFilePath) {
+        let [res, err] = await FileUtils.writeJsonArrayToCsvFile(
+            { csvPath: csvFilePath, data: result },
+            { txid }
+        );
+        if (err) throw err;
+    }
+
+    return [result, null];
+}
+
+export const generateSequencesAnalyticsCsv = functionWrapper(
+    fileName,
+    "generateSequencesAnalyticsCsv",
+    _generateSequencesAnalyticsCsv
+);
+
+/*
+result columns: 
+    "campaign name"
+    "email name" (seq step number) (Ex: "Email 1")
+    "contacted"
+    "delivered"
+    "delivered %"
+    "opens"
+    "unique opens"
+    "unique opens %"
+    "replies"
+    "failed delivery"
+    "failed delivery %"
+    "email id of who opened"
+    "actual replies"
+*/
+async function _generateSequenceAnalytics(
+    { sequenceId, accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started for sequenceId: ${sequenceId}`);
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!accountId) throw `accountId is invalid`;
+
+    let seqQueryObj = { _id: sequenceId, account: accountId };
+    let sequenceDoc = await SequenceModel.findOne(seqQueryObj).lean();
+    if (!sequenceDoc) {
+        throw `failed to find sequenceDoc for sequenceId: ${sequenceId}`;
+    }
+
+    let sequenceName = sequenceDoc.name;
+
+    let seqStepDocs = await SequenceStep.find({
+        sequence: sequenceId,
+        account: accountId,
+    })
+        .sort("order")
+        .lean();
+    let seqStepsCount = seqStepDocs.length;
+    logg.info(`seqStepsCount: ${seqStepsCount}`);
+    if (!seqStepsCount) throw `no seqSteps found for sequenceId: ${sequenceId}`;
+
+    let seqStepEmailNames = [];
+    for (let i = 1; i <= seqStepsCount; i++) {
+        seqStepEmailNames.push(`Email ${i}`);
+    }
+
+    let result = [];
+
+    let spmsDocs = await SequenceProspectMessageSchedule.find({
+        sequence: sequenceId,
+        account: accountId,
+    })
+        .select("_id message_status sequence_step")
+        .lean();
+
+    let groupedSpmsDocs = []; // [{seq_step_id, spmsDocs}]
+    for (let i = 0; i < seqStepsCount; i++) {
+        let seqStepDoc = seqStepDocs[i];
+        let seqStepId = seqStepDoc._id;
+        let spmsDocsForSeqStep = spmsDocs.filter(
+            (x) => x.sequence_step === seqStepId
+        );
+        groupedSpmsDocs.push({
+            seq_step_id: seqStepId,
+            spmsDocs: spmsDocsForSeqStep,
+        });
+    }
+
+    let [stepAnalytics, stepAnalyticsErr] =
+        await AnalyticUtils.getSequenceStepAnalyticsForOpenAndReply(
+            { sequenceId, accountId },
+            { txid }
+        );
+    if (stepAnalyticsErr) throw stepAnalyticsErr;
+    /*
+        stepAnalytics structure: {
+            sequence_step_id: {
+                opened: {
+                    total_count: 0,
+                    unique_count: 0,
+                    prospects: [{ email, count, last_opened_on }]
+                }
+                replied: {
+                    total_count: 0,
+                    prospects: [{ email, replied_on, reply }]
+                }
+            }
+        }
+    */
+
+    for (let i = 0; i < seqStepsCount; i++) {
+        let item = {
+            "campaign name": sequenceName,
+            "email name": seqStepEmailNames[i],
+            contacted: 0,
+            delivered: 0,
+            "delivered %": "0%",
+            opens: 0,
+            "unique opens": 0,
+            "unique opens %": 0,
+            replies: 0,
+            "failed delivery": 0,
+            "failed delivery %": "0%",
+            "email id of who opened": "",
+            "actual replies": "",
+        };
+
+        let stepSpmsDocs = groupedSpmsDocs[i].spmsDocs;
+        // get contacted as message_status with anything other than ("pending" or "skipped")
+        item.contacted = stepSpmsDocs.filter(
+            (x) =>
+                x.message_status !== "pending" && x.message_status !== "skipped"
+        ).length;
+        // get count of message_status with "sent"
+        item.delivered = stepSpmsDocs.filter(
+            (x) => x.message_status === "sent"
+        ).length;
+        // calculate delivered % to 1 decimal place
+        let deliveredPercent = 0;
+        if (item.contacted) {
+            deliveredPercent = (item.delivered / item.contacted) * 100;
+            item["delivered %"] = deliveredPercent.toFixed(1) + "%";
+        }
+
+        // set failed delivery count as the difference between contacted and delivered
+        item["failed delivery"] = item.contacted - item.delivered;
+
+        // set failed delivery % as 100 - delivered % to 1 decimal place
+        let failedDeliveryPercent = 0;
+        if (item.contacted) {
+            failedDeliveryPercent = 100 - deliveredPercent;
+            item["failed delivery %"] = failedDeliveryPercent.toFixed(1) + "%";
+        }
+
+        let stepId = groupedSpmsDocs[i].seq_step_id;
+        let stepAnalytic = stepAnalytics[stepId];
+        if (stepAnalytic) {
+            let opened = stepAnalytic.opened;
+            let replied = stepAnalytic.replied;
+            item.opens = opened.total_count || 0;
+            item["unique opens"] = opened.unique_count || 0;
+
+            // calculate unique opens % to 1 decimal place
+            if (item.delivered) {
+                let uniqueOpensPercent =
+                    (opened.unique_count / item.delivered) * 100;
+                item["unique opens %"] = uniqueOpensPercent.toFixed(1) + "%";
+            }
+
+            item.replies = replied.total_count || 0;
+
+            /*
+            for "email id of who opened", generate string like below:
+            "ex@dom1.com (5) | ex2@dom2.com (1)"
+            */
+            item["email id of who opened"] = generateOpenedEmailsString(
+                opened.prospects
+            );
+
+            /*
+            for "actual replies", generate string like below:
+            "(ex@dom1.com) reply_str | (ex2@dom2.com) reply_str"
+            */
+            item["actual replies"] = generateRepliesString(replied.prospects);
+        }
+
+        result.push(item);
+    }
+
+    logg.info(`ended for sequenceId: ${sequenceId}`);
+    return [result, null];
+}
+
+const generateSequenceAnalytics = functionWrapper(
+    fileName,
+    "generateSequenceAnalytics",
+    _generateSequenceAnalytics
+);
+
+/*
+    prospectsData: [{ email, count, last_opened_on }]
+
+    return string like below:
+            "ex@dom1.com (5) | ex2@dom2.com (1)"
+*/
+function generateOpenedEmailsString(prospectsData) {
+    let result = "";
+    if (prospectsData && prospectsData.length) {
+        let prospectsStr = prospectsData
+            .map((x) => `${x.email} (${x.count})`)
+            .join(" | ");
+        result = prospectsStr;
+    }
+    return result;
+}
+
+/*
+    prospectsData: [{ email, replied_on, reply }]
+
+    return string like below:
+            "((ex@dom1.com) reply_str | (ex2@dom2.com) reply_str"
+*/
+function generateRepliesString(prospectsData) {
+    let result = "";
+    if (prospectsData && prospectsData.length) {
+        let repliesStr = prospectsData
+            .map((x) => `(${x.email}) ${x.reply}`)
+            .join(" | ");
+        result = repliesStr;
+    }
+    return result;
+}
+
+async function _checkIfMessageSentForPrevSteps(
+    {
+        currentSequenceStepId,
+        sequenceId,
+        sequenceProspectId,
+        prevSpmsDocs,
+        returnBackSpmsDocs = false,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!currentSequenceStepId) throw `currentSequenceStepId is invalid`;
+
+    let seqStepsQueryObj = { sequence: sequenceId };
+    let seqSteps = await SequenceStep.find(seqStepsQueryObj)
+        .sort("order")
+        .lean();
+
+    let prevSeqStepIds = [];
+    for (let i = 0; i < seqSteps.length; i++) {
+        let seqStep = seqSteps[i];
+        if (seqStep._id === currentSequenceStepId) {
+            break;
+        }
+        prevSeqStepIds.push(seqStep._id);
+    }
+
+    if (!(prevSpmsDocs && prevSpmsDocs.length) && prevSeqStepIds.length) {
+        let queryObj = {
+            sequence: sequenceId,
+            sequence_prospect: sequenceProspectId,
+            sequence_step: { $in: prevSeqStepIds },
+        };
+
+        prevSpmsDocs = await SequenceProspectMessageSchedule.find(
+            queryObj
+        ).lean();
+
+        // sort the prevSpmsDocs based on sequence_step order
+        prevSpmsDocs.sort((a, b) => {
+            let aSeqStepOrder = seqSteps.find(
+                (x) => x._id === a.sequence_step
+            ).order;
+            let bSeqStepOrder = seqSteps.find(
+                (x) => x._id === b.sequence_step
+            ).order;
+            return aSeqStepOrder - bSeqStepOrder;
+        });
+    }
+
+    if (!prevSpmsDocs) {
+        prevSpmsDocs = [];
+    }
+
+    // if atleast one of the previous steps is sent, then return true
+    let hasPrevMessageSent = prevSpmsDocs.some(
+        (x) => x.message_status === "sent" || x.message_status === "replied"
+    );
+
+    logg.info(`hasPrevMessageSent: ${hasPrevMessageSent}`);
+
+    logg.info(`ended`);
+    let result = hasPrevMessageSent;
+    if (returnBackSpmsDocs) {
+        result = { hasPrevMessageSent, prevSpmsDocs };
+    }
+    return [result, null];
+}
