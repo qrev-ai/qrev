@@ -217,7 +217,7 @@ export const refreshOrReturnToken = functionWrapper(
 );
 
 async function _sendEmail(
-    { senderEmailId, toEmailId, subject, body, senderAuthObj },
+    { senderEmailId, toEmailId, subject, body, senderAuthObj, replyToEmailId },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -236,15 +236,15 @@ async function _sendEmail(
 
     let headers = { Authorization: `Bearer ${accessToken}` };
 
-    let data = {
-        raw: Buffer.from(
-            `To: ${toEmailId}
-Content-type: text/html;charset=iso-8859-1
-Subject: ${subject}
+    let emailStr = `To: ${toEmailId}`;
+    emailStr += `\nContent-type: text/html;charset=iso-8859-1`;
 
-${body}`
-        ).toString("base64"),
-    };
+    if (replyToEmailId) {
+        emailStr += `\nReply-To: ${replyToEmailId}`;
+    }
+
+    emailStr += `\nSubject: ${subject}\n\n${body}`;
+    let data = { raw: Buffer.from(emailStr).toString("base64") };
 
     try {
         let resp = await axios.post(url, data, { headers });
@@ -352,31 +352,46 @@ async function _hasEmailReplied(
         return [false, null];
     }
 
-    for (const message of messages) {
-        let headers = message && message.payload && message.payload.headers;
-        if (!headers) {
-            logg.error(`no headers found for this message`);
+    if (!messages.length) {
+        logg.error(`no messages found for this thread`);
+        return [false, null];
+    }
+
+    if (messages.length === 1) {
+        logg.info(`only one message found. So, no reply`);
+        return [false, null];
+    }
+
+    for (let i = 1; i < messages.length; i++) {
+        const message = messages[i];
+
+        let labelIds = message.labelIds;
+
+        if (!labelIds || !labelIds.length) {
+            logg.error(
+                `no labelIds found for this message: ${JSON.stringify(message)}`
+            );
             continue;
         }
 
-        let replyHeader = headers.find(
-            (header) => header.name === "In-Reply-To"
-        );
-        if (replyHeader) {
+        let isSent = labelIds.includes("SENT");
+        if (!isSent) {
+            logg.info(`since SENT label not found, this is a reply`);
+
             let replyMessage = message.snippet;
             let replyMessageId = message.id;
             let result = { message: replyMessage, message_id: replyMessageId };
             logg.info(`email replied: ${JSON.stringify(result)}`);
+
             logg.info(`ended`);
             return [result, null];
         }
     }
 
-    logg.info(`no reply headers found`);
+    logg.info(`no reply found`);
     logg.info(`ended`);
     return [false, null];
 }
-
 export const hasEmailReplied = functionWrapper(
     fileName,
     "hasEmailReplied",
