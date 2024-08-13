@@ -3943,3 +3943,658 @@ export const sendReplyAndDelayEmail = functionWrapper(
     "sendReplyAndDelayEmail",
     _sendReplyAndDelayEmail
 );
+
+/*
+prevMsgOpenMap structure: map of spmsId (key) -> count of opens (value)
+prevSpmsDocs: array of spmsDocs
+
+- get the spmsId with the most opens
+- if more than one spmsId has the same count of opens, then get the spmsId of the most recent sequence step (this is the sequence step at the end of prevSpmsDocs)
+*/
+function getMostOpenedSpmsId({ prevMsgOpenMap, prevSpmsDocs }, { txid }) {
+    const funcName = "getMostOpenedSpmsId";
+    const logg = logger.child({ txid, funcName });
+    // logg.info(`started`);
+
+    let maxCount = 0;
+    let maxSpmsIds = [];
+    for (let spmsId in prevMsgOpenMap) {
+        let count = prevMsgOpenMap[spmsId];
+        if (count > maxCount) {
+            maxCount = count;
+            maxSpmsIds = [spmsId];
+        } else if (count === maxCount && count > 0) {
+            maxSpmsIds.push(spmsId);
+        }
+    }
+
+    if (!maxSpmsIds.length) {
+        logg.info(`no maxSpmsIds found`);
+        return null;
+    }
+
+    if (maxSpmsIds.length === 1) {
+        logg.info(`maxSpmsId: ${maxSpmsIds[0]}`);
+        return maxSpmsIds[0];
+    }
+
+    logg.info(`maxSpmsIds with same count: ${JSON.stringify(maxSpmsIds)}`);
+
+    let maxSpmsId = null;
+    // do reverse for loop on prevSpmsDocs
+    for (let i = prevSpmsDocs.length - 1; i >= 0; i--) {
+        let spmsDoc = prevSpmsDocs[i];
+        if (maxSpmsIds.includes(spmsDoc._id.toString())) {
+            maxSpmsId = spmsDoc._id;
+            break;
+        }
+    }
+
+    logg.info(`maxSpmsId: ${maxSpmsId}`);
+    // logg.info(`ended`);
+    return maxSpmsId;
+}
+
+async function _delaySequenceProspectMessages(
+    {
+        spmsDoc,
+        spmsId,
+        accountId,
+        contactDoc,
+        sequenceDoc,
+        seqProspectDoc,
+        campaignConfigDoc,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!spmsDoc) {
+        let spmsQueryObj = { _id: spmsId, account: accountId };
+        spmsDoc = await SequenceProspectMessageSchedule.findOne(
+            spmsQueryObj
+        ).lean();
+    }
+
+    if (!spmsDoc) throw `spmsDoc is invalid for spmsId: ${spmsId}`;
+    if (!spmsId) {
+        spmsId = spmsDoc._id;
+    }
+
+    if (!campaignConfigDoc) {
+        logg.info(`fetching campaignConfigDoc`);
+        let configQueryObj = { account: accountId };
+        campaignConfigDoc = await CampaignConfig.findOne(configQueryObj).lean();
+        logg.info(`campaignConfigDoc: ${JSON.stringify(campaignConfigDoc)}`);
+    }
+
+    let contactId = contactDoc._id;
+    let currSequenceStepId = spmsDoc.sequence_step;
+    let senderId = spmsDoc.sender;
+    let sequenceId = spmsDoc.sequence;
+
+    let [futureDocResp, futureSeqStepErr] = await getFutureSpmsDocs(
+        {
+            accountId,
+            currSequenceStepId,
+            sequenceId,
+            contactId,
+            includeCurrent: true,
+            returnPreviousSeqStepDoc: true,
+        },
+        { txid }
+    );
+    if (futureSeqStepErr) throw futureSeqStepErr;
+
+    let { futureSpmsDocs, prevSeqStepDoc } = futureDocResp;
+    if (!futureSpmsDocs || !futureSpmsDocs.length) {
+        throw `no futureSpmsDocs found to delay`;
+    }
+
+    let [senderDetails, senderDetailsErr] = await getSenderDetails(
+        { accountId, senderId },
+        { txid }
+    );
+    if (senderDetailsErr) throw senderDetailsErr;
+
+    let senderList = [senderDetails];
+
+    let { perHourLimit, perDayLimit } = getLimitConfig(
+        { senderCount: senderList.length },
+        { txid }
+    );
+
+    let defaultTimezone =
+        sequenceDoc.default_timezone ||
+        senderDetails.timezone ||
+        "Asia/Calcutta";
+
+    let prospects = [seqProspectDoc];
+
+    let resultScheduleList = [];
+    let [scheduleMapRes, scheduleMapErr] = await prepareScheduleMap(
+        {
+            accountId,
+            sequenceId,
+            sequenceProspectId: seqProspectDoc._id,
+            contactId,
+            senderList,
+            spmsDocsToIgnore: futureSpmsDocs.map((x) => x._id),
+        },
+        { txid }
+    );
+    if (scheduleMapErr) throw scheduleMapErr;
+
+    let { prospectSenderMap, prospectLastScheduleTimeMap } = scheduleMapRes;
+    let prevStepTimeValue =
+        prevSeqStepDoc &&
+        prevSeqStepDoc.time_of_dispatch &&
+        prevSeqStepDoc.time_of_dispatch.value;
+
+    for (let i = 0; i < futureSpmsDocs.length; i++) {
+        let futureSpmsDoc = futureSpmsDocs[i];
+        let fSeqStepDoc = futureSpmsDoc.sequence_step;
+        let sequenceStepId = fSeqStepDoc._id;
+        let sequenceStepTimeValue =
+            fSeqStepDoc.time_of_dispatch && fSeqStepDoc.time_of_dispatch.value;
+
+        let ignoreSchedulingBeforeTimes = [];
+        if (i === 0) {
+            let msgScheduledTime = futureSpmsDoc.message_scheduled_time;
+            msgScheduledTime = new Date(msgScheduledTime).getTime();
+            // increase the msgScheduledTime by sequenceStepTimeValue (format: { "time_value": 6, "time_unit": "day" })
+            let timeToBeIgnored = addSequenceStepTime(
+                {
+                    time: msgScheduledTime,
+                    sequenceStepTimeValue,
+                    prevStepTimeValue,
+                },
+                { txid }
+            );
+            logg.info(`timeToBeIgnored: ${timeToBeIgnored}`);
+            ignoreSchedulingBeforeTimes.push(timeToBeIgnored);
+        }
+
+        let replyToUser =
+            campaignConfigDoc && campaignConfigDoc.reply_to_user
+                ? campaignConfigDoc.reply_to_user.toString()
+                : null;
+
+        let scheduleList = scheduleTimeForSequenceProspects(
+            {
+                prospects,
+                perHourLimit,
+                perDayLimit,
+                senderList,
+                sequenceStepId,
+                isFirstSequenceStep: false,
+                sequenceStepTimeValue,
+                prospectSenderMap,
+                prospectLastScheduleTimeMap,
+                defaultTimezone,
+                prevStepTimeValue,
+                ignoreSchedulingBeforeTimes,
+                scheduleTimeHours:
+                    campaignConfigDoc &&
+                    campaignConfigDoc.message_schedule_window,
+                replyToUser,
+            },
+            { txid }
+        );
+
+        resultScheduleList = [...resultScheduleList, ...scheduleList];
+        prevStepTimeValue = sequenceStepTimeValue;
+    }
+
+    let updateData = resultScheduleList.map((x) => {
+        let {
+            sequence,
+            account,
+            contact,
+            sequence_step,
+            sequence_prospect,
+            message_scheduled_time,
+            reply_to,
+        } = x;
+
+        let updateObj = { message_scheduled_time };
+        if (reply_to) {
+            updateObj.reply_to = reply_to;
+        }
+
+        return {
+            updateOne: {
+                filter: {
+                    sequence,
+                    account,
+                    contact,
+                    sequence_step,
+                    sequence_prospect,
+                },
+                update: updateObj,
+            },
+        };
+    });
+    logg.info(`updateData: ${JSON.stringify(updateData)}`);
+    let bulkWriteResp = await SequenceProspectMessageSchedule.bulkWrite(
+        updateData
+    );
+    logg.info(`bulkWriteResp: ${JSON.stringify(bulkWriteResp)}`);
+
+    logg.info(`ended`);
+    return [resultScheduleList, null];
+}
+
+const delaySequenceProspectMessages = functionWrapper(
+    fileName,
+    "delaySequenceProspectMessages",
+    _delaySequenceProspectMessages
+);
+
+async function _getFutureSpmsDocs(
+    {
+        accountId,
+        currSequenceStepId,
+        sequenceId,
+        contactId,
+        includeCurrent,
+        returnPreviousSeqStepDoc,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!contactId) throw `contactId is invalid`;
+    if (!currSequenceStepId) throw `currSequenceStepId is invalid`;
+
+    let seqStepDocs = await SequenceStep.find({
+        sequence: sequenceId,
+        account: accountId,
+    })
+        .sort("order")
+        .lean();
+
+    let futureSeqStepDocs = [];
+    let foundCurrent = false;
+    for (let i = 0; i < seqStepDocs.length; i++) {
+        let seqStepDoc = seqStepDocs[i];
+        if (seqStepDoc._id.toString() === currSequenceStepId) {
+            foundCurrent = true;
+            if (includeCurrent) {
+                futureSeqStepDocs.push(seqStepDoc);
+            }
+            continue;
+        }
+
+        if (foundCurrent) {
+            futureSeqStepDocs.push(seqStepDoc);
+        }
+    }
+
+    logg.info(`futureSeqStepDocs.length: ${futureSeqStepDocs.length}`);
+    if (futureSeqStepDocs.length <= 10) {
+        logg.info(`futureSeqStepDocs: ${JSON.stringify(futureSeqStepDocs)}`);
+    }
+
+    let futureSpmsDocs = await SequenceProspectMessageSchedule.find({
+        sequence: sequenceId,
+        sequence_step: { $in: futureSeqStepDocs.map((x) => x._id) },
+        account: accountId,
+        contact: contactId,
+    }).lean();
+
+    // sort the futureSpmsDocs based on sequence_step order
+    futureSpmsDocs.sort((a, b) => {
+        let aSeqStepOrder = seqStepDocs.find(
+            (x) => x._id === a.sequence_step
+        ).order;
+        let bSeqStepOrder = seqStepDocs.find(
+            (x) => x._id === b.sequence_step
+        ).order;
+        return aSeqStepOrder - bSeqStepOrder;
+    });
+
+    // replace sequence_step field with actual sequence_step doc
+    futureSpmsDocs = futureSpmsDocs.map((x) => {
+        let seqStepDoc = seqStepDocs.find((y) => y._id === x.sequence_step);
+        if (seqStepDoc) {
+            x.sequence_step = seqStepDoc;
+        }
+        return x;
+    });
+
+    // if futureSpmsDocs.length <= 10, then logg.info the futureSpmsDocs
+    if (futureSpmsDocs.length <= 10) {
+        logg.info(`futureSpmsDocs: ${JSON.stringify(futureSpmsDocs)}`);
+    }
+
+    if (returnPreviousSeqStepDoc) {
+        let prevSeqStepDoc = getPreviousSeqStepDoc(
+            { seqStepDocs, currSequenceStepId },
+            { txid }
+        );
+        logg.info(`ended`);
+        return [{ prevSeqStepDoc, futureSpmsDocs }, null];
+    }
+
+    logg.info(`ended`);
+    return [futureSpmsDocs, null];
+}
+
+const getFutureSpmsDocs = functionWrapper(
+    fileName,
+    "getFutureSpmsDocs",
+    _getFutureSpmsDocs
+);
+
+function getPreviousSeqStepDoc({ seqStepDocs, currSequenceStepId }, { txid }) {
+    const funcName = "getPreviousSeqStepDoc";
+    const logg = logger.child({ txid, funcName });
+
+    let prevSeqStepDoc = null;
+    let foundCurrDoc = false;
+    for (let i = 0; i < seqStepDocs.length; i++) {
+        let seqStepDoc = seqStepDocs[i];
+        if (seqStepDoc._id === currSequenceStepId) {
+            foundCurrDoc = true;
+            break;
+        }
+        prevSeqStepDoc = seqStepDoc;
+    }
+
+    if (!foundCurrDoc) {
+        logg.error(`currSequenceStepId not found in seqStepDocs`);
+        throw `currSequenceStepId not found in seqStepDocs`;
+    }
+
+    logg.info(`prevSeqStepDoc: ${JSON.stringify(prevSeqStepDoc)}`);
+
+    return prevSeqStepDoc;
+}
+
+async function _getSenderDetails(
+    { accountId, senderId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!senderId) throw `senderId is invalid`;
+
+    let [userDoc, userDocErr] = await UserUtils.getUserById(
+        { id: senderId },
+        { txid }
+    );
+    if (userDocErr) throw userDocErr;
+    if (!userDoc) throw `userDoc is empty for userId: ${senderId}`;
+    let userEmail = userDoc.email;
+    let senderDetails = { email: userEmail, user_id: senderId };
+
+    logg.info(`ended`);
+    return [senderDetails, null];
+}
+
+const getSenderDetails = functionWrapper(
+    fileName,
+    "getSenderDetails",
+    _getSenderDetails
+);
+
+/*
+ Generate map objects of prospectSenderMap and prospectLastScheduleTimeMap
+ * prospectSenderMap: map of prospect_email (key) -> sender_email (value)
+ * prospectLastScheduleTimeMap: map of prospect_email (key) -> last_schedule_time_millis (value)
+*/
+async function _prepareScheduleMap(
+    {
+        accountId,
+        sequenceId,
+        sequenceProspectId,
+        contactId,
+        senderList,
+        spmsDocsToIgnore,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+
+    if (!spmsDocsToIgnore) {
+        spmsDocsToIgnore = [];
+    }
+
+    let prospectSenderMap = {};
+    let prospectLastScheduleTimeMap = {};
+
+    let spmsQueryObj = {
+        sequence: sequenceId,
+        account: accountId,
+    };
+    if (spmsDocsToIgnore.length) {
+        spmsQueryObj._id = { $nin: spmsDocsToIgnore };
+    }
+
+    let spmsDocs = await SequenceProspectMessageSchedule.find(spmsQueryObj)
+        .populate("contact")
+        .populate("sender")
+        .select(
+            "contact sender message_scheduled_time message_status sequence_prospect sequence_step"
+        )
+        .lean();
+
+    for (let i = 0; i < spmsDocs.length; i++) {
+        let spmsDoc = spmsDocs[i];
+        let contactDoc = spmsDoc.contact;
+        let senderDoc = spmsDoc.sender;
+        let contactEmail = contactDoc.email;
+        let senderEmail = senderDoc.email;
+        let msgScheduledTime = spmsDoc.message_scheduled_time;
+        if (!msgScheduledTime) {
+            logg.error(
+                `msgScheduledTime is invalid for spmsDoc: ${JSON.stringify(
+                    spmsDoc
+                )}. but continuing`
+            );
+            continue;
+        }
+        msgScheduledTime = new Date(msgScheduledTime).getTime();
+        if (!prospectSenderMap[contactEmail]) {
+            prospectSenderMap[contactEmail] = senderEmail;
+        }
+
+        if (!prospectLastScheduleTimeMap[contactEmail]) {
+            prospectLastScheduleTimeMap[contactEmail] = msgScheduledTime;
+        } else if (
+            msgScheduledTime > prospectLastScheduleTimeMap[contactEmail]
+        ) {
+            prospectLastScheduleTimeMap[contactEmail] = msgScheduledTime;
+        }
+    }
+
+    // if number of keys is less than 20, then logg.info the maps
+    if (Object.keys(prospectSenderMap).length <= 20) {
+        logg.info(`prospectSenderMap: ${JSON.stringify(prospectSenderMap)}`);
+    }
+    if (Object.keys(prospectLastScheduleTimeMap).length <= 20) {
+        logg.info(
+            `prospectLastScheduleTimeMap: ${JSON.stringify(
+                prospectLastScheduleTimeMap
+            )}`
+        );
+    }
+
+    logg.info(`ended`);
+    return [{ prospectSenderMap, prospectLastScheduleTimeMap }, null];
+}
+
+const prepareScheduleMap = functionWrapper(
+    fileName,
+    "prepareScheduleMap",
+    _prepareScheduleMap
+);
+
+function addSequenceStepTime(
+    { time, sequenceStepTimeValue, prevStepTimeValue },
+    { txid }
+) {
+    const funcName = "addSequenceStepTime";
+    const logg = logger.child({ txid, funcName });
+
+    let { time_value: timeValue, time_unit: timeUnit } = sequenceStepTimeValue;
+    let { time_value: prevTimeValue, time_unit: prevTimeUnit } =
+        prevStepTimeValue;
+
+    let stepValueMillis = convertTimeStepValueToMillis(
+        { timeValue, timeUnit },
+        { txid }
+    );
+
+    let prevStepValueMillis = convertTimeStepValueToMillis(
+        { timeValue: prevTimeValue, timeUnit: prevTimeUnit },
+        { txid }
+    );
+
+    let newTime = time + stepValueMillis - prevStepValueMillis;
+
+    // logg.info(`newTime: ${newTime}`);
+    return newTime;
+}
+
+/*
+ * Created on 18th July 2024
+ * WHAT:
+    - This function sends a auto-reply 'Any thoughts, <<first_name>>?' to the most opened message in a sequence.
+
+* WHEN IS THIS FUNCTION CALLED:
+    - This function is called when a prospect opens a message in a sequence.
+
+* WHY call this function, when we already have implemented auto-reply feature in "sendReplyAndDelayEmail" function above:
+    - The "sendReplyAndDelayEmail" function is called when we are about to send 2nd or 3rd or 4th or so on message to a prospect and then we check if the previous messages were opened and then we send the auto-reply.
+    - But "sendReplyAndDelayEmail" function will not work for 1 specific scenario:
+        - When we send all messages in a sequence and then the prospect opens any of the messages in the sequence.
+    - Hence, we need a separate function to handle this specific scenario.
+
+* HOW:
+    - Check if all messages were sent. (So that we confirm there are no pending messages in the sequence)
+        - If NO, then do nothing
+        - If YES, then continue.
+    - Check if any auto-reply was sent before to any of the messages in the sequence.
+        - If yes, then do nothing.
+        - If no, then continue.
+    - Get the most opened message in the sequence.
+    - Send the auto-reply 'Any thoughts, <<first_name>>?' to the most opened message.
+
+* Reference Notion Doc: https://www.notion.so/thetrackapp/Auto-Reply-feature-when-prospects-open-the-message-46795b175da5487d8b372538f3d1b4e3
+*/
+async function _sendReplyIfNotSentBefore(
+    { spmsDoc },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!spmsDoc) throw `spmsDoc is invalid`;
+
+    let sequenceId = spmsDoc.sequence;
+    let accountId = spmsDoc.account;
+    let contactId = spmsDoc.contact;
+
+    let fAccountId = accountId.toString();
+    if (fAccountId === AccountMap.bevy) {
+        // ! manually added this code on 20th July 2024
+        // ! Bevy manually asked us to not send any emails. So we are not sending any emails that are part of Bevy Campaign
+        logg.info(`Bevy account. So not sending any emails.`);
+        return [{ messageSent: false }, null];
+    }
+
+    let spmsDocs = await SequenceProspectMessageSchedule.find({
+        sequence: sequenceId,
+        account: accountId,
+        contact: contactId,
+    })
+        .populate("sequence_step")
+        .lean();
+
+    logg.info(`spmsDocs.length: ${spmsDocs.length}`);
+    if (spmsDocs.length <= 10) {
+        logg.info(`spmsDocs: ${JSON.stringify(spmsDocs)}`);
+    }
+
+    // sort by sequence_step order
+    spmsDocs.sort((a, b) => {
+        let aSeqStepOrder = a.sequence_step.order;
+        let bSeqStepOrder = b.sequence_step.order;
+        return aSeqStepOrder - bSeqStepOrder;
+    });
+
+    // if number of spmsDocs is less than = 1, then do nothing
+    if (spmsDocs.length <= 1) {
+        logg.info(`only one spmsDoc found. So no need to send reply.`);
+        return [{ messageSent: false }, null];
+    }
+
+    // 1. Check if there are any messages that haven't yet sent
+    let pendingSpmsDocs = spmsDocs.filter((x) => x.message_status !== "sent");
+    if (pendingSpmsDocs.length) {
+        logg.info(`pending messages found. So no need to send reply.`);
+        return [{ messageSent: false }, null];
+    } else {
+        logg.info(
+            `no pending messages found. This means all messages were attempted to send. So continuing.`
+        );
+    }
+
+    let spmsIds = spmsDocs.map((x) => x._id);
+
+    // 2. Check if any auto-reply was sent before to any of the messages in the sequence.
+    let [autoReplyAlreadySent, autoReplyCheckErr] =
+        await AnalyticUtils.checkIfAutoReplyAlreadySent(
+            { sequenceId, accountId, spmsIds },
+            { txid }
+        );
+    if (autoReplyCheckErr) throw autoReplyCheckErr;
+
+    if (autoReplyAlreadySent) {
+        logg.info(`auto reply already sent. So no need to send reply.`);
+        return [{ messageSent: false }, null];
+    } else {
+        logg.info(`auto reply not sent. So continuing.`);
+    }
+
+    // 3. Get the most opened message in the sequence.
+    let [prevMsgOpenMap, hasPrevMessagesOpenedErr] =
+        await AnalyticUtils.checkIfAnySequenceMessageOpensFound(
+            { sequenceId, accountId, spmsIds, returnOpenMap: true },
+            { txid }
+        );
+    if (hasPrevMessagesOpenedErr) throw hasPrevMessagesOpenedErr;
+
+    // prevMsgOpenMap format:  map of spmsId (key) -> count of opens (value)
+    if (!prevMsgOpenMap || !Object.keys(prevMsgOpenMap).length) {
+        logg.info(`no previous message opened. So no need to send reply.`);
+        return [{ messageSent: false }, null];
+    } else {
+        logg.info(`previous messages were opened. So continuing.`);
+    }
+
+    let mostOpenedSpmsId = getMostOpenedSpmsId(
+        { prevMsgOpenMap, prevSpmsDocs: spmsDocs },
+        { txid }
+    );
+    if (!mostOpenedSpmsId) throw `mostOpenedSpmsId is invalid`;
+
+    // 4. Send the auto-reply 'Any thoughts, <<first_name>>?' to the most opened message.
+    logg.info(`sending reply to spmsId: ${mostOpenedSpmsId}`);
+    let [sendReplyResp, sendReplyErr] = await sendReplyToMessage(
+        { accountId, spmsId: mostOpenedSpmsId },
+        { txid }
+    );
+    if (sendReplyErr) throw sendReplyErr;
+
+    logg.info(`ended`);
+    return [{ messageSent: true }, null];
+}
+
+export const sendReplyIfNotSentBefore = functionWrapper(
+    fileName,
+    "sendReplyIfNotSentBefore",
+    _sendReplyIfNotSentBefore
+);
