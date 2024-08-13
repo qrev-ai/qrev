@@ -156,6 +156,50 @@ export const storeCampaignMessageOpenAnalytic = functionWrapper(
     _storeCampaignMessageOpenAnalytic
 );
 
+async function _storeCampaignAutoMessageReplyOpenAnalytic(
+    {
+        sessionId,
+        spmsId,
+        accountId,
+        sequenceId,
+        contactId,
+        sequenceStepId,
+        sequenceProspectId,
+        replyId,
+        replyObj,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    let analytic = new VisitorAnalytics({
+        session_id: sessionId,
+        app_type: AnalyticAppTypes.campaign,
+        action_type: AnalyticActionTypes.campaign_message_auto_reply_open,
+        sequence_prospect_message: spmsId,
+        account: accountId,
+        sequence: sequenceId,
+        contact: contactId,
+        sequence_step: sequenceStepId,
+        sequence_prospect: sequenceProspectId,
+        analytic_metadata: {
+            reply_id: replyId,
+            reply_obj: replyObj,
+        },
+    });
+
+    let saveResp = await analytic.save();
+
+    logg.info(`saveResp: ` + JSON.stringify(saveResp));
+    logg.info(`ended`);
+    return [saveResp, null];
+}
+
+export const storeCampaignAutoMessageReplyOpenAnalytic = functionWrapper(
+    fileName,
+    "storeCampaignAutoMessageReplyOpenAnalytic",
+    _storeCampaignAutoMessageReplyOpenAnalytic
+);
+
 async function _getCampaignMessageAnalytics(
     { accountId, sequenceIds },
     { txid, logg, funcName }
@@ -940,4 +984,82 @@ export const checkIfAnySequenceMessageOpensFound = functionWrapper(
     fileName,
     "checkIfAnySequenceMessageOpensFound",
     _checkIfAnySequenceMessageOpensFound
+);
+
+async function _checkIfAutoReplyAlreadySent(
+    { sequenceId, accountId, spmsIds },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId not found`;
+    if (!accountId) throw `accountId not found`;
+
+    let queryObj = {
+        account: accountId,
+        sequence: sequenceId,
+        action_type: AnalyticActionTypes.campaign_message_auto_reply,
+    };
+    if (spmsIds && spmsIds.length) {
+        queryObj.sequence_prospect_message = { $in: spmsIds };
+    }
+
+    let analytics = await VisitorAnalytics.find(queryObj);
+    let hasAutoReplySent = analytics.length > 0;
+
+    logg.info(`hasAutoReplySent: ${hasAutoReplySent}`);
+    logg.info(`ended`);
+    return [hasAutoReplySent, null];
+}
+
+export const checkIfAutoReplyAlreadySent = functionWrapper(
+    fileName,
+    "checkIfAutoReplyAlreadySent",
+    _checkIfAutoReplyAlreadySent
+);
+
+async function _storeAutoCampaignMessageReplyAnalytic(
+    {
+        sessionId,
+        spmsId,
+        accountId,
+        sequenceId,
+        contactId,
+        sequenceStepId,
+        sequenceProspectId,
+        replyId,
+        replyObj,
+        repliedOnDate,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    let analytic = new VisitorAnalytics({
+        session_id: sessionId,
+        app_type: AnalyticAppTypes.campaign,
+        action_type: AnalyticActionTypes.campaign_message_auto_reply,
+        analytic_metadata: {
+            reply_id: replyId,
+            reply_obj: replyObj,
+        },
+        sequence_prospect_message: spmsId,
+        account: accountId,
+        sequence: sequenceId,
+        contact: contactId,
+        sequence_step: sequenceStepId,
+        sequence_prospect: sequenceProspectId,
+        created_on: repliedOnDate || new Date(),
+        updated_on: repliedOnDate || new Date(),
+    });
+
+    let saveResp = await analytic.save();
+
+    logg.info(`saveResp: ` + JSON.stringify(saveResp));
+    logg.info(`ended`);
+    return [saveResp, null];
+}
+
+export const storeAutoCampaignMessageReplyAnalytic = functionWrapper(
+    fileName,
+    "storeAutoCampaignMessageReplyAnalytic",
+    _storeAutoCampaignMessageReplyAnalytic
 );
