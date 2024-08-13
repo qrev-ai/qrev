@@ -4598,3 +4598,630 @@ export const sendReplyIfNotSentBefore = functionWrapper(
     "sendReplyIfNotSentBefore",
     _sendReplyIfNotSentBefore
 );
+
+async function _updateSequenceProspects(
+    { sequenceId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId is invalid`;
+
+    // 1. check if the sequence is found for the sequenceId
+    // 2. check if prospects have been already generated. If so, then throw an error
+    // 3. Get the generated prospects from IntermediateProspectData collection
+    // 4. Create SequenceProspect documents for the prospects
+
+    let sequenceDoc = await SequenceModel.findOne({
+        _id: sequenceId,
+    }).lean();
+    if (!sequenceDoc)
+        throw `failed to find sequenceDoc for sequenceId: ${sequenceId}`;
+
+    let accountId = sequenceDoc.account;
+    let activities = sequenceDoc.activities;
+    let userId = sequenceDoc.created_by;
+    let conversationId = sequenceDoc.conversation;
+
+    let isProspectAddedStatusFound = checkActivity(
+        { activities, type: "prospects_added" },
+        { txid }
+    );
+    if (isProspectAddedStatusFound) {
+        throw `prospects are already generated for the sequenceId: ${sequenceId}`;
+    }
+
+    let [prospectDocs, prospectDocsErr] =
+        await createCampaignSequenceProspectsFromQAi(
+            {
+                campaignSequenceId: sequenceId,
+                accountId,
+                userId,
+                conversationId,
+            },
+            { txid }
+        );
+    if (prospectDocsErr) throw prospectDocsErr;
+
+    // add activities with object { type: "prospects_added", time: new Date().toISOString() }
+    let updateObj = {
+        $push: {
+            activities: {
+                type: "prospects_added",
+                time: new Date().toISOString(),
+                txid,
+            },
+        },
+    };
+    let updateResp = await SequenceModel.updateOne(
+        { _id: sequenceId },
+        updateObj
+    );
+
+    logg.info(`updateResp: ${JSON.stringify(updateResp)}`);
+
+    logg.info(`ended`);
+    return [prospectDocs, null];
+}
+
+export const updateSequenceProspects = functionWrapper(
+    fileName,
+    "updateSequenceProspects",
+    _updateSequenceProspects
+);
+
+function checkActivity({ activities, type }, { txid }) {
+    const funcName = "checkActivity";
+    const logg = logger.child({ txid, funcName });
+
+    if (!activities || !activities.length) {
+        activities = [];
+    }
+
+    let isFound = false;
+    for (let i = 0; i < activities.length; i++) {
+        let activity = activities[i];
+        if (activity.type === type) {
+            isFound = true;
+            break;
+        }
+    }
+
+    logg.info(`${type}: isFound: ${isFound}`);
+    return isFound;
+}
+
+async function _updateSequenceStepProspectMessages(
+    { sequenceId, sequenceStepId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!sequenceStepId) throw `sequenceStepId is invalid`;
+
+    // 1. check if the sequence is found for the sequenceId
+    // 2. check if the sequenceStep is found for the sequenceStepId
+    // 3. for the sequenceStep, if prospect messages are already generated, then throw an error (this is done through checking the sequenceStepDoc.activities)
+    // 4. Get the generated prospect messages from IntermediateProspectMessageData collection
+    // 5. Create SequenceProspectMessage documents for the prospects
+    // 6. In the sequenceDoc, if there is activity for 'execute_sequence_confirmation', then schedule messages and add to seqStepDoc.activities with object { status: "prospect_messages_scheduled", time: new Date().toISOString() }
+    // 7. In the sequenceStepDoc, add to activities with object { status: "prospect_messages_added", time: new Date().toISOString() }
+
+    let seqQueryObj = { _id: sequenceId };
+    let sequenceDoc = await SequenceModel.findOne(seqQueryObj).lean();
+    if (!sequenceDoc)
+        throw `failed to find sequenceDoc for sequenceId: ${sequenceId}`;
+
+    let accountId = sequenceDoc.account;
+
+    let seqStepQueryObj = {
+        _id: sequenceStepId,
+        sequence: sequenceId,
+        account: accountId,
+    };
+    let sequenceStepDoc = await SequenceStep.findOne(seqStepQueryObj).lean();
+    if (!sequenceStepDoc)
+        throw `failed to find sequenceStepDoc for sequenceStepId: ${sequenceStepId}`;
+
+    let seqProspectQueryObj = { sequence: sequenceId, account: accountId };
+    let seqProspects = await SequenceProspect.find(seqProspectQueryObj)
+        .populate("contact")
+        .lean();
+    logg.info(`seqProspects.length: ${seqProspects.length}`);
+
+    let isProspectMessagesAddedStatusFound = checkActivity(
+        {
+            activities: sequenceStepDoc.activities,
+            type: "prospect_messages_added",
+        },
+        { txid }
+    );
+    if (isProspectMessagesAddedStatusFound) {
+        throw `prospect messages are already generated for the sequenceStepId: ${sequenceStepId}`;
+    }
+
+    let [spmsDocs, prospectMessageDocsErr] =
+        await createSpmsDocsFromIntermediateProspectMessage(
+            {
+                sequenceId,
+                sequenceStepId,
+                sequenceStepDoc,
+                accountId,
+                seqProspects,
+            },
+            { txid }
+        );
+    if (prospectMessageDocsErr) throw prospectMessageDocsErr;
+
+    let updateObj = {
+        $push: {
+            activities: {
+                type: "prospect_messages_added",
+                time: new Date().toISOString(),
+                txid,
+            },
+        },
+    };
+    let updateMessageAddedResp = await SequenceStep.updateOne(
+        seqStepQueryObj,
+        updateObj
+    );
+    logg.info(
+        `updateMessageAddedResp: ${JSON.stringify(updateMessageAddedResp)}`
+    );
+
+    let isExecuteSequenceConfirmationFound = checkActivity(
+        {
+            activities: sequenceDoc.activities,
+            type: "execute_sequence_confirmation",
+        },
+        { txid }
+    );
+
+    if (isExecuteSequenceConfirmationFound) {
+        logg.info(`execute_sequence_confirmation found. Scheduling messages.`);
+        let [scheduleResp, scheduleErr] =
+            await scheduleSequenceProspectMessages(
+                {
+                    accountId,
+                    sequenceId,
+                    sequenceDoc,
+                    sequenceStepId,
+                    sequenceStepDoc,
+                    seqProspects,
+                    spmsDocs,
+                },
+                { txid }
+            );
+        if (scheduleErr) throw scheduleErr;
+
+        let updateObj = {
+            $push: {
+                activities: {
+                    type: "prospect_messages_scheduled",
+                    time: new Date().toISOString(),
+                    txid,
+                },
+            },
+        };
+        let updateScheduleStatusResp = await SequenceStep.updateOne(
+            seqStepQueryObj,
+            updateObj
+        );
+        logg.info(
+            `updateScheduleStatusResp: ${JSON.stringify(
+                updateScheduleStatusResp
+            )}`
+        );
+    }
+
+    logg.info(`ended`);
+    return [spmsDocs, null];
+}
+
+export const updateSequenceStepProspectMessages = functionWrapper(
+    fileName,
+    "updateSequenceStepProspectMessages",
+    _updateSequenceStepProspectMessages
+);
+
+async function _createSpmsDocsFromIntermediateProspectMessage(
+    { sequenceId, sequenceStepId, sequenceStepDoc, accountId, seqProspects },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!sequenceStepId) throw `sequenceStepId is invalid`;
+    if (!accountId) throw `accountId is invalid`;
+
+    // 1. query 'IntermediateProspectMessage' collection to get the prospect messages for the sequenceStepId
+    // 2. create SequenceProspectMessage documents for the prospect messages
+
+    let interProspectMessageDocs = await IntermediateProspectMessage.find({
+        sequence_id: sequenceId,
+        sequence_step_id: sequenceStepId,
+    }).lean();
+
+    logg.info(
+        `interProspectMessageDocs.length: ${interProspectMessageDocs.length}`
+    );
+    if (interProspectMessageDocs.length <= 10) {
+        logg.info(
+            `interProspectMessageDocs: ${JSON.stringify(
+                interProspectMessageDocs
+            )}`
+        );
+    }
+    if (!interProspectMessageDocs.length) {
+        throw `no interProspectMessageDocs found for sequenceStepId: ${sequenceStepId}`;
+    }
+
+    let contactEmailMap = {};
+    seqProspects.forEach((x) => {
+        contactEmailMap[x.contact.email] = x;
+    });
+
+    let spmsDocs = [];
+    for (let i = 0; i < interProspectMessageDocs.length; i++) {
+        let interProspectMessageDoc = interProspectMessageDocs[i];
+        let prospectDoc =
+            contactEmailMap[interProspectMessageDoc.prospect_email];
+
+        let spmsDoc = {
+            _id: uuidv4(),
+            sequence: sequenceId,
+            account: accountId,
+            contact: prospectDoc.contact._id,
+            sequence_step: sequenceStepId,
+            sequence_prospect: prospectDoc._id,
+            is_message_generation_complete: true,
+            message_type: sequenceStepDoc.type,
+            message_subject: interProspectMessageDoc.message_subject,
+            message_body: interProspectMessageDoc.message_body,
+            message_status: "pending",
+            prospect_email: interProspectMessageDoc.prospect_email,
+            prospect_timezone: prospectDoc.contact.timezone,
+        };
+        spmsDocs.push(spmsDoc);
+    }
+
+    logg.info(`spmsDocs.length: ${spmsDocs.length}`);
+    if (spmsDocs.length <= 10) {
+        logg.info(`spmsDocs: ${JSON.stringify(spmsDocs)}`);
+    }
+    if (!spmsDocs.length) {
+        throw `no spmsDocs found for sequenceStepId: ${sequenceStepId}`;
+    }
+
+    let spmsDocsResp = await SequenceProspectMessageSchedule.insertMany(
+        spmsDocs
+    );
+
+    if (spmsDocsResp.length <= 10) {
+        logg.info(`spmsDocsResp: ${JSON.stringify(spmsDocsResp)}`);
+    }
+
+    logg.info(`ended`);
+    return [spmsDocsResp, null];
+}
+
+const createSpmsDocsFromIntermediateProspectMessage = functionWrapper(
+    fileName,
+    "createSpmsDocsFromIntermediateProspectMessage",
+    _createSpmsDocsFromIntermediateProspectMessage
+);
+
+async function _scheduleSequenceProspectMessages(
+    {
+        accountId,
+        sequenceId,
+        sequenceDoc,
+        sequenceStepId,
+        sequenceStepDoc,
+        seqProspects,
+        spmsDocs,
+        seqStepDocs,
+        campaignConfigDoc,
+    },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!sequenceStepId) throw `sequenceStepId is invalid`;
+    if (!seqProspects || !seqProspects.length) throw `seqProspects is invalid`;
+
+    if (!spmsDocs || !spmsDocs.length) {
+        logg.info(
+            `querying spmsDocs for sequenceId: ${sequenceId} and sequenceStepId: ${sequenceStepId}`
+        );
+        spmsDocs = await SequenceProspectMessageSchedule.find({
+            account: accountId,
+            sequence: sequenceId,
+            sequence_step: sequenceStepId,
+        }).lean();
+    }
+
+    if (!campaignConfigDoc) {
+        let cConfigQueryObj = { account: accountId };
+        campaignConfigDoc = await CampaignConfig.findOne(
+            cConfigQueryObj
+        ).lean();
+        logg.info(`campaignConfigDoc: ${JSON.stringify(campaignConfigDoc)}`);
+    }
+
+    let userId = sequenceDoc.created_by;
+    let defaultTimezone = sequenceDoc.default_timezone || "Asia/Calcutta";
+
+    let [scheduleMapRes, scheduleMapErr] = await prepareScheduleMap(
+        { accountId, sequenceId, spmsDocsToIgnore: spmsDocs.map((x) => x._id) },
+        { txid }
+    );
+    if (scheduleMapErr) throw scheduleMapErr;
+
+    let { prospectSenderMap, prospectLastScheduleTimeMap } = scheduleMapRes;
+
+    let [senderList, senderListErr] = await getSendersList(
+        { accountId, userId },
+        { txid }
+    );
+    if (senderListErr) throw senderListErr;
+    if (!senderList || !senderList.length) throw `senderList is empty or null`;
+
+    let senderIdMap = {};
+    for (let i = 0; i < senderList.length; i++) {
+        let sender = senderList[i];
+        let senderId = sender.user_id;
+        senderId =
+            typeof senderId === "object" ? senderId.toString() : senderId;
+        let senderEmail = sender.email;
+        senderIdMap[senderEmail] = senderId;
+    }
+
+    let { perHourLimit, perDayLimit } = getLimitConfig(
+        { senderCount: senderList.length },
+        { txid }
+    );
+
+    let sequenceStepTimeValue =
+        sequenceStepDoc.time_of_dispatch &&
+        sequenceStepDoc.time_of_dispatch.value;
+
+    if (!seqStepDocs || !seqStepDocs.length) {
+        seqStepDocs = await SequenceStep.find({
+            sequence: sequenceId,
+            account: accountId,
+        })
+            .sort("order")
+            .lean();
+    }
+
+    let isFirstSequenceStep =
+        seqStepDocs[0]._id.toString() === sequenceStepId.toString();
+
+    let prevStepTimeValue = null;
+    if (!isFirstSequenceStep) {
+        let prevSeqStepDoc = getPreviousSeqStepDoc(
+            { seqStepDocs, currSequenceStepId: sequenceStepId },
+            { txid }
+        );
+        prevStepTimeValue =
+            prevSeqStepDoc &&
+            prevSeqStepDoc.time_of_dispatch &&
+            prevSeqStepDoc.time_of_dispatch.value;
+    }
+
+    let replyToUser =
+        campaignConfigDoc && campaignConfigDoc.reply_to_user
+            ? campaignConfigDoc.reply_to_user.toString()
+            : null;
+
+    let scheduleList = scheduleTimeForSequenceProspects(
+        {
+            prospects: seqProspects,
+            perHourLimit,
+            perDayLimit,
+            senderList,
+            sequenceStepId,
+            isFirstSequenceStep,
+            sequenceStepTimeValue,
+            prospectSenderMap,
+            prospectLastScheduleTimeMap,
+            defaultTimezone,
+            prevStepTimeValue,
+            scheduleTimeHours:
+                campaignConfigDoc && campaignConfigDoc.message_schedule_window,
+            replyToUser,
+        },
+        { txid }
+    );
+
+    let updateData = scheduleList.map((x) => {
+        let {
+            sequence,
+            account,
+            contact,
+            sequence_step,
+            sequence_prospect,
+            message_scheduled_time,
+            sender_email,
+            message_status,
+            reply_to,
+        } = x;
+
+        let sender = senderIdMap[sender_email];
+
+        if (contact && contact._id) {
+            contact = contact._id;
+        }
+
+        let updateObj = {
+            message_scheduled_time,
+            message_status,
+            sender,
+            sender_email,
+        };
+
+        if (reply_to) {
+            updateObj.reply_to = reply_to;
+        }
+
+        return {
+            updateOne: {
+                filter: {
+                    sequence,
+                    account,
+                    contact,
+                    sequence_step,
+                    sequence_prospect,
+                },
+                update: updateObj,
+            },
+        };
+    });
+    logg.info(`updateData: ${JSON.stringify(updateData)}`);
+    let bulkWriteResp = await SequenceProspectMessageSchedule.bulkWrite(
+        updateData
+    );
+    logg.info(`bulkWriteResp: ${JSON.stringify(bulkWriteResp)}`);
+
+    logg.info(`ended`);
+    return [bulkWriteResp, null];
+}
+
+const scheduleSequenceProspectMessages = functionWrapper(
+    fileName,
+    "scheduleSequenceProspectMessages",
+    _scheduleSequenceProspectMessages
+);
+
+async function _scheduleTimeForSequenceIfNotAlreadyDone(
+    { sequenceId, sequenceDoc, accountId, userId, sequenceSteps },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) throw `sequenceId is invalid`;
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+    if (!sequenceSteps || !sequenceSteps.length)
+        throw `sequenceSteps is invalid`;
+
+    /*
+    * if sequenceDoc.activities doesn't have "prospects_added", then do nothing 
+    * for each seqstepdoc:
+       1. if "prospect_messages_added" is present but "prospect_messages_scheduled" is not present, then schedule the messages
+       2. else do nothing
+    */
+
+    let isProspectsAdded = checkActivity(
+        {
+            activities: sequenceDoc.activities,
+            type: "prospects_added",
+        },
+        { txid }
+    );
+    if (!isProspectsAdded) {
+        logg.info(
+            `prospects are not added for sequenceId: ${sequenceId}. So not scheduling messages.`
+        );
+        return [true, null];
+    }
+
+    let seqProspects = await SequenceProspect.find({
+        sequence: sequenceId,
+        account: accountId,
+    })
+        .populate("contact")
+        .lean();
+
+    if (!seqProspects || !seqProspects.length) {
+        throw `no seqProspects found for sequenceId: ${sequenceId}`;
+    }
+
+    logg.info(`seqProspects.length: ${seqProspects.length}`);
+    if (seqProspects.length <= 10) {
+        logg.info(`seqProspects: ${JSON.stringify(seqProspects)}`);
+    }
+
+    for (let i = 0; i < sequenceSteps.length; i++) {
+        let sequenceStepDoc = sequenceSteps[i];
+        let sequenceStepId = sequenceStepDoc._id;
+        let seqStepActivities = sequenceStepDoc.activities;
+
+        let isMessagesAdded = checkActivity(
+            {
+                activities: seqStepActivities,
+                type: "prospect_messages_added",
+            },
+            { txid }
+        );
+        if (!isMessagesAdded) {
+            logg.info(
+                `prospect messages are not added for sequenceStepId: ${sequenceStepId}. So not scheduling messages.`
+            );
+            continue;
+        }
+
+        let isMessagesScheduled = checkActivity(
+            {
+                activities: seqStepActivities,
+                type: "prospect_messages_scheduled",
+            },
+            { txid }
+        );
+
+        if (isMessagesScheduled) {
+            logg.info(
+                `prospect messages are already scheduled for sequenceStepId: ${sequenceStepId}. So not scheduling messages.`
+            );
+            continue;
+        }
+
+        let [scheduleResp, scheduleErr] =
+            await scheduleSequenceProspectMessages(
+                {
+                    accountId,
+                    sequenceId,
+                    sequenceDoc,
+                    sequenceStepId,
+                    sequenceStepDoc,
+                    seqProspects,
+                    seqStepDocs: sequenceSteps,
+                },
+                { txid }
+            );
+        if (scheduleErr) throw scheduleErr;
+
+        let updateObj = {
+            $push: {
+                activities: {
+                    type: "prospect_messages_scheduled",
+                    time: new Date().toISOString(),
+                    txid,
+                },
+            },
+        };
+        let seqStepQueryObj = {
+            _id: sequenceStepId,
+            sequence: sequenceId,
+            account: accountId,
+        };
+        let updateScheduleStatusResp = await SequenceStep.updateOne(
+            seqStepQueryObj,
+            updateObj
+        );
+        logg.info(
+            `updateScheduleStatusResp: ${JSON.stringify(
+                updateScheduleStatusResp
+            )}`
+        );
+    }
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+const scheduleTimeForSequenceIfNotAlreadyDone = functionWrapper(
+    fileName,
+    "scheduleTimeForSequenceIfNotAlreadyDone",
+    _scheduleTimeForSequenceIfNotAlreadyDone
+);
