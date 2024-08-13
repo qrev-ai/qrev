@@ -1611,15 +1611,25 @@ const executeCampaignStepUtil = functionWrapper(
     _executeCampaignStepUtil
 );
 
-function convertToHtmlAndAddTrackingTag(
-    { emailBody, campaignProspectId },
+function convertToHtmlAndAddTags(
+    { emailBody, campaignProspectId, replyId },
     { txid }
 ) {
-    const funcName = "convertToHtmlAndAddTrackingTag";
+    const funcName = "convertToHtmlAndAddTags";
     const logg = logger.child({ txid, funcName });
     logg.info(`started`);
+
+    //convert \n to <br>
+    emailBody = emailBody.replace(/\n/g, "<br>");
+
     const serverUrlPath = process.env.SERVER_URL_PATH;
-    const result = `${emailBody}<img src="${serverUrlPath}/api/campaign/email_open?ssmid=${campaignProspectId}" alt="Image"/>`;
+    let trackingUrl = `${serverUrlPath}/api/campaign/email_open?ssmid=${campaignProspectId}`;
+    if (replyId) trackingUrl += `&reply_id=${replyId}`;
+
+    const trackingTag = `<img src="${trackingUrl}" alt="Image"/>`;
+    // const unsubscribeTag = `<a href="${serverUrlPath}/api/campaign/unsubscribe?ssmid=${campaignProspectId}">Click here to unsubscribe</a>`;
+    // const result = `${emailBody}<br><br>${unsubscribeTag}<br>${trackingTag}`;
+    const result = `${emailBody}<br>${trackingTag}`;
     logg.info(`after converting to html & adding tracking tag: ${result}`);
     logg.info(`ended`);
     return result;
@@ -3059,4 +3069,153 @@ const updateSequenceStepMessageReply = functionWrapper(
     fileName,
     "updateSequenceStepMessageReply",
     _updateSequenceStepMessageReply
+);
+
+async function _prospectClickedUnsubscribeLink(
+    { ssmid },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!ssmid) throw `ssmid is invalid`;
+
+    let queryObj = { _id: ssmid };
+    let spmsDoc = await SequenceProspectMessageSchedule.findOne(
+        queryObj
+    ).lean();
+    logg.info(`spmsDoc: ${JSON.stringify(spmsDoc)}`);
+
+    if (!spmsDoc) {
+        throw `failed to find spmsDoc for ssmid: ${ssmid}`;
+    }
+
+    let updateObj = {
+        $addToSet: {
+            unsubscribe_activities: {
+                type: "email_unsubscribe_clicked",
+                time: new Date().toISOString(),
+            },
+        },
+    };
+
+    let updateResp = await SequenceProspectMessageSchedule.updateOne(
+        queryObj,
+        updateObj
+    );
+    logg.info(`updateResp: ${JSON.stringify(updateResp)}`);
+
+    logg.info(`ended`);
+    return [updateResp, null];
+}
+
+export const prospectClickedUnsubscribeLink = functionWrapper(
+    fileName,
+    "prospectClickedUnsubscribeLink",
+    _prospectClickedUnsubscribeLink
+);
+
+async function _prospectConfirmedUnsubscribeLink(
+    { ssmid },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!ssmid) throw `ssmid is invalid`;
+
+    let queryObj = { _id: ssmid };
+    let spmsDoc = await SequenceProspectMessageSchedule.findOne(queryObj)
+        .populate("contact")
+        .lean();
+    logg.info(`spmsDoc: ${JSON.stringify(spmsDoc)}`);
+
+    if (!spmsDoc) {
+        throw `failed to find spmsDoc for ssmid: ${ssmid}`;
+    }
+
+    let contactDoc = spmsDoc.contact;
+
+    let updateObj = {
+        $addToSet: {
+            unsubscribe_activities: {
+                type: "email_unsubscribe_confirmed",
+                time: new Date().toISOString(),
+            },
+        },
+    };
+
+    let updateResp = await SequenceProspectMessageSchedule.updateOne(
+        queryObj,
+        updateObj
+    );
+    logg.info(`updateResp: ${JSON.stringify(updateResp)}`);
+
+    let [unsubscribeResp, unsubscribeErr] = await addProspectToUnsubscribeList(
+        { spmsDoc, contactDoc },
+        { txid }
+    );
+    if (unsubscribeErr) throw unsubscribeErr;
+
+    let [analyticsResp, analyticsErr] =
+        await AnalyticUtils.storeCampaignMessageUnsubscribeAnalytic(
+            {
+                sessionId: spmsDoc.analytic_session_id,
+                spmsId: spmsDoc._id,
+                accountId: spmsDoc.account,
+                sequenceId: spmsDoc.sequence,
+                contactId: contactDoc._id,
+                sequenceStepId: spmsDoc.sequence_step,
+                sequenceProspectId: spmsDoc.sequence_prospect,
+            },
+            { txid }
+        );
+    if (analyticsErr) throw analyticsErr;
+
+    logg.info(`ended`);
+    return [updateResp, null];
+}
+
+export const prospectConfirmedUnsubscribeLink = functionWrapper(
+    fileName,
+    "prospectConfirmedUnsubscribeLink",
+    _prospectConfirmedUnsubscribeLink
+);
+
+async function _addProspectToUnsubscribeList(
+    { spmsDoc, contactDoc },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!spmsDoc) throw `spmsDoc is invalid`;
+
+    let spmsId = spmsDoc._id;
+    let accountId = spmsDoc.account;
+    accountId =
+        typeof accountId === "object" ? accountId.toString() : accountId;
+    let senderUserId = spmsDoc.sender;
+    let prospectEmail = contactDoc.email.trim().toLowerCase();
+    let contactId = contactDoc._id;
+
+    let queryObj = { account: accountId, prospect_email: prospectEmail };
+    let updateObj = {
+        sequence_prospect_message: spmsId,
+        contact: contactId,
+        sender: senderUserId,
+        updated_on: new Date(),
+    };
+
+    let unsubscribeListDoc =
+        await CampaignEmailUnsubscribeList.findOneAndUpdate(
+            queryObj,
+            updateObj,
+            { upsert: true, new: true }
+        ).lean();
+
+    logg.info(`unsubscribeListDoc: ${JSON.stringify(unsubscribeListDoc)}`);
+
+    logg.info(`ended`);
+    return [unsubscribeListDoc, null];
+}
+
+const addProspectToUnsubscribeList = functionWrapper(
+    fileName,
+    "addProspectToUnsubscribeList",
+    _addProspectToUnsubscribeList
 );
