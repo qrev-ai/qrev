@@ -5281,3 +5281,379 @@ export const getCampaignDefaults = functionWrapper(
     "getCampaignDefaults",
     _getCampaignDefaults
 );
+/*
+* Context: 
+*   * Our potential customer Scripbox wanted to have a different email ID for the “Reply To” field in the email that we send to the prospects as part of the campaign.
+
+* Challenge:
+*   * If the prospect replies, then another email ID will receive the message. So we won’t be able to detect a reply and show accurate stats.
+
+* Solution:
+*   * Make sure the “Reply To” email ID is logged in to QRev and the Google PubSub Reply service is also set up for this email ID.
+*   * Whenever we detect a message from this email ID, try to connect to the appropriate campaign message and then store the reply analytic.
+
+* For more details, check this notion doc: https://www.notion.so/thetrackapp/Reply-To-feature-for-Campaigns-d4a30efa7bc148deb5c4c2896670d5b9
+
+* "messages" structure: [{ threadId, messageId }]
+*/
+async function _checkIfRepliedToMessagesSentByAnotherSender(
+    { messages, userInfo, userAuthObj },
+    { txid, logg, funcName }
+) {
+    if (!userInfo) throw `userInfo is invalid`;
+    logg.info(`started`);
+
+    if (!messages || !messages.length) {
+        logg.info(`no messages found. So returning.`);
+        return [true, null];
+    }
+
+    let isAReplyToSender = await SequenceProspectMessageSchedule.exists({
+        "reply_to.user_id": userInfo._id,
+        message_status: { $ne: "sent" },
+    });
+    logg.info(`isAReplyToSender: ${isAReplyToSender}`);
+    if (isAReplyToSender) {
+        // do nothing
+    } else {
+        // WHY to return if not a sender?
+        // If not a sender for any existing message, then no need to check further
+        // Also, we don't want to unnecessarily check details of each message of user that isn't related to QRev since it is a breach of privacy
+        logg.info(`userInfo is not a reply to sender. So returning.`);
+        return [true, null];
+    }
+
+    let promises = [];
+    for (let i = 0; i < messages.length; i++) {
+        if (i !== 0) {
+            // wait for 2 sec
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
+        const message = messages[i];
+        let promise = checkIfRepliedToMessageSentByAnotherSender(
+            { message, userInfo, userAuthObj },
+            { txid, sendErrorMsg: true }
+        );
+        promises.push(promise);
+    }
+
+    let responses = await Promise.all(promises);
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+const checkIfRepliedToMessagesSentByAnotherSender = functionWrapper(
+    fileName,
+    "checkIfRepliedToMessagesSentByAnotherSender",
+    _checkIfRepliedToMessagesSentByAnotherSender
+);
+
+async function _checkIfRepliedToMessageSentByAnotherSender(
+    { message, userInfo, userAuthObj },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!message) throw `message is invalid`;
+    if (!userInfo) throw `userInfo is invalid`;
+
+    let { threadId, messageId } = message;
+    if (!threadId) throw `threadId is invalid`;
+    if (!messageId) throw `messageId is invalid`;
+
+    let { email: userEmail, _id: userId } = userInfo;
+    if (!userEmail) throw `userEmail is invalid`;
+    if (!userId) throw `userId is invalid`;
+    userId = userId.toString();
+
+    /*
+    * Check if the “messageId” is the same as the “threadId”
+    - If YES, then continue below
+    - If NO, then check if “threadId” matches the previous “reply_thread_id”. If so, then store the reply analytic.
+    */
+    if (threadId !== messageId) {
+        let spmsDoc = await SequenceProspectMessageSchedule.findOne({
+            "reply_to.thread_id": threadId,
+            "reply_to.user_id": userId,
+        })
+            .populate("contact", "_id email")
+            .populate("sender", "_id email")
+            .lean();
+
+        if (!spmsDoc) {
+            logg.info(
+                `spmsDoc not found for threadId: ${threadId}. so not storing the reply analytic.`
+            );
+            logg.info(`ended`);
+            return [true, null];
+        }
+        logg.info(`matchingSpmsDoc: ${JSON.stringify(spmsDoc)}`);
+
+        let [messageDetailsResp, messageDetailsErr] =
+            await GoogleUtils.getEmailMessageDetails(
+                { authObj: userAuthObj, messages: [message] },
+                { txid }
+            );
+        if (messageDetailsErr) throw messageDetailsErr;
+        if (!messageDetailsResp || !messageDetailsResp.length) {
+            throw `failed to get message details for message: ${JSON.stringify(
+                message
+            )}`;
+        }
+        let [messageData] = messageDetailsResp;
+
+        logg.info(`reply matched. So storing the reply analytic.`);
+        let [storeReplyResp, storeReplyErr] =
+            await storeReplyAnalyticForDifferentSender(
+                {
+                    threadId,
+                    messageId,
+                    userId,
+                    userEmail,
+                    spmsDoc,
+                    messageData,
+                },
+                { txid }
+            );
+        if (storeReplyErr) throw storeReplyErr;
+
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    let [messageDetailsResp, messageDetailsErr] =
+        await GoogleUtils.getEmailMessageDetails(
+            { authObj: userAuthObj, messages: [message] },
+            { txid }
+        );
+    if (messageDetailsErr) throw messageDetailsErr;
+    if (!messageDetailsResp || !messageDetailsResp.length) {
+        throw `failed to get message details for message: ${JSON.stringify(
+            message
+        )}`;
+    }
+    let [messageData] = messageDetailsResp;
+
+    /*
+    * Check if the prospect is the prospect for that campaign message.
+    - If YES, then continue below
+    - If NO, then do nothing.
+    */
+    // from the messageData, get the prospect email from the "From" field in message header
+    let headers =
+        messageData && messageData.payload && messageData.payload.headers;
+    if (!headers || !headers.length) {
+        throw `headers is invalid`;
+    }
+    let prospectEmail = getFromEmailUsingHeaders({ headers }, { txid });
+    if (!prospectEmail) {
+        throw `failed to get prospectEmail from headers`;
+    }
+
+    let spmsId = getSpmsIdIfTrackingTagPresentInMessage(
+        { messageData },
+        { txid }
+    );
+    if (!spmsId) {
+        logg.info(`spmsId not found. So not storing the reply analytic.`);
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    let matchingSpmsDoc = await SequenceProspectMessageSchedule.findOne({
+        _id: spmsId,
+    })
+        .populate("contact", "_id email")
+        .populate("sender", "_id email")
+        .lean();
+    if (!matchingSpmsDoc) {
+        logg.info(`not able to find matchingSpmsDoc for spmsId: ${spmsId}`);
+        throw `failed to find matchingSpmsDoc for spmsId: ${spmsId}`;
+    }
+    logg.info(`matchingSpmsDoc: ${JSON.stringify(matchingSpmsDoc)}`);
+
+    // see if userId matches with "reply_to.user_id" in matchingSpmsDoc
+    if (matchingSpmsDoc.reply_to.user_id.toString() !== userId) {
+        logg.info(
+            `userId doesn't match with reply_to.user_id. So not storing the reply analytic.`
+        );
+        logg.info(`ended`);
+        return [true, null];
+    }
+
+    logg.info(`storing the reply analytic.`);
+    let [storeReplyResp, storeReplyErr] =
+        await storeReplyAnalyticForDifferentSender(
+            {
+                threadId,
+                messageId,
+                userId,
+                userEmail,
+                spmsDoc: matchingSpmsDoc,
+                messageData,
+            },
+            { txid }
+        );
+    if (storeReplyErr) throw storeReplyErr;
+
+    let spmsUpdateObj = {
+        "reply_to.thread_id": threadId,
+        "reply_to.message_id": messageId,
+        "reply_to.replied_on": new Date().toISOString(),
+    };
+
+    let spmsUpdateResp = await SequenceProspectMessageSchedule.updateOne(
+        { _id: spmsId },
+        spmsUpdateObj
+    );
+    logg.info(`spmsUpdateResp: ${JSON.stringify(spmsUpdateResp)}`);
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const checkIfRepliedToMessageSentByAnotherSender = functionWrapper(
+    fileName,
+    "checkIfRepliedToMessageSentByAnotherSender",
+    _checkIfRepliedToMessageSentByAnotherSender
+);
+
+async function _storeReplyAnalyticForDifferentSender(
+    { threadId, messageId, userId, userEmail, spmsDoc, messageData },
+    { txid, logg, funcName }
+) {
+    /*
+     * NOTE: in spmsDoc, field "contact" and "sender" are populated fields
+     */
+
+    let messageHeaders =
+        messageData && messageData.payload && messageData.payload.headers;
+    let repliedOnDate = new Date();
+    if (messageHeaders && messageHeaders.length) {
+        /*
+        * Date Header to be found:
+        {
+            "name": "Date",
+            "value": "Thu, 6 Jun 2024 12:22:12 +0530"
+        }
+        */
+        let dateHeader = messageHeaders.find((x) => x.name === "Date");
+        if (dateHeader) {
+            let dateStr = dateHeader.value;
+            try {
+                repliedOnDate = new Date(dateStr);
+                logg.info(`we have set repliedOnDate as: ${repliedOnDate}`);
+            } catch (e) {
+                logg.error(`failed to parse dateStr: ${dateStr}`);
+            }
+        }
+    }
+
+    let isFailed = GoogleUtils.hasEmailFailed(
+        { message: messageData },
+        { txid }
+    );
+
+    let [ReplyAnalyticResp, ReplyAnalyticErr] =
+        await AnalyticUtils.storeCampaignMessageReplyAnalytic(
+            {
+                sessionId: spmsDoc.analytic_session_id,
+                spmsId: spmsDoc._id,
+                accountId: spmsDoc.account,
+                sequenceId: spmsDoc.sequence,
+                contactId: spmsDoc.contact._id,
+                sequenceStepId: spmsDoc.sequence_step,
+                sequenceProspectId: spmsDoc.sequence_prospect,
+                messageId,
+                messageDetails: messageData,
+                repliedOnDate,
+                isFailed,
+                replyToUserId: userId,
+            },
+            { txid }
+        );
+    if (ReplyAnalyticErr) throw ReplyAnalyticErr;
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+const storeReplyAnalyticForDifferentSender = functionWrapper(
+    fileName,
+    "storeReplyAnalyticForDifferentSender",
+    _storeReplyAnalyticForDifferentSender
+);
+
+function getFromEmailUsingHeaders({ headers }, { txid }) {
+    const funcName = "getFromEmailUsingHeaders";
+    const logg = logger.child({ txid, funcName });
+    // logg.info(`started`);
+    // NOTE: Maybe need to move code to GoogleUtils file because when we support Outlook, it may have different header structure
+
+    if (!headers) {
+        logg.info(`headers is invalid`);
+        return null;
+    }
+    if (!headers.length) {
+        logg.info(`headers is empty`);
+        return null;
+    }
+
+    let fromHeader = headers.find((x) => x.name === "From");
+    if (!fromHeader) {
+        logg.info(`fromHeader not found`);
+        return null;
+    }
+
+    let fromValue = fromHeader.value;
+    if (!fromValue) {
+        logg.info(`fromValue not found`);
+        return null;
+    }
+
+    // see if the fromValue has the email ID in format "name <email>"
+    let emailMatch = fromValue.match(/<([^>]+)>/);
+    if (!emailMatch) {
+        logg.info(`emailMatch not found. so returning fromValue`);
+        return fromValue;
+    }
+
+    let email = emailMatch[1];
+    if (email && email.length) {
+        email = email.trim().toLowerCase();
+    }
+    logg.info(`email: ${email}`);
+    return email;
+}
+
+function getSpmsIdIfTrackingTagPresentInMessage(
+    { messageData, accountType = "google" },
+    { txid }
+) {
+    const funcName = "getSpmsIdIfTrackingTagPresentInMessage";
+    const logg = logger.child({ txid, funcName });
+    // logg.info(`started`);
+
+    const serverUrlPath = process.env.SERVER_URL_PATH;
+    let trackingUrl = `${serverUrlPath}/api/campaign/email_open`;
+    let spmsIdQueryParamName = "ssmid";
+
+    let spmsId = null;
+    if (accountType === "google" || accountType === "gmail") {
+        spmsId = GoogleUtils.getSpmsIdIfTrackingTagPresentInMessage(
+            { messageData, trackingUrl, spmsIdQueryParamName },
+            { txid }
+        );
+    } else {
+        throw `accountType: ${accountType} is not supported`;
+    }
+
+    if (!spmsId) {
+        logg.info(`trackingTag not found`);
+        return null;
+    }
+
+    logg.info(`spmsId: ${spmsId}`);
+    // logg.info(`ended`);
+    return spmsId;
+}
