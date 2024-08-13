@@ -1540,7 +1540,7 @@ async function _executeCampaignStepUtil(
         throw `senderAuthObj is invalid for sender_email: ${sender_email}`;
 
     if (spmsId) {
-        message_body = convertToHtmlAndAddTrackingTag(
+        message_body = convertToHtmlAndAddTags(
             { emailBody: message_body, campaignProspectId: spmsId },
             { txid }
         );
