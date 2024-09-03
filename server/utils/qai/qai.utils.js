@@ -17,6 +17,7 @@ async function _converse(
         conversationInfo,
         accountInfo,
         userInfo,
+        campaignConfig,
     },
     { txid, logg, funcName }
 ) {
@@ -41,6 +42,11 @@ async function _converse(
         sender_company: senderCompany,
         sender_person: senderPerson,
     };
+
+    let fieldsFromConfigDoc = formatFieldsFromCampaignConfigDoc({ campaignConfig }, { txid });
+    if (fieldsFromConfigDoc) {
+        data = { ...data, ...fieldsFromConfigDoc };
+    }
 
     logg.info(`inp-data: ${JSON.stringify(data)}`);
     if (uploadedData && uploadedData.values && uploadedData.values.length > 0) {
@@ -217,6 +223,40 @@ function formatUserInfo({ userInfo }, { txid }) {
 
     logg.info(`ended`);
 
+    return result;
+}
+
+function formatFieldsFromCampaignConfigDoc({ campaignConfig }, { txid }) {
+    const funcName = "formatFieldsFromCampaignConfigDoc";
+
+    const logg = logger.child({ txid, funcName });
+
+    logg.info(`started`);
+
+    if (!campaignConfig) {
+        logg.info(`campaignConfig not found. So not returning any fields`);
+        return {};
+    }
+
+    let sequenceStepsTemplate = campaignConfig && campaignConfig.sequence_steps_template;
+    let resourceDocuments = campaignConfig && campaignConfig.resource_documents;
+    let excludeDomains = campaignConfig && campaignConfig.exclude_domains;
+
+    let result = {
+        default_configurations: {},
+        sender_resource_documents: [],
+    };
+    if (sequenceStepsTemplate && sequenceStepsTemplate.length) {
+        result.default_configurations.sequence_steps_template = sequenceStepsTemplate;
+    }
+    if (excludeDomains && excludeDomains.length) {
+        result.default_configurations.exclude_domains = excludeDomains;
+    }
+    if (resourceDocuments && resourceDocuments.length) {
+        result.sender_resource_documents = resourceDocuments;
+    }
+
+    logg.info(`ended`);
     return result;
 }
 

@@ -21,6 +21,7 @@ import { CampaignEmailUnsubscribeList } from "../../models/campaign/campaign.uns
 import * as FileUtils from "../std/file.utils.js";
 import { IntermediateProspectMessage } from "../../models/campaign/intermediate.prospect.message.model.js";
 import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
+import * as S3Utils from "../aws/aws.s3.utils.js";
 
 const fileName = "Campaign Utils";
 
@@ -2363,6 +2364,10 @@ export const getEmailSenderListForCampaign = functionWrapper(
 
 async function _executeCampaignCronJob({}, { txid, logg, funcName }) {
     logg.info(`started at ${new Date().toISOString()}`);
+    if (process.env.LOCAL_COMPUTER === "yes") {
+        logg.info(`since LOCAL_COMPUTER is yes, not executing the cron job`);
+        return;
+    }
 
     let now = new Date();
     let now1MinBack = new Date(now.getTime() - 1 * 60 * 1000);
@@ -5554,6 +5559,7 @@ const scheduleTimeForSequenceIfNotAlreadyDone = functionWrapper(
     "scheduleTimeForSequenceIfNotAlreadyDone",
     _scheduleTimeForSequenceIfNotAlreadyDone
 );
+
 async function _getCampaignDefaults(
     { accountId, setDefaultIfNotFound = false },
     { txid, logg, funcName }
@@ -5575,22 +5581,29 @@ async function _getCampaignDefaults(
         return [null, null];
     }
 
-    let exclude_domains = campaignDefaults && campaignDefaults.exclude_domains;
-    if (!exclude_domains) {
-        exclude_domains = [];
+    if (!campaignDefaults) {
+        campaignDefaults = {};
+    }
+    if (!campaignDefaults.exclude_domains) {
+        campaignDefaults.exclude_domains = [];
     }
 
-    let sequence_steps_template =
-        campaignDefaults && campaignDefaults.sequence_steps_template;
-    if (!sequence_steps_template) {
-        sequence_steps_template = [];
+    if (!campaignDefaults.sequence_steps_template) {
+        campaignDefaults.sequence_steps_template = [];
     }
-    if (!sequence_steps_template.length && setDefaultIfNotFound) {
-        sequence_steps_template = CampaignDefaults.sequence_steps_template;
+    if (
+        !campaignDefaults.sequence_steps_template.length &&
+        setDefaultIfNotFound
+    ) {
+        campaignDefaults.sequence_steps_template =
+            CampaignDefaults.sequence_steps_template;
         // update the sequence_steps_template in the CampaignConfig collection
         let seqStepTemplateUpdateResp = await CampaignConfig.updateOne(
             defaultQueryObj,
-            { sequence_steps_template }
+            {
+                sequence_steps_template:
+                    campaignDefaults.sequence_steps_template,
+            }
         );
         logg.info(
             `seqStepTemplateUpdateResp: ${JSON.stringify(
@@ -5599,7 +5612,7 @@ async function _getCampaignDefaults(
         );
     }
 
-    let result = { exclude_domains, sequence_steps_template };
+    let result = campaignDefaults;
 
     logg.info(`ended`);
     return [result, null];
@@ -5986,3 +5999,107 @@ function getSpmsIdIfTrackingTagPresentInMessage(
     // logg.info(`ended`);
     return spmsId;
 }
+
+async function _storeResourceFile(
+    { accountId, resourceName, file },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!resourceName) throw `resourceName is invalid`;
+    if (!file) throw `file is invalid`;
+
+    // resourceName will be either “brand_doc”,”pain_points_doc”, “case_studies_doc” or “icp_doc”
+    let validResourceNames = CampaignDefaults.resource_file_types;
+    if (!validResourceNames.includes(resourceName))
+        throw `Invalid resource_name: ${resourceName}. It can only be ${validResourceNames.join(
+            ", "
+        )}`;
+
+    // Check if the resource is already configured
+    const [configResult, configErr] = await isResourceConfigured(
+        { accountId, resourceName },
+        { txid }
+    );
+    if (configErr) throw configErr;
+    if (configResult && configResult.isConfigured) {
+        throw `Resource ${resourceName} is already configured`;
+    }
+
+    const campaignResourceConfigPrefixPath =
+        process.env.CAMPAIGN_RESOURCE_CONFIG_PREFIX_PATH;
+
+    const [fileObj, fileErr] = await FileUtils.readFile(
+        { filePath: file.path },
+        { txid }
+    );
+    if (fileErr) throw fileErr;
+
+    // Upload file to S3
+    const fileName = `${campaignResourceConfigPrefixPath}/${accountId}/${resourceName}_${file.originalname}`;
+    logg.info(`fileName: ${fileName}`);
+    const [s3Link, s3Error] = await S3Utils.uploadFile(
+        { file: fileObj, fileName, ContentType: file.mimetype },
+        { txid }
+    );
+    if (s3Error) throw s3Error;
+
+    // Store S3 link in CampaignConfig model
+    const updateResult = await CampaignConfig.findOneAndUpdate(
+        { account: accountId },
+        {
+            $push: {
+                resource_documents: {
+                    name: resourceName,
+                    s3_link: s3Link,
+                    added_on: new Date().toISOString(),
+                },
+            },
+            updated_on: new Date().toISOString(),
+        },
+        { new: true, upsert: true }
+    );
+    if (!updateResult) throw "Failed to update CampaignConfig";
+
+    // now using FileUtils, unlink the file from the server
+    let [unlinkResult, unlinkErr] = await FileUtils.deleteFile(
+        { filePath: file.path },
+        { txid }
+    );
+    if (unlinkErr) throw unlinkErr;
+
+    logg.info(`ended successfully`);
+    return [{ s3Link }, null];
+}
+
+export const storeResourceFile = functionWrapper(
+    fileName,
+    "storeResourceFile",
+    _storeResourceFile
+);
+
+async function _isResourceConfigured(
+    { accountId, resourceName },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!resourceName) throw `resourceName is invalid`;
+
+    // Check if the resource is configured in the CampaignConfig model
+    const config = await CampaignConfig.findOne({ account: accountId });
+    const isConfigured =
+        config &&
+        config.resource_documents &&
+        config.resource_documents.length &&
+        config.resource_documents.some((doc) => doc.name === resourceName);
+
+    logg.info(`ended successfully`);
+    return [{ isConfigured }, null];
+}
+
+const isResourceConfigured = functionWrapper(
+    fileName,
+    "isResourceConfigured",
+    _isResourceConfigured
+);

@@ -78,3 +78,16 @@ export const writeJsonArrayToCsvFile = functionWrapper(
     "writeJsonArrayToCsvFile",
     _writeJsonArrayToCsvFile
 );
+
+async function _readFile({ filePath }, { txid, logg, funcName }) {
+    logg.info(`started`);
+    try {
+        const file = await fs.promises.readFile(filePath);
+        logg.info(`ended`);
+        return [file, null];
+    } catch (err) {
+        throw new CustomError(err, fileName, funcName);
+    }
+}
+
+export const readFile = functionWrapper(fileName, "readFile", _readFile);

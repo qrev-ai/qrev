@@ -75,6 +75,19 @@ const CampaignConfigSchema = new Schema({
      */
     reply_to_user: { type: Schema.Types.ObjectId, ref: "User" },
 
+    /*
+     * Added "resource_documents" on 30th Aug 2024.
+     * Context: When a new user logs in QRev for the first time, we need them to upload their brand document, pain points doc, ICP text/voice/doc etc.
+     * resource_documents will store each of these documents which are uploaded by the user.
+     * Sample structure:
+     * [{
+     *  name: "document_name",
+     *  s3_link: "s3_link",
+     *  added_on: "date_in_ISO_format"
+     * }]
+     */
+    resource_documents: [],
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });

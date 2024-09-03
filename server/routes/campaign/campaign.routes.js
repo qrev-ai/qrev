@@ -1,6 +1,8 @@
 import { Router } from "express";
 import * as CampaignApis from "../../apis/campaign/campaign.apis.js";
 import { apiWrapper } from "../../std/wrappers.js";
+import multer from "multer";
+const upload = multer({ dest: "uploads/" });
 
 const router = Router();
 
@@ -81,5 +83,12 @@ router.get(
     "/sequence/step/analytics/reply",
     apiWrapper(CampaignApis.getSequenceStepReplyAnalyticsApi)
 );
+
+router
+    .route("/set/config/resource")
+    .post(
+        upload.single("resource"),
+        apiWrapper(CampaignApis.storeResourceFileApi)
+    );
 
 export default router;

@@ -676,3 +676,42 @@ export async function getSequenceStepReplyAnalyticsApi(req, res, next) {
         result,
     });
 }
+
+/*
+ * Added on 30th August 2024
+ * Context: When a new user logs in QRev for the first time, we need them to upload their brand document, pain points doc, ICP text/voice/doc etc.
+ * WHAT DOES THIS API DO?
+ * - This API is used to store the resource file (like brand document, pain points doc, ICP text/voice/doc etc.) uploaded by the user.
+ * - It stores the file in the database and returns the file path.
+ * WHERE IS THIS API USED?
+ * - This API is used in the QRev Desktop App when user logs in and if any of the required resources are not uploaded, it will ask user to upload the resources.
+ */
+export async function storeResourceFileApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "storeResourceFileApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId } = req.query;
+    let { resource_name: resourceName } = req.body;
+    let file = req.file;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!resourceName) throw `Missing resource_name`;
+    if (!file) throw `No file uploaded`;
+
+    let [result, resultErr] = await CampaignUtils.storeResourceFile(
+        { accountId, resourceName, file },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+    });
+}

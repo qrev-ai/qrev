@@ -28,6 +28,7 @@
     },
     "dependencies": {
         "@sendgrid/mail": "^7.7.0",
+        "aws-sdk": "^2.1686.0",
         "axios": "^1.5.1",
         "bluebird": "^3.7.2",
         "cors": "^2.8.5",
@@ -42,6 +43,7 @@
         "moment": "^2.29.4",
         "moment-timezone": "^0.5.43",
         "mongoose": "^7.5.3",
+        "multer": "^1.4.5-lts.1",
         "node-cron": "^3.0.3",
         "qs": "^6.11.2",
         "uuid": "^9.0.1",

@@ -14,6 +14,12 @@ export async function signAccessToken(req, res, next) {
             return;
         }
 
+        if (process.env.LOCAL_COMPUTER === "yes") {
+            _addTestUserToReq({ req, logg });
+            next();
+            return;
+        }
+
         const authHeader = req.headers["authorization"];
         const accessToken = authHeader && authHeader.split(" ")[1];
         if (!accessToken) {
@@ -46,4 +52,35 @@ export async function signAccessToken(req, res, next) {
         logg.error(`ended unsuccessfully`);
         next(error);
     }
+}
+
+function _addTestUserToReq({ req, logg }) {
+    logg.info(`Since LOCAL_COMPUTER is set, skipping token verification`);
+    let testUserId = null,
+        testState = null;
+    if (req.body.testUserId) {
+        logg.info(
+            `Setting userId to req.body.testUserId: ${req.body.testUserId}`
+        );
+        testUserId = req.body.testUserId;
+    } else {
+        logg.info(
+            `Setting userId to process.env.LOCAL_COMPUTER_USER_ID: ${process.env.LOCAL_COMPUTER_USER_ID}`
+        );
+        testUserId = process.env.LOCAL_COMPUTER_USER_ID;
+    }
+
+    if (req.body.testState) {
+        logg.info(`Setting state to req.body.testState: ${req.body.testState}`);
+        testState = req.body.testState;
+    } else {
+        logg.info(
+            `Setting state to process.env.LOCAL_COMPUTER_STATE: ${process.env.LOCAL_COMPUTER_STATE}`
+        );
+        testState = process.env.LOCAL_COMPUTER_STATE;
+    }
+    req.user = {
+        userId: testUserId,
+        state: testState,
+    };
 }

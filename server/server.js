@@ -5,15 +5,19 @@ import expressRequestId from "express-request-id";
 // configure .env using package dotenv
 dotenv.config({ path: "./.env" });
 import { dbConnect } from "./db.connect.js";
-import { setRoutes } from "./routes.js";
+
 import { invalidRouteHandler } from "./middleware/invalid.route.js";
 import { errorHandler } from "./middleware/error.handler.js";
 import { signAccessToken } from "./middleware/verify.access.token.js";
 import { logIncomingRequest } from "./middleware/log.incoming.request.js";
 import { logger } from "./logger.js";
 import { cronSetup } from "./cron.setup.js";
+import { awsSdkSetup } from "./aws.setup.js";
+import { setRoutes } from "./routes.js";
 
 dbConnect();
+
+awsSdkSetup();
 
 const app = new express();
 

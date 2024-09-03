@@ -58,6 +58,14 @@ export async function converseApi(req, res, next) {
         );
     if (conversationErr) throw conversationErr;
 
+    // get campaign defaults from Campaign Config in CampaignUtils
+    let [campaignConfig, campaignConfigErr] =
+        await CampaignUtils.getCampaignDefaults(
+            { accountId, setDefaultIfNotFound: false },
+            { txid }
+        );
+    if (campaignConfigErr) throw campaignConfigErr;
+
     let [botResp, botErr] = await QAiBotUtils.converse(
         {
             query,
@@ -67,6 +75,7 @@ export async function converseApi(req, res, next) {
             conversationInfo,
             accountInfo,
             userInfo,
+            campaignConfig,
         },
         { txid }
     );
