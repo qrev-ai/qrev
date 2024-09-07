@@ -211,3 +211,33 @@ export const updateAccountUserStatusAsLoggedIn = functionWrapper(
     "updateAccountUserStatusAsLoggedIn",
     _updateAccountUserStatusAsLoggedIn
 );
+
+async function _doAllUsersBelongToAccount(
+    { accountId, userIds },
+    { logg, txid, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `invalid accountId`;
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+        throw `invalid userIds`;
+    }
+
+    logg.info(`userIds: ${JSON.stringify(userIds)}`);
+    const count = await AccountUser.countDocuments({
+        account: accountId,
+        user: { $in: userIds },
+    });
+    logg.info(`count: ${count}`);
+
+    const allBelong = count === userIds.length;
+
+    logg.info(`All users belong to account: ${allBelong}`);
+    logg.info(`ended`);
+    return [allBelong, null];
+}
+
+export const doAllUsersBelongToAccount = functionWrapper(
+    fileName,
+    "doAllUsersBelongToAccount",
+    _doAllUsersBelongToAccount
+);

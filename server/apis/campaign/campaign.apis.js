@@ -777,3 +777,73 @@ export async function checkMissingResourcesApi(req, res, next) {
         missing_resources: missingResources,
     });
 }
+
+/*
+ * Added on 7th September 2024
+ * WHAT DOES THIS API DO?
+ * - Retrieves existing campaign defaults for the user's account.
+ * - If no defaults exist, it creates a new config with default values.
+ * WHERE IS THIS API USED?
+ * - In the QRev Desktop App when onbaording user. also used in Settings page.
+ */
+export async function getExistingCampaignDefaultsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getExistingCampaignDefaultsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw new CustomError(`Missing userId from decoded access token`, fileName, funcName);
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) throw new CustomError(`Missing account_id`, fileName, funcName);
+
+    let [result, resultErr] = await CampaignUtils.getExistingCampaignDefaults(
+        { accountId, userId },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        campaign_defaults: result,
+    });
+}
+
+/*
+ * Added on 7th September 2024
+ * WHAT DOES THIS API DO?
+ * - Sets campaign defaults for the user's account.
+ * WHERE IS THIS API USED?
+ * - In the QRev Desktop App when onbaording user. also used in Settings page.
+ */
+export async function setCampaignDefaultsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "setCampaignDefaultsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw new CustomError(`Missing userId from decoded access token`, fileName, funcName);
+
+    let { account_id: accountId } = req.query;
+    let { email_senders, exclude_domains, sequence_steps_template } = req.body;
+
+    if (!accountId) throw new CustomError(`Missing account_id`, fileName, funcName);
+    if (!email_senders || !Array.isArray(email_senders)) 
+        throw new CustomError(`Invalid email_senders`, fileName, funcName);
+
+    let [result, resultErr] = await CampaignUtils.setCampaignDefaults(
+        { accountId, email_senders, exclude_domains, sequence_steps_template },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+    });
+}

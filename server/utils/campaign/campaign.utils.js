@@ -22,6 +22,8 @@ import * as FileUtils from "../std/file.utils.js";
 import { IntermediateProspectMessage } from "../../models/campaign/intermediate.prospect.message.model.js";
 import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
 import * as S3Utils from "../aws/aws.s3.utils.js";
+import * as AccountUserUtils from "../account/account.user.utils.js";
+
 import path from "path";
 
 const fileName = "Campaign Utils";
@@ -6113,7 +6115,14 @@ async function _processTextResource(
     if (tempFileErr) throw tempFileErr;
 
     const [s3Link, s3LinkErr] = await uploadFileToS3(
-        { accountId, resourceName, filePath: tempFilePath, prefixPath, contentType: "text/plain", originalFileName: `${resourceName}.txt` },
+        {
+            accountId,
+            resourceName,
+            filePath: tempFilePath,
+            prefixPath,
+            contentType: "text/plain",
+            originalFileName: `${resourceName}.txt`,
+        },
         { txid }
     );
     if (s3LinkErr) throw s3LinkErr;
@@ -6137,7 +6146,14 @@ async function _processFileResources(
     const s3Links = [];
     for (let file of files) {
         const [s3Link, s3LinkErr] = await uploadFileToS3(
-            { accountId, resourceName, filePath: file.path, prefixPath, contentType: file.mimetype, originalFileName: file.originalname },
+            {
+                accountId,
+                resourceName,
+                filePath: file.path,
+                prefixPath,
+                contentType: file.mimetype,
+                originalFileName: file.originalname,
+            },
             { txid }
         );
         if (s3LinkErr) throw s3LinkErr;
@@ -6155,7 +6171,14 @@ const processFileResources = functionWrapper(
 );
 
 async function _uploadFileToS3(
-    { accountId, resourceName, filePath, prefixPath, contentType, originalFileName },
+    {
+        accountId,
+        resourceName,
+        filePath,
+        prefixPath,
+        contentType,
+        originalFileName,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -6164,7 +6187,7 @@ async function _uploadFileToS3(
 
     logg.info(`filePath: ${filePath}`);
 
-    const uniqueId = uuidv4().replace(/-/g, '');
+    const uniqueId = uuidv4().replace(/-/g, "");
     const fileName = `${prefixPath}/${accountId}/${resourceName}_${uniqueId}_${originalFileName}`;
     logg.info(`fileName: ${fileName}`);
 
@@ -6266,4 +6289,110 @@ export const checkMissingResources = functionWrapper(
     fileName,
     "checkMissingResources",
     _checkMissingResources
+);
+
+async function _getExistingCampaignDefaults(
+    { accountId, userId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+
+    let campaignConfigDoc = await CampaignConfig.findOne({
+        account: accountId,
+    }).lean();
+
+    if (!campaignConfigDoc) {
+        // Create default config if not exists
+        let defaultConfig = {
+            _id: uuidv4(),
+            account: accountId,
+            email_senders: [{ user_id: userId, email: req.user.email }],
+            exclude_domains: [],
+            sequence_steps_template: [
+                {
+                    type: "ai_generated_email",
+                    time_of_dispatch: {
+                        time_value: 1,
+                        time_unit: "day",
+                    },
+                },
+            ],
+        };
+        let campaignConfig = new CampaignConfig(defaultConfig);
+        campaignConfigDoc = await campaignConfig.save();
+    }
+
+    let result = {
+        email_senders: campaignConfigDoc.email_senders.map(
+            (sender) => sender.email
+        ),
+        exclude_domains: campaignConfigDoc.exclude_domains,
+        sequence_steps_template: campaignConfigDoc.sequence_steps_template,
+    };
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getExistingCampaignDefaults = functionWrapper(
+    fileName,
+    "getExistingCampaignDefaults",
+    _getExistingCampaignDefaults
+);
+
+async function _setCampaignDefaults(
+    { accountId, email_senders, exclude_domains, sequence_steps_template },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+
+    let [userObjs, userErr] = await UserUtils.getUserInfoByEmails(
+        { emails: email_senders },
+        { txid }
+    );
+    if (userErr) throw userErr;
+
+    let [doAllUsersBelongToAccount, doAllUsersBelongToAccountErr] =
+        await AccountUserUtils.doAllUsersBelongToAccount(
+            { accountId, userIds: userObjs.map((x) => x._id.toString()) },
+            { txid }
+        );
+    if (doAllUsersBelongToAccountErr) throw doAllUsersBelongToAccountErr;
+    if (!doAllUsersBelongToAccount)
+        throw new CustomError(
+            `All users do not belong to the account`,
+            fileName,
+            funcName
+        );
+
+    let emailSenders = userObjs.map((x) => ({
+        user_id: x._id.toString(),
+        email: x.email,
+    }));
+
+    let updateObj = {
+        email_senders: emailSenders,
+        exclude_domains,
+        sequence_steps_template,
+        updated_on: new Date(),
+    };
+
+    let updateResp = await CampaignConfig.findOneAndUpdate(
+        { account: accountId },
+        updateObj,
+        { new: true }
+    );
+
+    logg.info(`updateResp: ${JSON.stringify(updateResp)}`);
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const setCampaignDefaults = functionWrapper(
+    fileName,
+    "setCampaignDefaults",
+    _setCampaignDefaults
 );

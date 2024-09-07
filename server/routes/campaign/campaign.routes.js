@@ -94,4 +94,14 @@ router.get(
     apiWrapper(CampaignApis.checkMissingResourcesApi)
 );
 
+router.get(
+    "/config/defaults",
+    apiWrapper(CampaignApis.getExistingCampaignDefaultsApi)
+);
+
+router.post(
+    "/config/defaults",
+    apiWrapper(CampaignApis.setCampaignDefaultsApi)
+);
+
 export default router;
