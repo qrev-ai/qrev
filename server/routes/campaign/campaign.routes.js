@@ -84,11 +84,14 @@ router.get(
     apiWrapper(CampaignApis.getSequenceStepReplyAnalyticsApi)
 );
 
-router
-    .route("/set/config/resource")
-    .post(
-        upload.single("resource"),
-        apiWrapper(CampaignApis.storeResourceFileApi)
-    );
+router.route("/set/config/resource").post(
+    upload.array("resources", 10), // Allow up to 10 files
+    apiWrapper(CampaignApis.storeResourceInfoApi)
+);
+
+router.get(
+    "/check/missing/resources",
+    apiWrapper(CampaignApis.checkMissingResourcesApi)
+);
 
 export default router;

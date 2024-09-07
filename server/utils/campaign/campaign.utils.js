@@ -22,6 +22,7 @@ import * as FileUtils from "../std/file.utils.js";
 import { IntermediateProspectMessage } from "../../models/campaign/intermediate.prospect.message.model.js";
 import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
 import * as S3Utils from "../aws/aws.s3.utils.js";
+import path from "path";
 
 const fileName = "Campaign Utils";
 
@@ -6001,22 +6002,21 @@ function getSpmsIdIfTrackingTagPresentInMessage(
 }
 
 async function _storeResourceFile(
-    { accountId, resourceName, file },
+    { accountId, resourceName, resourceType, resourceText, files },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
     if (!accountId) throw `accountId is invalid`;
     if (!resourceName) throw `resourceName is invalid`;
-    if (!file) throw `file is invalid`;
+    if (!resourceType) throw `resourceType is invalid`;
 
-    // resourceName will be either “brand_doc”,”pain_points_doc”, “case_studies_doc” or “icp_doc”
-    let validResourceNames = CampaignDefaults.resource_file_types;
-    if (!validResourceNames.includes(resourceName))
+    if (!isValidResourceName(resourceName)) {
+        const validResourceNames = CampaignDefaults.resource_file_types;
         throw `Invalid resource_name: ${resourceName}. It can only be ${validResourceNames.join(
             ", "
         )}`;
+    }
 
-    // Check if the resource is already configured
     const [configResult, configErr] = await isResourceConfigured(
         { accountId, resourceName },
         { txid }
@@ -6026,32 +6026,176 @@ async function _storeResourceFile(
         throw `Resource ${resourceName} is already configured`;
     }
 
-    const campaignResourceConfigPrefixPath =
-        process.env.CAMPAIGN_RESOURCE_CONFIG_PREFIX_PATH;
-
-    const [fileObj, fileErr] = await FileUtils.readFile(
-        { filePath: file.path },
+    const [s3Links, s3LinksErr] = await processAndUploadFiles(
+        { accountId, resourceName, resourceType, resourceText, files },
         { txid }
     );
+    if (s3LinksErr) throw s3LinksErr;
+
+    if (s3Links && s3Links.length) {
+        const [updateResult, updateErr] = await updateCampaignConfig(
+            { accountId, resourceName, s3Links },
+            { txid }
+        );
+        if (updateErr) throw updateErr;
+    }
+
+    logg.info(`ended successfully`);
+    return [{ s3Links }, null];
+}
+
+export const storeResourceFile = functionWrapper(
+    fileName,
+    "storeResourceFile",
+    _storeResourceFile
+);
+
+async function _processAndUploadFiles(
+    { accountId, resourceName, resourceType, resourceText, files },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    const campaignResourceConfigPrefixPath =
+        process.env.CAMPAIGN_RESOURCE_CONFIG_PREFIX_PATH;
+    let s3Links = [];
+
+    if (resourceType === "text") {
+        const [textLinks, textErr] = await processTextResource(
+            {
+                accountId,
+                resourceName,
+                resourceText,
+                prefixPath: campaignResourceConfigPrefixPath,
+            },
+            { txid }
+        );
+        if (textErr) throw textErr;
+        s3Links = textLinks;
+    } else if (resourceType === "files" || resourceType === "file") {
+        const [fileLinks, fileErr] = await processFileResources(
+            {
+                accountId,
+                resourceName,
+                files,
+                prefixPath: campaignResourceConfigPrefixPath,
+            },
+            { txid }
+        );
+        if (fileErr) throw fileErr;
+        s3Links = fileLinks;
+    } else {
+        throw `Invalid resourceType: ${resourceType}`;
+    }
+
+    logg.info(`ended`);
+    return [s3Links, null];
+}
+
+const processAndUploadFiles = functionWrapper(
+    fileName,
+    "processAndUploadFiles",
+    _processAndUploadFiles
+);
+
+function isValidResourceName(resourceName) {
+    const validResourceNames = CampaignDefaults.resource_file_types;
+    return validResourceNames.includes(resourceName);
+}
+async function _processTextResource(
+    { accountId, resourceName, resourceText, prefixPath },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    const [tempFilePath, tempFileErr] = await FileUtils.createFileFromText(
+        { text: resourceText, fileName: `${resourceName}_text.txt` },
+        { txid }
+    );
+    if (tempFileErr) throw tempFileErr;
+
+    const [s3Link, s3LinkErr] = await uploadFileToS3(
+        { accountId, resourceName, filePath: tempFilePath, prefixPath, contentType: "text/plain", originalFileName: `${resourceName}.txt` },
+        { txid }
+    );
+    if (s3LinkErr) throw s3LinkErr;
+
+    await FileUtils.deleteFile({ filePath: tempFilePath }, { txid });
+    logg.info(`ended`);
+    return [[s3Link], null];
+}
+
+const processTextResource = functionWrapper(
+    fileName,
+    "processTextResource",
+    _processTextResource
+);
+
+async function _processFileResources(
+    { accountId, resourceName, files, prefixPath },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    const s3Links = [];
+    for (let file of files) {
+        const [s3Link, s3LinkErr] = await uploadFileToS3(
+            { accountId, resourceName, filePath: file.path, prefixPath, contentType: file.mimetype, originalFileName: file.originalname },
+            { txid }
+        );
+        if (s3LinkErr) throw s3LinkErr;
+        s3Links.push(s3Link);
+        await FileUtils.deleteFile({ filePath: file.path }, { txid });
+    }
+    logg.info(`ended`);
+    return [s3Links, null];
+}
+
+const processFileResources = functionWrapper(
+    fileName,
+    "processFileResources",
+    _processFileResources
+);
+
+async function _uploadFileToS3(
+    { accountId, resourceName, filePath, prefixPath, contentType, originalFileName },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    const [fileObj, fileErr] = await FileUtils.readFile({ filePath }, { txid });
     if (fileErr) throw fileErr;
 
-    // Upload file to S3
-    const fileName = `${campaignResourceConfigPrefixPath}/${accountId}/${resourceName}_${file.originalname}`;
+    logg.info(`filePath: ${filePath}`);
+
+    const uniqueId = uuidv4().replace(/-/g, '');
+    const fileName = `${prefixPath}/${accountId}/${resourceName}_${uniqueId}_${originalFileName}`;
     logg.info(`fileName: ${fileName}`);
+
     const [s3Link, s3Error] = await S3Utils.uploadFile(
-        { file: fileObj, fileName, ContentType: file.mimetype },
+        { file: fileObj, fileName, ContentType: contentType },
         { txid }
     );
     if (s3Error) throw s3Error;
 
-    // Store S3 link in CampaignConfig model
+    logg.info(`ended`);
+    return [s3Link, null];
+}
+
+const uploadFileToS3 = functionWrapper(
+    fileName,
+    "uploadFileToS3",
+    _uploadFileToS3
+);
+
+async function _updateCampaignConfig(
+    { accountId, resourceName, s3Links },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
     const updateResult = await CampaignConfig.findOneAndUpdate(
         { account: accountId },
         {
             $push: {
                 resource_documents: {
                     name: resourceName,
-                    s3_link: s3Link,
+                    s3_links: s3Links,
                     added_on: new Date().toISOString(),
                 },
             },
@@ -6060,22 +6204,14 @@ async function _storeResourceFile(
         { new: true, upsert: true }
     );
     if (!updateResult) throw "Failed to update CampaignConfig";
-
-    // now using FileUtils, unlink the file from the server
-    let [unlinkResult, unlinkErr] = await FileUtils.deleteFile(
-        { filePath: file.path },
-        { txid }
-    );
-    if (unlinkErr) throw unlinkErr;
-
-    logg.info(`ended successfully`);
-    return [{ s3Link }, null];
+    logg.info(`ended`);
+    return [updateResult, null];
 }
 
-export const storeResourceFile = functionWrapper(
+const updateCampaignConfig = functionWrapper(
     fileName,
-    "storeResourceFile",
-    _storeResourceFile
+    "updateCampaignConfig",
+    _updateCampaignConfig
 );
 
 async function _isResourceConfigured(
@@ -6102,4 +6238,32 @@ const isResourceConfigured = functionWrapper(
     fileName,
     "isResourceConfigured",
     _isResourceConfigured
+);
+
+async function _checkMissingResources({ accountId }, { txid, logg, funcName }) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+
+    const validResourceNames = CampaignDefaults.resource_file_types;
+    const missingResources = [];
+
+    for (const resourceName of validResourceNames) {
+        const [configResult, configErr] = await isResourceConfigured(
+            { accountId, resourceName },
+            { txid }
+        );
+        if (configErr) throw configErr;
+        if (!configResult.isConfigured) {
+            missingResources.push(resourceName);
+        }
+    }
+
+    logg.info(`ended successfully`);
+    return [{ missingResources, totalMissing: missingResources.length }, null];
+}
+
+export const checkMissingResources = functionWrapper(
+    fileName,
+    "checkMissingResources",
+    _checkMissingResources
 );

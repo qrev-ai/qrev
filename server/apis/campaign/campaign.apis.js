@@ -686,9 +686,9 @@ export async function getSequenceStepReplyAnalyticsApi(req, res, next) {
  * WHERE IS THIS API USED?
  * - This API is used in the QRev Desktop App when user logs in and if any of the required resources are not uploaded, it will ask user to upload the resources.
  */
-export async function storeResourceFileApi(req, res, next) {
+export async function storeResourceInfoApi(req, res, next) {
     const txid = req.id;
-    const funcName = "storeResourceFileApi";
+    const funcName = "storeResourceInfoApi";
     const logg = logger.child({ txid, funcName });
     logg.info(`started with body:` + JSON.stringify(req.body));
 
@@ -696,15 +696,39 @@ export async function storeResourceFileApi(req, res, next) {
     if (!userId) throw `Missing userId from decoded access token`;
 
     let { account_id: accountId } = req.query;
-    let { resource_name: resourceName } = req.body;
-    let file = req.file;
+    let {
+        resource_name: resourceName,
+        resource_type: resourceType,
+        resource_text: resourceText,
+    } = req.body;
+    let files = req.files;
 
-    if (!accountId) throw `Missing account_id`;
-    if (!resourceName) throw `Missing resource_name`;
-    if (!file) throw `No file uploaded`;
+    if (!accountId)
+        throw new CustomError(`Missing account_id`, fileName, funcName);
+    if (!resourceName)
+        throw new CustomError(`Missing resource_name`, fileName, funcName);
+    if (!resourceType)
+        throw new CustomError(`Missing resource_type`, fileName, funcName);
+
+    if (resourceType !== "text" && resourceType !== "files" && resourceType !== "file")
+        throw new CustomError(`Invalid resource_type`, fileName, funcName);
+    if (resourceType === "text" && !resourceText)
+        throw new CustomError(
+            `Missing resource_text for text resource_type`,
+            fileName,
+            funcName
+        );
+    if ((resourceType === "files" || resourceType === "file") && (!files || files.length === 0))
+        throw new CustomError(
+            `No files uploaded for ${resourceType} resource_type`,
+            fileName,
+            funcName
+        );
+
+    logg.info(`resourceType: ${resourceType}, files: ${JSON.stringify(files)}`);
 
     let [result, resultErr] = await CampaignUtils.storeResourceFile(
-        { accountId, resourceName, file },
+        { accountId, resourceName, resourceType, resourceText, files },
         { txid }
     );
     if (resultErr) throw resultErr;
@@ -713,5 +737,43 @@ export async function storeResourceFileApi(req, res, next) {
     return res.json({
         success: true,
         message: `${funcName} executed successfully`,
+    });
+}
+
+/*
+ * Added on 3rd September 2024
+ * Context: When a user logs in QRev, we need them to upload their brand document, pain points doc, ICP text/voice/doc etc.
+ * WHAT DOES THIS API DO?
+ * - This API is used to check if the user has uploaded all the required resources.
+ * - If any resource is missing, it returns the list of missing resources.
+ * - If all resources are uploaded, it returns an empty array.
+ * WHERE IS THIS API USED?
+ * - This API is used in the QRev Desktop App when user logs in.
+ */
+export async function checkMissingResourcesApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "checkMissingResourcesApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) throw `Missing account_id`;
+
+    let [result, resultErr] = await CampaignUtils.checkMissingResources(
+        { accountId },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+    if (!result) throw new CustomError(`Missing result`, fileName, funcName);
+
+    let missingResources = result.missingResources || [];
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        missing_resources: missingResources,
     });
 }

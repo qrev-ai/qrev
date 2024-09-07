@@ -91,3 +91,26 @@ async function _readFile({ filePath }, { txid, logg, funcName }) {
 }
 
 export const readFile = functionWrapper(fileName, "readFile", _readFile);
+
+async function _createFileFromText(
+    { text, fileName, encoding = "utf8" },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    let tempFilePath = `data/temp/${fileName}`;
+    try {
+        // Specify encoding when writing the file
+        await fs.promises.writeFile(tempFilePath, text, { encoding });
+        logg.info(`ended`);
+        return [tempFilePath, null];
+    } catch (err) {
+        logg.error(`error: ${err}`);
+        return [null, err];
+    }
+}
+
+export const createFileFromText = functionWrapper(
+    fileName,
+    "createFileFromText",
+    _createFileFromText
+);
