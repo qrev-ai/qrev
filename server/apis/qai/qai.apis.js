@@ -94,17 +94,17 @@ export async function converseApi(req, res, next) {
         throw botErr;
     }
 
-    let campaignSequenceId = QAiBotUtils.isCampaignCreatedInAIResponse(
+    let sequenceDetails = QAiBotUtils.isCampaignCreatedInAIResponse(
         { botResp, accountId, userId },
         { txid }
     );
 
-    if (campaignSequenceId) {
+    if (sequenceDetails) {
         logg.info(`setting up the campaign sequence in db`);
         let [campaignSetupResp, campaignSetupErr] =
             await CampaignUtils.setupCampaignFromQai(
                 {
-                    campaignSequenceId,
+                    sequenceDetails,
                     accountId,
                     userId,
                     userQuery: query,
