@@ -5,6 +5,7 @@ import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { QaiConversation } from "../../models/qai/qai.conversations.model.js";
 import * as UserUtils from "../user/user.utils.js";
+import * as CampaignUtils from "../campaign/campaign.utils.js";
 
 const fileName = "QAi Utils";
 
@@ -32,6 +33,12 @@ async function _converse(
     let senderCompany = formatCompanyInfo({ accountInfo }, { txid });
     let senderPerson = formatUserInfo({ userInfo }, { txid });
 
+    let [defaultConfigs, dConfigsErr] = await CampaignUtils.getCampaignDefaults(
+        { accountId, setDefaultIfNotFound: true },
+        { txid }
+    );
+    if (dConfigsErr) throw dConfigsErr;
+
     let data = {
         query,
         company_id: accountId,
@@ -41,9 +48,13 @@ async function _converse(
         conversation: conversationInfo,
         sender_company: senderCompany,
         sender_person: senderPerson,
+        default_configurations: defaultConfigs,
     };
 
-    let fieldsFromConfigDoc = formatFieldsFromCampaignConfigDoc({ campaignConfig }, { txid });
+    let fieldsFromConfigDoc = formatFieldsFromCampaignConfigDoc(
+        { campaignConfig },
+        { txid }
+    );
     if (fieldsFromConfigDoc) {
         data = { ...data, ...fieldsFromConfigDoc };
     }
@@ -86,11 +97,11 @@ export function isCampaignCreatedInAIResponse(
     logg.info(`started`);
 
     let actions = botResp && botResp.actions ? botResp.actions : [];
-    let sequenceId = null;
+    let sequence = null;
     for (const a of actions) {
         if (a.type === "email_sequence_draft") {
-            sequenceId = a.sequence_id;
-            if (sequenceId) {
+            sequence = a.sequence;
+            if (sequence) {
                 logg.info(`campaign action found`);
                 break;
             }
@@ -98,7 +109,7 @@ export function isCampaignCreatedInAIResponse(
     }
 
     logg.info(`ended`);
-    return sequenceId;
+    return sequence;
 }
 
 function formatConversationInfo({ conversationInfo }, { txid }) {
@@ -238,7 +249,8 @@ function formatFieldsFromCampaignConfigDoc({ campaignConfig }, { txid }) {
         return {};
     }
 
-    let sequenceStepsTemplate = campaignConfig && campaignConfig.sequence_steps_template;
+    let sequenceStepsTemplate =
+        campaignConfig && campaignConfig.sequence_steps_template;
     let resourceDocuments = campaignConfig && campaignConfig.resource_documents;
     let excludeDomains = campaignConfig && campaignConfig.exclude_domains;
 
@@ -247,7 +259,8 @@ function formatFieldsFromCampaignConfigDoc({ campaignConfig }, { txid }) {
         sender_resource_documents: [],
     };
     if (sequenceStepsTemplate && sequenceStepsTemplate.length) {
-        result.default_configurations.sequence_steps_template = sequenceStepsTemplate;
+        result.default_configurations.sequence_steps_template =
+            sequenceStepsTemplate;
     }
     if (excludeDomains && excludeDomains.length) {
         result.default_configurations.exclude_domains = excludeDomains;
