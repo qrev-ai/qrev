@@ -47,6 +47,13 @@ export const exchangeCodeForTokens = functionWrapper(
     _exchangeCodeForTokens
 );
 
+function getRedirectUri() {
+    if (process.env.ENVIRONMENT_TYPE === "dev") {
+        return process.env.LOCAL_GOOGLE_AUTH_REDIRECT_URL;
+    }
+    return process.env.GOOGLE_AUTH_REDIRECT_URL;
+}
+
 async function _getUserInfo({ accessToken }, { logg, txid, funcName }) {
     logg.info(`started`);
     const GOOGLE_PROFILE_URL = "https://www.googleapis.com/userinfo/v2/me";
