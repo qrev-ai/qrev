@@ -6,7 +6,7 @@ const fileName = "Account User APIs";
 
 export async function setUserConfigApi(req, res, next) {
     const txid = req.id;
-    const funcName = "createAccountApi";
+    const funcName = "setUserConfigApi";
     const logg = logger.child({ txid, funcName });
     logg.info(`started with body:`, req.body);
     let userId = req.user && req.user.userId ? req.user.userId : null;
