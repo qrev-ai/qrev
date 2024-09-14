@@ -6303,12 +6303,21 @@ async function _getExistingCampaignDefaults(
         account: accountId,
     }).lean();
 
+    // get user info
+    let [userDoc, userDocErr] = await UserUtils.getUserById(
+        { id: userId },
+        { txid }
+    );
+    if (userDocErr) throw userDocErr;
+
+    let userEmail = userDoc.email;
+
     if (!campaignConfigDoc) {
         // Create default config if not exists
         let defaultConfig = {
             _id: uuidv4(),
             account: accountId,
-            email_senders: [{ user_id: userId, email: req.user.email }],
+            email_senders: [{ user_id: userId, email: userEmail }],
             exclude_domains: [],
             sequence_steps_template: [
                 {
