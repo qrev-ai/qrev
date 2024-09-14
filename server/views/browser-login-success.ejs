@@ -74,7 +74,10 @@
         console.log("Inside close window script, wait time is " + delayTime + "ms ");
         setTimeout(() => {
             console.log("Inside set timeout");
-            window.opener.postMessage({ action: "CLOSE_GOOGLE_MODAL" }, "*");
+            // window.opener.postMessage({ action: "CLOSE_GOOGLE_MODAL" }, "*");
+            // New code added
+            window.opener.postMessage({ type: "GOOGLE_LOGIN_SUCCESS"}, "*");
+            window.close();
         }, delayTime);
     </script>
 </body>
