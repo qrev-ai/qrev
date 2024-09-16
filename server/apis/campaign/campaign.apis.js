@@ -710,7 +710,11 @@ export async function storeResourceInfoApi(req, res, next) {
     if (!resourceType)
         throw new CustomError(`Missing resource_type`, fileName, funcName);
 
-    if (resourceType !== "text" && resourceType !== "files" && resourceType !== "file")
+    if (
+        resourceType !== "text" &&
+        resourceType !== "files" &&
+        resourceType !== "file"
+    )
         throw new CustomError(`Invalid resource_type`, fileName, funcName);
     if (resourceType === "text" && !resourceText)
         throw new CustomError(
@@ -718,7 +722,10 @@ export async function storeResourceInfoApi(req, res, next) {
             fileName,
             funcName
         );
-    if ((resourceType === "files" || resourceType === "file") && (!files || files.length === 0))
+    if (
+        (resourceType === "files" || resourceType === "file") &&
+        (!files || files.length === 0)
+    )
         throw new CustomError(
             `No files uploaded for ${resourceType} resource_type`,
             fileName,
@@ -793,13 +800,24 @@ export async function getExistingCampaignDefaultsApi(req, res, next) {
     logg.info(`started with query:` + JSON.stringify(req.query));
 
     let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) throw new CustomError(`Missing userId from decoded access token`, fileName, funcName);
+    if (!userId)
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
 
     let { account_id: accountId } = req.query;
-    if (!accountId) throw new CustomError(`Missing account_id`, fileName, funcName);
+    if (!accountId)
+        throw new CustomError(`Missing account_id`, fileName, funcName);
 
     let [result, resultErr] = await CampaignUtils.getExistingCampaignDefaults(
-        { accountId, userId },
+        {
+            accountId,
+            userId,
+            returnBackDefaultConfig: true,
+            createIfNotExists: false,
+        },
         { txid }
     );
     if (resultErr) throw resultErr;
@@ -826,13 +844,19 @@ export async function setCampaignDefaultsApi(req, res, next) {
     logg.info(`started with body:` + JSON.stringify(req.body));
 
     let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) throw new CustomError(`Missing userId from decoded access token`, fileName, funcName);
+    if (!userId)
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
 
     let { account_id: accountId } = req.query;
     let { email_senders, exclude_domains, sequence_steps_template } = req.body;
 
-    if (!accountId) throw new CustomError(`Missing account_id`, fileName, funcName);
-    if (!email_senders || !Array.isArray(email_senders)) 
+    if (!accountId)
+        throw new CustomError(`Missing account_id`, fileName, funcName);
+    if (!email_senders || !Array.isArray(email_senders))
         throw new CustomError(`Invalid email_senders`, fileName, funcName);
 
     let [result, resultErr] = await CampaignUtils.setCampaignDefaults(

@@ -12,4 +12,7 @@ router.post("/users/remove", apiWrapper(AccountApis.removeUserFromAccountApi));
 
 router.post("/user/config", apiWrapper(AccountUserApis.setUserConfigApi));
 router.get("/user/config", apiWrapper(AccountUserApis.getUserConfigApi));
+
+router.get("/config/status", apiWrapper(AccountApis.getAccountConfigStatusApi));
+
 export default router;

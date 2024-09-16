@@ -6292,7 +6292,12 @@ export const checkMissingResources = functionWrapper(
 );
 
 async function _getExistingCampaignDefaults(
-    { accountId, userId },
+    {
+        accountId,
+        userId,
+        createIfNotExists = true,
+        returnBackDefaultConfig = false,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -6312,25 +6317,32 @@ async function _getExistingCampaignDefaults(
 
     let userEmail = userDoc.email;
 
-    if (!campaignConfigDoc) {
-        // Create default config if not exists
-        let defaultConfig = {
-            _id: uuidv4(),
-            account: accountId,
-            email_senders: [{ user_id: userId, email: userEmail }],
-            exclude_domains: [],
-            sequence_steps_template: [
-                {
-                    type: "ai_generated_email",
-                    time_of_dispatch: {
-                        time_value: 1,
-                        time_unit: "day",
-                    },
+    let defaultConfig = {
+        _id: uuidv4(),
+        account: accountId,
+        email_senders: [{ user_id: userId, email: userEmail }],
+        exclude_domains: [],
+        sequence_steps_template: [
+            {
+                type: "ai_generated_email",
+                time_of_dispatch: {
+                    time_value: 1,
+                    time_unit: "day",
                 },
-            ],
-        };
+            },
+        ],
+    };
+
+    if (!campaignConfigDoc && createIfNotExists) {
+        // Create default config if not exists
         let campaignConfig = new CampaignConfig(defaultConfig);
         campaignConfigDoc = await campaignConfig.save();
+    } else if (!campaignConfigDoc && !returnBackDefaultConfig) {
+        logg.info(`campaignConfigDoc not found. So returning null`);
+        return [null, null];
+    } else if (!campaignConfigDoc && returnBackDefaultConfig) {
+        logg.info(`campaignConfigDoc not found. So returning defaultConfig`);
+        campaignConfigDoc = defaultConfig;
     }
 
     let result = {
