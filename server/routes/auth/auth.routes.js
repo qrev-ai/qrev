@@ -6,5 +6,6 @@ const router = Router();
 
 router.post("/ex/tokens", apiWrapper(AuthApis.getTokenFromStateApi));
 router.post("/refresh", apiWrapper(AuthApis.refreshAccessTokenApi));
+router.post("/logout", apiWrapper(AuthApis.logoutUserApi));
 
 export default router;

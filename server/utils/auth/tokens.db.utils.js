@@ -171,3 +171,34 @@ export const updateAccessToken = functionWrapper(
     "updateAccessToken",
     _updateAccessToken
 );
+
+async function _deleteToken(
+    { accessToken, userId, refreshToken },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accessToken) {
+        throw `Missing accessToken`;
+    }
+    if (!userId) {
+        throw `Missing userId`;
+    }
+    if (!refreshToken) {
+        throw `Missing refreshToken`;
+    }
+
+    let deleteDbResp = await Tokens.deleteOne({
+        access_token: accessToken,
+        user_id: userId,
+        refresh_token: refreshToken,
+    });
+    logg.info(`deleteDbResp:` + JSON.stringify(deleteDbResp));
+    logg.info(`ended`);
+    return [deleteDbResp, null];
+}
+
+export const deleteToken = functionWrapper(
+    fileName,
+    "deleteToken",
+    _deleteToken
+);

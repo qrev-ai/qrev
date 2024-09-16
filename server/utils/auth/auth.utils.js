@@ -287,3 +287,32 @@ export const verifyAccessToken = functionWrapper(
         printError: false,
     }
 );
+
+async function _logoutUser(
+    { userId, accessToken, refreshToken },
+    { logg, txid, funcName }
+) {
+    logg.info(`started`);
+
+    // verify refresh token
+    let [decodedData, jwtVerifyErr] = await JwtUtils.verifyRefreshToken(
+        { refreshToken },
+        { txid }
+    );
+    if (jwtVerifyErr) {
+        throw jwtVerifyErr;
+    }
+
+    let [result, resultErr] = await TokenDbUtils.deleteToken(
+        { accessToken, userId, refreshToken },
+        { txid }
+    );
+    if (resultErr) {
+        throw resultErr;
+    }
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const logoutUser = functionWrapper(fileName, "logoutUser", _logoutUser);

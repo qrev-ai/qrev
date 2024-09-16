@@ -91,3 +91,42 @@ export async function refreshAccessTokenApi(req, res, next) {
         result,
     });
 }
+
+export async function logoutUserApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "logoutUserApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body: ${JSON.stringify(req.body)}`);
+    logg.info(`started with params: ${JSON.stringify(req.params)}`);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw new CustomError(`Missing userId`, fileName, funcName);
+
+    let refreshToken = req.body.refreshToken;
+    if (!refreshToken) {
+        throw new CustomError(`Missing refreshToken`, fileName, funcName);
+    }
+
+    const authHeader = req.headers["authorization"];
+    const accessToken = authHeader && authHeader.split(" ")[1];
+
+    if (accessToken) {
+        logg.info(`accessToken found, logging out user from db`);
+    } else {
+        throw new CustomError(`Missing access token`, fileName, funcName);
+    }
+
+    let [result, resultErr] = await AuthUtils.logoutUser(
+        { userId, accessToken, refreshToken },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended`);
+    res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        txid,
+    });
+}
