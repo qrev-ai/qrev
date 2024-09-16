@@ -6370,29 +6370,33 @@ async function _setCampaignDefaults(
     logg.info(`started`);
     if (!accountId) throw `accountId is invalid`;
 
-    let [userObjs, userErr] = await UserUtils.getUserInfoByEmails(
-        { emails: email_senders },
-        { txid }
-    );
-    if (userErr) throw userErr;
+    let emailSenders = [];
 
-    let [doAllUsersBelongToAccount, doAllUsersBelongToAccountErr] =
-        await AccountUserUtils.doAllUsersBelongToAccount(
-            { accountId, userIds: userObjs.map((x) => x._id.toString()) },
+    if (email_senders && email_senders.length > 0) {
+        let [userObjs, userErr] = await UserUtils.getUserInfoByEmails(
+            { emails: email_senders },
             { txid }
         );
-    if (doAllUsersBelongToAccountErr) throw doAllUsersBelongToAccountErr;
-    if (!doAllUsersBelongToAccount)
-        throw new CustomError(
-            `All users do not belong to the account`,
-            fileName,
-            funcName
-        );
+        if (userErr) throw userErr;
 
-    let emailSenders = userObjs.map((x) => ({
-        user_id: x._id.toString(),
-        email: x.email,
-    }));
+        let [doAllUsersBelongToAccount, doAllUsersBelongToAccountErr] =
+            await AccountUserUtils.doAllUsersBelongToAccount(
+                { accountId, userIds: userObjs.map((x) => x._id.toString()) },
+                { txid }
+            );
+        if (doAllUsersBelongToAccountErr) throw doAllUsersBelongToAccountErr;
+        if (!doAllUsersBelongToAccount)
+            throw new CustomError(
+                `All users do not belong to the account`,
+                fileName,
+                funcName
+            );
+
+        emailSenders = userObjs.map((x) => ({
+            user_id: x._id.toString(),
+            email: x.email,
+        }));
+    }
 
     let updateObj = {
         email_senders: emailSenders,
