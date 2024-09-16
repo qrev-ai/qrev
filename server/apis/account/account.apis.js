@@ -234,7 +234,7 @@ export async function removeUserFromAccountApi(req, res, next) {
  
 * Response structure:
 {
-            to_be_configued: [
+            to_be_configured: [
         { config_type: "account_info" },
         {
             config_type: "resource",
@@ -265,21 +265,36 @@ export async function getAccountConfigStatusApi(req, res, next) {
         );
     }
 
+    let { account_id: accountId, return_all_config: returnAllConfig } =
+        req.query;
+    if (!accountId && !returnAllConfig) {
+        throw new CustomError(
+            `Missing account_id or return_all_config`,
+            fileName,
+            funcName
+        );
+    }
+
     let toBeConfigured = [];
-
-    let [accounts, accountDbErr] = await AccountUtils.getUserAccounts(
-        { userId },
-        { txid }
-    );
-    if (accountDbErr) {
-        logg.info(`ended unsuccessfully`);
-        throw accountDbErr;
+    if (returnAllConfig) {
+        // return all config
+        toBeConfigured.push({
+            config_type: "account_info",
+        });
+        toBeConfigured.push({
+            config_type: "resource",
+            values: CampaignUtils.getAllResourcesToBeConfigured(),
+        });
+        toBeConfigured.push({ config_type: "default_configurations" });
+        logg.info(`toBeConfigured: ${JSON.stringify(toBeConfigured)}`);
+        logg.info(`ended`);
+        return res.json({
+            success: true,
+            message: `${funcName} executed successfully`,
+            txid,
+            to_be_configured: toBeConfigured,
+        });
     }
-    if (accounts.length === 0) {
-        toBeConfigured.push({ config_type: "account_info" });
-    }
-
-    let accountId = accounts[0].id;
 
     let [missingResourcesResp, missingResourcesDbErr] =
         await CampaignUtils.checkMissingResources({ accountId }, { txid });

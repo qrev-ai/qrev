@@ -6212,23 +6212,48 @@ async function _updateCampaignConfig(
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
-    const updateResult = await CampaignConfig.findOneAndUpdate(
-        { account: accountId },
-        {
-            $push: {
-                resource_documents: {
+
+    const existingConfig = await CampaignConfig.findOne({ account: accountId });
+
+    if (existingConfig) {
+        // Update existing document
+        const updateResult = await CampaignConfig.findOneAndUpdate(
+            { account: accountId },
+            {
+                $push: {
+                    resource_documents: {
+                        name: resourceName,
+                        s3_links: s3Links,
+                        added_on: new Date().toISOString(),
+                    },
+                },
+                updated_on: new Date().toISOString(),
+            },
+            { new: true }
+        );
+        if (!updateResult) throw "Failed to update CampaignConfig";
+        logg.info(`ended - updated existing document`);
+        return [updateResult, null];
+    } else {
+        // Create new document with uuidv4() as _id
+        const newConfig = new CampaignConfig({
+            _id: uuidv4(),
+            account: accountId,
+            resource_documents: [
+                {
                     name: resourceName,
                     s3_links: s3Links,
                     added_on: new Date().toISOString(),
                 },
-            },
+            ],
+            created_on: new Date().toISOString(),
             updated_on: new Date().toISOString(),
-        },
-        { new: true, upsert: true }
-    );
-    if (!updateResult) throw "Failed to update CampaignConfig";
-    logg.info(`ended`);
-    return [updateResult, null];
+        });
+        const saveResult = await newConfig.save();
+        if (!saveResult) throw "Failed to create new CampaignConfig";
+        logg.info(`ended - created new document`);
+        return [saveResult, null];
+    }
 }
 
 const updateCampaignConfig = functionWrapper(
@@ -6308,6 +6333,28 @@ async function _getExistingCampaignDefaults(
         account: accountId,
     }).lean();
 
+    let areAnyDefaultFieldsPresent = false;
+    if (campaignConfigDoc) {
+        if (
+            campaignConfigDoc.email_senders &&
+            campaignConfigDoc.email_senders.length
+        ) {
+            areAnyDefaultFieldsPresent = true;
+        }
+        if (
+            campaignConfigDoc.exclude_domains &&
+            campaignConfigDoc.exclude_domains.length
+        ) {
+            areAnyDefaultFieldsPresent = true;
+        }
+        if (
+            campaignConfigDoc.sequence_steps_template &&
+            campaignConfigDoc.sequence_steps_template.length
+        ) {
+            areAnyDefaultFieldsPresent = true;
+        }
+    }
+
     // get user info
     let [userDoc, userDocErr] = await UserUtils.getUserById(
         { id: userId },
@@ -6333,15 +6380,32 @@ async function _getExistingCampaignDefaults(
         ],
     };
 
-    if (!campaignConfigDoc && createIfNotExists) {
+    if (!areAnyDefaultFieldsPresent && createIfNotExists) {
         // Create default config if not exists
-        let campaignConfig = new CampaignConfig(defaultConfig);
-        campaignConfigDoc = await campaignConfig.save();
-    } else if (!campaignConfigDoc && !returnBackDefaultConfig) {
-        logg.info(`campaignConfigDoc not found. So returning null`);
+        if (campaignConfigDoc) {
+            // update all fields with defaultConfig other than _id and account
+            let updateObj = {};
+            for (let key in defaultConfig) {
+                if (key !== "_id" && key !== "account") {
+                    updateObj[key] = defaultConfig[key];
+                }
+            }
+            campaignConfigDoc = await CampaignConfig.findOneAndUpdate(
+                { account: accountId },
+                updateObj,
+                { new: true }
+            );
+        } else {
+            let campaignConfig = new CampaignConfig(defaultConfig);
+            campaignConfigDoc = await campaignConfig.save();
+        }
+    } else if (!areAnyDefaultFieldsPresent && !returnBackDefaultConfig) {
+        logg.info(`areAnyDefaultFieldsPresent not found. So returning null`);
         return [null, null];
-    } else if (!campaignConfigDoc && returnBackDefaultConfig) {
-        logg.info(`campaignConfigDoc not found. So returning defaultConfig`);
+    } else if (!areAnyDefaultFieldsPresent && returnBackDefaultConfig) {
+        logg.info(
+            `areAnyDefaultFieldsPresent not found. So returning defaultConfig`
+        );
         campaignConfigDoc = defaultConfig;
     }
 
@@ -6421,3 +6485,7 @@ export const setCampaignDefaults = functionWrapper(
     "setCampaignDefaults",
     _setCampaignDefaults
 );
+
+export function getAllResourcesToBeConfigured() {
+    return CampaignDefaults.resource_file_types;
+}
