@@ -165,7 +165,7 @@ export async function createConversationApi(req, res, next) {
     return res.json({
         success: true,
         message: `${funcName} executed successfully`,
-        conversation_id: conversation,
+        conversation,
     });
 }
 
