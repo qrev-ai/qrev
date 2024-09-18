@@ -7,6 +7,7 @@ import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { reportErrorToQRevTeam } from "../../std/report.error.js";
 import Papa from "papaparse";
+import csv from "csv-parser";
 
 const fileName = "File Utils";
 
@@ -114,3 +115,17 @@ export const createFileFromText = functionWrapper(
     "createFileFromText",
     _createFileFromText
 );
+
+export function readCsvFile({ csvPath }, { txid }) {
+    return new Promise((resolve, reject) => {
+        let data = [];
+        fs.createReadStream(csvPath)
+            .pipe(csv())
+            .on("data", (row) => {
+                data.push(row);
+            })
+            .on("end", () => {
+                resolve(data);
+            });
+    });
+}

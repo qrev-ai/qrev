@@ -3,6 +3,7 @@ import { logger } from "../../logger.js";
 import CustomError from "../../std/custom.error.js";
 import * as QAiBotUtils from "../../utils/qai/qai.utils.js";
 import * as CampaignUtils from "../../utils/campaign/campaign.utils.js";
+import * as FileUtils from "../../utils/std/file.utils.js";
 
 const fileName = "QAi Bot APIs";
 
@@ -26,6 +27,31 @@ export async function converseApi(req, res, next) {
         uploaded_data: uploadedData,
         conversation_id: conversationId,
     } = req.body;
+
+    let uploadedCsvFile = req.file;
+    if (uploadedCsvFile && uploadedCsvFile.path) {
+        let csvData = await FileUtils.readCsvFile(
+            { csvPath: uploadedCsvFile.path },
+            { txid }
+        );
+        logg.info(
+            `since csv file is uploaded, using it instead of uploaded_data`
+        );
+        uploadedData = csvData;
+
+        // Add this check before deleting the file
+        if (uploadedData && uploadedData.length > 0) {
+            let [deleteResp, deleteErr] = await FileUtils.deleteFile(
+                { filePath: uploadedCsvFile.path },
+                { txid }
+            );
+            if (deleteErr) throw deleteErr;
+        } else {
+            logg.error(
+                `CSV data is empty or not properly loaded. File not deleted.`
+            );
+        }
+    }
 
     let [conversationDocResp, conversationDocErr] =
         await QAiBotUtils.getConversation(

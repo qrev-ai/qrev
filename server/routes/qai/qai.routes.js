@@ -1,10 +1,14 @@
 import { Router } from "express";
 import * as QaiBotApis from "../../apis/qai/qai.apis.js";
 import { apiWrapper } from "../../std/wrappers.js";
+import multer from "multer";
+const upload = multer({ dest: "uploads/" });
 
 const router = Router();
 
-router.post("/converse", apiWrapper(QaiBotApis.converseApi));
+router
+    .route("/converse")
+    .post(upload.single("uploaded_file"), apiWrapper(QaiBotApis.converseApi));
 
 router.post(
     "/conversation/create",
