@@ -2440,6 +2440,7 @@ async function _getSequenceProspects(
         _id: {
             label: "ID",
             type: "string",
+            is_unique_identifier: true,
             hidden: true,
             order: 0,
         },
