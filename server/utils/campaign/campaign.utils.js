@@ -2247,6 +2247,7 @@ async function _getSequenceDetails(
     for (let i = 0; i < sequenceSteps.length; i++) {
         let sequenceStep = sequenceSteps[i];
         let item = {
+            _id: sequenceStep._id,
             active: sequenceStep.active,
             order: sequenceStep.order || 1,
             type: sequenceStep.type,
