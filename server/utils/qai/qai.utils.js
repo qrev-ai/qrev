@@ -19,6 +19,7 @@ async function _converse(
         accountInfo,
         userInfo,
         campaignConfig,
+        isDemoConversation,
     },
     { txid, logg, funcName }
 ) {
@@ -49,6 +50,7 @@ async function _converse(
         sender_company: senderCompany,
         sender_person: senderPerson,
         default_configurations: defaultConfigs,
+        is_demo_conversation: isDemoConversation ? true : false,
     };
 
     let fieldsFromConfigDoc = formatFieldsFromCampaignConfigDoc(

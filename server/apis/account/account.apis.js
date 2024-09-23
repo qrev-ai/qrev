@@ -276,6 +276,7 @@ export async function getAccountConfigStatusApi(req, res, next) {
     }
 
     let toBeConfigured = [];
+    let qaiDemoWalkThrough = false;
     if (returnAllConfig) {
         // return all config
         toBeConfigured.push({
@@ -285,6 +286,8 @@ export async function getAccountConfigStatusApi(req, res, next) {
             config_type: "resource",
             values: CampaignUtils.getAllResourcesToBeConfigured(),
         });
+
+        qaiDemoWalkThrough = true;
         toBeConfigured.push({ config_type: "default_configurations" });
         logg.info(`toBeConfigured: ${JSON.stringify(toBeConfigured)}`);
         logg.info(`ended`);
@@ -293,6 +296,7 @@ export async function getAccountConfigStatusApi(req, res, next) {
             message: `${funcName} executed successfully`,
             txid,
             to_be_configured: toBeConfigured,
+            qai_demo_walk_through: qaiDemoWalkThrough,
         });
     }
 

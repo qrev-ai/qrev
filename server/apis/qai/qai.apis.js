@@ -26,6 +26,7 @@ export async function converseApi(req, res, next) {
         query,
         uploaded_data: uploadedData,
         conversation_id: conversationId,
+        is_demo: isDemoConversation,
     } = req.body;
 
     let uploadedCsvFile = req.file;
@@ -102,6 +103,7 @@ export async function converseApi(req, res, next) {
             accountInfo,
             userInfo,
             campaignConfig,
+            isDemoConversation,
         },
         { txid }
     );
