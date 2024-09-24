@@ -6,6 +6,7 @@ import { logger } from "../../logger.js";
 import { QaiConversation } from "../../models/qai/qai.conversations.model.js";
 import * as UserUtils from "../user/user.utils.js";
 import * as CampaignUtils from "../campaign/campaign.utils.js";
+import * as OpenAiUtils from "../ai/openai.utils.js";
 
 const fileName = "QAi Utils";
 
@@ -411,7 +412,19 @@ async function _addUserQueryToConversation(
     }
     let updateObj = { $push: { messages: messageObj } };
     if (!conversation.messages || conversation.messages.length === 0) {
-        updateObj.$set = { title: query };
+        let [summary, openAiError] = await OpenAiUtils.queryGpt40Mini(
+            {
+                query: `Summarize the following query for an AI bot in 6-8 words: \n${query}\n\n Do not add any full stop at the end of the summary.`,
+            },
+            { txid, sendErrorMsg: true }
+        );
+        if (openAiError) {
+            logg.error(`Error in OpenAI: ${openAiError}`);
+            logg.error(`so setting title to query`);
+            updateObj.$set = { title: query };
+        } else {
+            updateObj.$set = { title: summary };
+        }
     }
 
     // also update the field `updated_on` in the conversation

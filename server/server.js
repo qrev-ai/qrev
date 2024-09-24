@@ -14,10 +14,13 @@ import { logger } from "./logger.js";
 import { cronSetup } from "./cron.setup.js";
 import { awsSdkSetup } from "./aws.setup.js";
 import { setRoutes } from "./routes.js";
+import { setupOpenAi } from "./setup.openai.js";
 
 dbConnect();
 
 awsSdkSetup();
+
+setupOpenAi();
 
 const app = new express();
 

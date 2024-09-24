@@ -46,6 +46,7 @@
         "mongoose": "^7.5.3",
         "multer": "^1.4.5-lts.1",
         "node-cron": "^3.0.3",
+        "openai": "^4.63.0",
         "papaparse": "^5.4.1",
         "qs": "^6.11.2",
         "uuid": "^9.0.1",
