@@ -284,7 +284,7 @@ async function _createConversation(
         _id: uuidv4(),
         account: accountId,
         owner: userId,
-        title: "New Conversation on " + new Date().toISOString(),
+        title: "New Chat",
         messages: [],
     };
 
