@@ -397,7 +397,7 @@ async function _getConversation(
         logg.info(`conversation: ${JSON.stringify(conversation)}`);
 
         if (updateTitleUsingAiIfNotDone) {
-            let [updateTitleResp, updateTitleErr] =
+            let [newTitle, updateTitleErr] =
                 await updateTitleUsingAiSummaryIfNotDone(
                     {
                         accountId,
@@ -409,6 +409,9 @@ async function _getConversation(
                 );
             if (updateTitleErr) {
                 throw updateTitleErr;
+            }
+            if (newTitle) {
+                conversation.title = newTitle;
             }
         }
 
@@ -452,7 +455,7 @@ async function _updateTitleUsingAiSummaryIfNotDone(
 
     let [summary, openAiError] = await OpenAiUtils.queryGpt40Mini(
         {
-            query: `Summarize the following query for an AI bot in 6-8 words: \n${query}\n\n Do not add any full stop or other symbolsat the end of the summary.`,
+            query: `Summarize the following query for an AI bot in 6 words or less: \n${query}\n\n Do not add any full stop or other symbolsat the end of the summary.`,
         },
         { txid, sendErrorMsg: true }
     );
@@ -474,7 +477,7 @@ async function _updateTitleUsingAiSummaryIfNotDone(
     logg.info(`conversationResp: ${JSON.stringify(conversationResp)}`);
 
     logg.info(`ended`);
-    return [true, null];
+    return [summary, null];
 }
 
 export const updateTitleUsingAiSummaryIfNotDone = functionWrapper(
