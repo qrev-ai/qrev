@@ -242,7 +242,12 @@ export async function getConversationApi(req, res, next) {
     let { account_id: accountId, conversation_id: conversationId } = req.query;
 
     let [conversation, conversationErr] = await QAiBotUtils.getConversation(
-        { accountId, userId, conversationId },
+        {
+            accountId,
+            userId,
+            conversationId,
+            updateTitleUsingAiIfNotDone: true,
+        },
         { txid }
     );
     if (conversationErr) throw conversationErr;

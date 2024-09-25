@@ -10,6 +10,8 @@ import * as OpenAiUtils from "../ai/openai.utils.js";
 
 const fileName = "QAi Utils";
 
+const NEW_CONVERSATION_TITLE = "New chat";
+
 async function _converse(
     {
         query,
@@ -285,7 +287,7 @@ async function _createConversation(
         _id: uuidv4(),
         account: accountId,
         owner: userId,
-        title: "New Chat",
+        title: NEW_CONVERSATION_TITLE,
         messages: [],
     };
 
@@ -333,7 +335,13 @@ export const getConversations = functionWrapper(
 );
 
 async function _getConversation(
-    { accountId, userId, conversationId, getAccountAndUserInfo },
+    {
+        accountId,
+        userId,
+        conversationId,
+        getAccountAndUserInfo,
+        updateTitleUsingAiIfNotDone = false,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -351,6 +359,23 @@ async function _getConversation(
             userInfoPromise,
         ]);
         conversation = conversationResp;
+
+        if (updateTitleUsingAiIfNotDone) {
+            let [updateTitleResp, updateTitleErr] =
+                await updateTitleUsingAiIfNotDone(
+                    {
+                        accountId,
+                        userId,
+                        conversationId,
+                        conversation,
+                    },
+                    { txid, sendErrorMsg: true }
+                );
+            if (updateTitleErr) {
+                throw updateTitleErr;
+            }
+        }
+
         let [userInfo, userInfoErr] = userInfoResp;
         if (userInfoErr) {
             throw userInfoErr;
@@ -371,6 +396,22 @@ async function _getConversation(
         conversation = await QaiConversation.findOne(queryObj).lean();
         logg.info(`conversation: ${JSON.stringify(conversation)}`);
 
+        if (updateTitleUsingAiIfNotDone) {
+            let [updateTitleResp, updateTitleErr] =
+                await updateTitleUsingAiSummaryIfNotDone(
+                    {
+                        accountId,
+                        userId,
+                        conversationId,
+                        conversation,
+                    },
+                    { txid, sendErrorMsg: true }
+                );
+            if (updateTitleErr) {
+                throw updateTitleErr;
+            }
+        }
+
         logg.info(`ended`);
         return [conversation, null];
     }
@@ -380,6 +421,66 @@ export const getConversation = functionWrapper(
     fileName,
     "_getConversation",
     _getConversation
+);
+
+async function _updateTitleUsingAiSummaryIfNotDone(
+    { accountId, userId, conversationId, conversation },
+    { txid, sendErrorMsg }
+) {
+    const funcName = "updateTitleUsingAiSummaryIfNotDone";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started`);
+
+    let title = conversation && conversation.title ? conversation.title : "";
+
+    if (title !== NEW_CONVERSATION_TITLE) {
+        logg.info(
+            `query is not "${NEW_CONVERSATION_TITLE}". So not updating title`
+        );
+        return [true, null];
+    }
+
+    let query =
+        conversation && conversation.messages.length
+            ? conversation.messages[0].value
+            : "";
+
+    if (!query) {
+        logg.info(`query not found. So not updating title`);
+        return [true, null];
+    }
+
+    let [summary, openAiError] = await OpenAiUtils.queryGpt40Mini(
+        {
+            query: `Summarize the following query for an AI bot in 6-8 words: \n${query}\n\n Do not add any full stop or other symbolsat the end of the summary.`,
+        },
+        { txid, sendErrorMsg: true }
+    );
+
+    let updateObj = {};
+    if (openAiError) {
+        logg.error(`Error in OpenAI: ${openAiError}`);
+        logg.error(`so setting title to query`);
+        updateObj.title = query;
+    } else {
+        updateObj.title = summary;
+    }
+
+    let conversationQuery = { _id: conversationId, account: accountId };
+    let conversationResp = await QaiConversation.updateOne(
+        conversationQuery,
+        updateObj
+    );
+    logg.info(`conversationResp: ${JSON.stringify(conversationResp)}`);
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const updateTitleUsingAiSummaryIfNotDone = functionWrapper(
+    fileName,
+    "updateTitleUsingAiSummaryIfNotDone",
+    _updateTitleUsingAiSummaryIfNotDone
 );
 
 async function _addUserQueryToConversation(
@@ -412,19 +513,7 @@ async function _addUserQueryToConversation(
     }
     let updateObj = { $push: { messages: messageObj } };
     if (!conversation.messages || conversation.messages.length === 0) {
-        let [summary, openAiError] = await OpenAiUtils.queryGpt40Mini(
-            {
-                query: `Summarize the following query for an AI bot in 6-8 words: \n${query}\n\n Do not add any full stop at the end of the summary.`,
-            },
-            { txid, sendErrorMsg: true }
-        );
-        if (openAiError) {
-            logg.error(`Error in OpenAI: ${openAiError}`);
-            logg.error(`so setting title to query`);
-            updateObj.$set = { title: query };
-        } else {
-            updateObj.$set = { title: summary };
-        }
+        // updateObj.$set = { title: query };
     }
 
     // also update the field `updated_on` in the conversation
