@@ -7,21 +7,22 @@ import * as GoogleUtils from "./utils/google/google.auth.utils.js";
 import { logger } from "./logger.js";
 
 export function cronSetup() {
-    logger.info(`setting up cron jobs`);
-    cron.schedule("*/30 * * * * *", async () => {
-        const txid = uuidv4();
-        await CampaignUtils.executeCampaignCronJob(
-            {},
-            { txid, sendErrorMsg: true }
-        );
-    });
+    logger.info(`currently disabled cron jobs`);
+    // logger.info(`setting up cron jobs`);
+    // cron.schedule("*/30 * * * * *", async () => {
+    //     const txid = uuidv4();
+    //     await CampaignUtils.executeCampaignCronJob(
+    //         {},
+    //         { txid, sendErrorMsg: true }
+    //     );
+    // });
 
     //set a cron job for every 1 hour
-    cron.schedule("0 0 */1 * * *", async () => {
-        const txid = uuidv4();
-        await GoogleUtils.autoRefreshGooglePubSubWebhook(
-            { expiresInNextNMinutes: 62 },
-            { txid, sendErrorMsg: true }
-        );
-    });
+    // cron.schedule("0 0 */1 * * *", async () => {
+    //     const txid = uuidv4();
+    //     await GoogleUtils.autoRefreshGooglePubSubWebhook(
+    //         { expiresInNextNMinutes: 62 },
+    //         { txid, sendErrorMsg: true }
+    //     );
+    // });
 }
