@@ -2244,6 +2244,18 @@ async function _getSequenceDetails(
         );
     if (analyticErr) throw analyticErr;
 
+    let [prospectStepMessageMap, randomProspectStepMessageErr] =
+        await getProspectStepMessageMap(
+            {
+                accountId,
+                sequenceId,
+                prospectId: seqProspects[0]._id,
+                seqStepIds: sequenceSteps.map((x) => x._id),
+            },
+            { txid }
+        );
+    if (randomProspectStepMessageErr) throw randomProspectStepMessageErr;
+
     for (let i = 0; i < sequenceSteps.length; i++) {
         let sequenceStep = sequenceSteps[i];
         let item = {
@@ -2252,11 +2264,13 @@ async function _getSequenceDetails(
             order: sequenceStep.order || 1,
             type: sequenceStep.type,
             time_of_dispatch: sequenceStep.time_of_dispatch,
+            subject: "",
+            body: "",
         };
         if (sequenceStep.draft_type === "ai_generated") {
             item.draft_type = sequenceStep.draft_type;
-            item.subject = "";
-            item.body = "";
+            item.subject = "-";
+            item.body = "-";
         } else {
             item.draft_type = sequenceStep.draft_type;
             item.subject = sequenceStep.subject;
@@ -2271,6 +2285,13 @@ async function _getSequenceDetails(
             item.analytics.pending = seqStepPendingCount;
         }
 
+        if (prospectStepMessageMap[seqStepId]) {
+            let pMsgInfo = prospectStepMessageMap[seqStepId];
+            item.subject =
+                pMsgInfo && pMsgInfo.subject ? pMsgInfo.subject : "-";
+            item.body = pMsgInfo && pMsgInfo.body ? pMsgInfo.body : "-";
+        }
+
         result.steps.push(item);
     }
 
@@ -2283,6 +2304,44 @@ export const getSequenceDetails = functionWrapper(
     fileName,
     "getSequenceDetails",
     _getSequenceDetails
+);
+
+async function _getProspectStepMessageMap(
+    { accountId, sequenceId, prospectId, seqStepIds },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let spmsDocs = await SequenceProspectMessageSchedule.find({
+        account: accountId,
+        sequence: sequenceId,
+        sequence_step: { $in: seqStepIds },
+        sequence_prospect: prospectId,
+    }).lean();
+
+    logg.info(`spmsDocs.length: ${spmsDocs.length}`);
+    logg.info(`spmsDocs: ${JSON.stringify(spmsDocs)}`);
+
+    let messageMap = {};
+    for (let i = 0; i < spmsDocs.length; i++) {
+        let spmsDoc = spmsDocs[i];
+        let seqStepId = spmsDoc.sequence_step;
+        if (!messageMap[seqStepId]) messageMap[seqStepId] = {};
+        messageMap[seqStepId] = {
+            subject: spmsDoc.message_subject,
+            body: spmsDoc.message_body,
+        };
+    }
+
+    logg.info(`messageMap: ${JSON.stringify(messageMap)}`);
+    logg.info(`ended`);
+    return [messageMap, null];
+}
+
+const getProspectStepMessageMap = functionWrapper(
+    fileName,
+    "getProspectStepMessageMap",
+    _getProspectStepMessageMap
 );
 
 async function _setEmailSenderListForCampaign(
