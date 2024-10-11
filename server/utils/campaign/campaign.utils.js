@@ -3611,7 +3611,7 @@ async function _getSequenceOpenAnalytics(
     };
 
     let [data, dataErr] = await AnalyticUtils.getSequenceOpenAnalytics(
-        { accountId, sequenceId, sequenceStepId },
+        { accountId, sequenceId, sequenceStepId, sortByDescCount: true },
         { txid }
     );
     if (dataErr) throw dataErr;
@@ -3670,7 +3670,7 @@ async function _getSequenceReplyAnalytics(
     };
 
     let [data, dataErr] = await AnalyticUtils.getSequenceReplyAnalytics(
-        { accountId, sequenceId, sequenceStepId },
+        { accountId, sequenceId, sequenceStepId, sortDescByTime: true },
         { txid }
     );
     if (dataErr) throw dataErr;

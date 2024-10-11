@@ -547,7 +547,7 @@ export const storeCampaignMessageUnsubscribeAnalytic = functionWrapper(
 * Else, it will return the analytics for the provided sequence step.
 */
 async function _getSequenceOpenAnalytics(
-    { accountId, sequenceId, sequenceStepId },
+    { accountId, sequenceId, sequenceStepId, sortByDescCount = false },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -608,6 +608,10 @@ async function _getSequenceOpenAnalytics(
         result.push(sequenceProspectIdMap[sequenceProspectId]);
     }
 
+    if (sortByDescCount && result.length) {
+        result = result.sort((a, b) => b.count - a.count);
+    }
+
     logg.info(`result: ${JSON.stringify(result)}`);
 
     logg.info(`ended`);
@@ -627,7 +631,7 @@ export const getSequenceOpenAnalytics = functionWrapper(
 * Else, it will return the analytics for the provided sequence step.
 */
 async function _getSequenceReplyAnalytics(
-    { accountId, sequenceId, sequenceStepId },
+    { accountId, sequenceId, sequenceStepId, sortDescByTime = false },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -702,6 +706,10 @@ async function _getSequenceReplyAnalytics(
         };
 
         result.push(item);
+    }
+
+    if (sortDescByTime && result.length) {
+        result = result.sort((a, b) => b.replied_on - a.replied_on);
     }
 
     logg.info(`result: ${JSON.stringify(result)}`);
