@@ -217,6 +217,7 @@ async function _getCampaignMessageAnalytics(
 
     let result = {};
     let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
+    let openedMessageMap = {};
 
     for (const analytic of analytics) {
         let seqId = analytic.sequence;
@@ -225,8 +226,10 @@ async function _getCampaignMessageAnalytics(
             result[seqId] = {
                 contacted: 0,
                 opened: 0,
+                unique_opened: 0,
                 clicked: 0,
                 replied: 0,
+                unique_replied: 0,
                 booked: 0,
             };
         }
@@ -243,6 +246,12 @@ async function _getCampaignMessageAnalytics(
             }
         } else if (actionType === AnalyticActionTypes.campaign_message_open) {
             result[seqId].opened++;
+
+            let sequenceProspectId = analytic.sequence_prospect;
+            if (!openedMessageMap[sequenceProspectId]) {
+                result[seqId].unique_opened++;
+                openedMessageMap[sequenceProspectId] = true;
+            }
         } else if (actionType === AnalyticActionTypes.campaign_message_reply) {
             if (
                 analytic.analytic_metadata &&
@@ -250,10 +259,12 @@ async function _getCampaignMessageAnalytics(
             ) {
                 // do not count as replied
             } else {
-                let spmsId = analytic.sequence_prospect_message;
-                if (!repliedMessageMap[spmsId]) {
-                    result[seqId].replied++;
-                    repliedMessageMap[spmsId] = true;
+                result[seqId].replied++;
+
+                let sequenceProspectId = analytic.sequence_prospect;
+                if (!repliedMessageMap[sequenceProspectId]) {
+                    result[seqId].unique_replied++;
+                    repliedMessageMap[sequenceProspectId] = true;
                 }
             }
         }
@@ -269,8 +280,10 @@ async function _getCampaignMessageAnalytics(
             result[seqId] = {
                 contacted: 0,
                 opened: 0,
+                unique_opened: 0,
                 clicked: 0,
                 replied: 0,
+                unique_replied: 0,
                 booked: 0,
             };
         }
