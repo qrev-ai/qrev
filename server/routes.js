@@ -9,6 +9,7 @@ import ZoomRouter from "./routes/integration/zoom.routes.js";
 import QaiBotRouter from "./routes/qai/qai.routes.js";
 import CampaignRouter from "./routes/campaign/campaign.routes.js";
 import CrmRouter from "./routes/crm/crm.routes.js";
+import AgentRouter from "./routes/agents/agent.routes.js";
 
 export function setRoutes(app) {
     app.get("/ping", (req, res) => {
@@ -25,4 +26,5 @@ export function setRoutes(app) {
     app.use("/api/qai", QaiBotRouter);
     app.use("/api/campaign", CampaignRouter);
     app.use("/api/crm", CrmRouter);
+    app.use("/api/agent", AgentRouter);
 }
