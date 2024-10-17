@@ -2,7 +2,8 @@ import re
 from typing import Any, Optional
 
 from beanie import PydanticObjectId
-from pydantic import Field
+from pydantic import BaseModel, Field
+
 from qai.schema.models.addons import (
     CreatedAtDoc,
     Deleteable,
@@ -56,14 +57,12 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
     )
     skills: Optional[list[str]] = Field(default=None, description="The skills of the person")
 
-    additional_data: Optional[dict[str, Any]] = Field(
-        default=None, description="Additional data of the person, a catch-all field"
-    )
-
     class Settings:
         name = "people"
         equality_fields = ["id"]
         keep_nulls = False
+        ## TODO
+        # indexes = [Indexed("name.first", pymongo.collation.), Indexed("name.last")]
 
     @property
     def full_name(self) -> str:

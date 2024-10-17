@@ -3,11 +3,11 @@ build-backend = "poetry.core.masonry.api"
 requires = ["poetry-core"]
 
 [tool.mypy]
-disable_error_code = "import-untyped"
 files = ["pi_blink", "tests"]
 pretty = true
 python_version = "3.11"
 show_error_codes = true
+disable_error_code = "import-untyped"
 
 [tool.poetry]
 authors = ["parnell <152523161+leeparnell@users.noreply.github.com>"]
@@ -15,11 +15,10 @@ description = "Qai Agents for the Qai AI Platform"
 name = "qai-agent"
 packages = [{from = "src", include = "qai"}]
 readme = "README.md"
-version = "0.6.1"
+version = "0.6.0"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.12"
-instructor = "^1.3.2"
 llama-index-agent-openai = "^0.2.5"
 llama-index-core = "^0.10.37"
 llama-index-embeddings-huggingface = "^0.2.0"
@@ -34,9 +33,7 @@ multiprocess = "^0.70.16"
 mysql-connector-python = "^8.4.0"
 openai = "^1.23.2"
 pandas = "^2.2.1"
-pdl-api = "^0.1.2"
-pi-blink = "^1.0.3"
-pi-conf = "^0.8.5.1"
+pi-conf = "^0.8.5"
 pi-log = "^0.5.8.1"
 pip = "^24.0"
 pydantic = "^2.7.0"
@@ -45,15 +42,18 @@ python-dateutil = "2.8.2"
 python-dotenv = "^1.0.1"
 qai-ai = "^0.6.0"
 qai-core = "^0.6.0"
-qai-schema = "^0.6.2.1"
+pdl-api = "^0.1.2"
 sqlalchemy = "^2.0.29"
+pi-blink = "^1.0.3"
+instructor = "^1.3.2"
+qai-schema = "^0.6.2.1"
 
 [tool.poetry.group.dev.dependencies]
 accelerate = "^0.29.3"
 bitsandbytes = "^0.42.0"
-pytest-asyncio = "^0.23.7"
 toml-sort = "^0.23.1"
 transformers = "^4.40.1"
+pytest-asyncio = "^0.23.7"
 types-requests = "^2.32.0.20240602"
 
 [[tool.poetry.source]]

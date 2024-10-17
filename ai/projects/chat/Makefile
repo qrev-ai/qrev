@@ -1,8 +1,4 @@
 
-# Install the project
-install:: 
-	poetry install --with dev
-	
 # Test Project
 test:: 
 	python -m unittest discover tests

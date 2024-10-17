@@ -1,10 +1,11 @@
 import importlib
 import re
 from logging import getLogger
-from typing import Any, Callable, Optional, TypeVar, cast
+from typing import Callable, Optional, TypeVar, cast
 
 from addressformatting import AddressFormatter  # type: ignore
 from pydantic import Field, field_validator
+
 from qai.schema.extensions import ExtendedDocument
 from qai.schema.models.addons import Provenance
 
@@ -44,19 +45,10 @@ class Address(ExtendedDocument):
         return cls.parse_address(s=s, *args, **kwargs)  # type: ignore
 
     @classmethod
-    def from_dict_mapping(cls, data: dict[str, Any], mapping: dict[str, str]) -> "Address":
-        d = {
-            address_field: data[dict_key]
-            for dict_key, address_field in mapping.items()
-            if dict_key in data
-        }
-        return cls(**d)
-
-    @classmethod
     def parse_address(cls: type["T"], s: str, *args, **kwargs) -> T:
         if not hasattr(cls, "_parse_address"):
             setattr(cls, "_parse_address", _load_address_parsers())
-            assert cls._parse_address, "No address parser loaded"  # type: ignore
+            assert cls._parse_address, "No address parser loaded" #type: ignore
         try:
             return cls._parse_address(s=s, *args, **kwargs)  # type: ignore
         except:

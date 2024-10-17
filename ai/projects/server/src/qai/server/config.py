@@ -1,5 +1,5 @@
 
 from pi_conf import load_config
 
-cfg = load_config("qrev-ai")
+cfg = load_config("qai")
 
