@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, TypeVar
 
 from beanie import PydanticObjectId
 from pydantic import Field
@@ -21,7 +21,9 @@ from qai.schema.models.qbeanie import Link
 from qai.schema.models.social_media_model import SocialMedia
 
 if TYPE_CHECKING:
-    from qai.schema.models.campaign_model import Campaign
+    from qai.schema.models.outreach.campaign_model import Campaign
+
+T = TypeVar('T', bound='Contact')
 
 
 class Contact(CreatedAtDoc, Taggable, Labels, Deleteable):
@@ -94,7 +96,10 @@ class Contact(CreatedAtDoc, Taggable, Labels, Deleteable):
         cls: type["Contact"], person: Person, company: Company, campaign: "Campaign"
     ) -> "Contact":
         contact = cls.from_data(person=person, company=company, campaign=campaign)
-        return await Contact.find_or_insert(contact)
+        found = await Contact.find_or_insert(contact)
+        if not found:
+            raise ValueError(f"Couldn't find or insert contact {contact}")
+        return found
 
     @property
     def safe_company_name(self) -> str:

@@ -1,9 +1,9 @@
+import json
 import re
 from typing import Any, Optional
 
 from beanie import PydanticObjectId
-from pydantic import BaseModel, Field
-
+from pydantic import Field
 from qai.schema.models.addons import (
     CreatedAtDoc,
     Deleteable,
@@ -57,12 +57,14 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
     )
     skills: Optional[list[str]] = Field(default=None, description="The skills of the person")
 
+    additional_data: Optional[dict[str, Any]] = Field(
+        default=None, description="Additional data of the person, a catch-all field"
+    )
+
     class Settings:
         name = "people"
         equality_fields = ["id"]
         keep_nulls = False
-        ## TODO
-        # indexes = [Indexed("name.first", pymongo.collation.), Indexed("name.last")]
 
     @property
     def full_name(self) -> str:
@@ -102,9 +104,19 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
                 return sm.url
         return None
 
+    def _get_work_email_from_personal_emails(self) -> Optional[Email]:
+        if not self.emails:
+            return None
+
+        for email in self.emails:
+            if email.type == "work":
+                return email
+
+        return None
+
     def get_work_email(self) -> Optional[Email]:
         if not self.work_history:
-            return None
+            return self._get_work_email_from_personal_emails()
 
         work_history = sorted(self.work_history, key=_sort_job_key, reverse=True)
         return work_history[0].email
@@ -112,11 +124,17 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
     def get_work_title(self) -> Optional[str]:
         if not self.work_history:
             return None
-        ## TODO: slintel doesn't have a start or end date
-        ## so we can't sort by start date or end date for now
-        # work_history = sorted(self.work_history, key=_sort_job_key, reverse=True)
-        # return work_history[0].title
-        return self.work_history[0].title
+
+        # Check if all jobs have both start and end dates
+        all_jobs_have_dates = all(job.start and job.end for job in self.work_history)
+
+        if all_jobs_have_dates:
+            # Sort the jobs only if all of them have dates
+            sorted_jobs = sorted(self.work_history, key=_sort_job_key, reverse=True)
+            return sorted_jobs[0].title
+        else:
+            # If any job lacks dates, return the first job's title without sorting
+            return self.work_history[0].title
 
     def match_query(self) -> dict[str, Any]:
         query: list[dict[str, Any]] = []
@@ -164,18 +182,6 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
 
                 if len(address_conditions) > 0:
                     query.append({"$and": [{k: v} for k, v in address_conditions.items()]})
-        ## TODO - clean up match conditions
-        # # Match by name and job company ID
-        # if self.name and self.work_history and isinstance(self.work_history, list):
-        #     for job in self.work_history:
-        #         if job.company_id and self.name.first and self.name.last:
-        #             query.append({
-        #                 "$and": [
-        #                     {"name.first": re.compile(f"^{re.escape(self.name.first)}$", re.IGNORECASE)},
-        #                     {"name.last": re.compile(f"^{re.escape(self.name.last)}$", re.IGNORECASE)},
-        #                     {"work_history.company_id": job.company_id}
-        #                 ]
-        #             })
 
         # Match by social media profiles
         if self.social_media and isinstance(self.social_media, list):
@@ -190,19 +196,24 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
                         }
                     )
 
-        # # Match by phone number
-        # if self.phone_numbers and isinstance(self.phone_numbers, list):
-        #     for phone in self.phone_numbers:
-        #         if phone.number and phone.type:
-        #             query.append({
-        #                 "$and": [
-        #                     {"phone_numbers.number": phone.number},
-        #                     {"phone_numbers.type": phone.type}
-        #                 ]
-        #             })
-
         if not query:
             raise ValueError(f"Couldn't create match_query for person {self}")
 
         q = {"$or": query}
         return q
+
+    @property
+    def summary(self) -> str:
+        return json.dumps(
+            self.summary_json(
+                exclude_fields=[
+                    "start",
+                    "end",
+                    "source",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at",
+                    "is_deleted",
+                ]
+            )
+        )

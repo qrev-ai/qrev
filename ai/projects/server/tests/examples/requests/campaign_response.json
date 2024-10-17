@@ -1,0 +1,48 @@
+{
+  "actions": [
+    {
+      "type": "list",
+      "title": "Here are some of the people:",
+      "values": [
+        {
+          "name": "John Doe",
+          "email": "johndoe@gmail.com",
+          "phone_number": "1234567890"
+        },
+        {
+          "name": "John Doe 2",
+          "email": "johndoe2@gmail.com",
+          "phone_number": "1234567891"
+        }
+      ]
+    },
+    {
+      "type": "email_sequence_draft",
+      "title": "Here is the draft",
+      "subject": "Exclusive Christmas Offer: 15% Off until Jan 2, 2024!",
+      "body": "Celebrate this season with our exclusive Christmas offer! Get ahead in 2024 by enjoying a 15% discount on [Your Product/Service]. Embrace the festive spirit and make the most of this limited-time offer. Act before Jan 2, 2024, to avail yourself of this special discount",
+      "sequence": {
+        "id": "6c42055a-1026-4bb3-8a4d-4076f219b398",
+        "name": "New year 20% offer campaign",
+        "steps": [
+          {
+            "id": "6a130fe1-a43c-4703-ab53-058330600738",
+            "type": "ai_generated_email",
+            "time_of_dispatch": {
+              "time_value": 1,
+              "time_unit": "day"
+            }
+          },
+          {
+            "id": "df83d08e-4441-4bf5-a20c-ced9ed952bf9",
+            "type": "ai_generated_email",
+            "time_of_dispatch": {
+              "time_value": 3,
+              "time_unit": "day"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -27,14 +27,19 @@ rsync -rt ~/nltk_data ${STAGING_DIR}/
 
 ## Configs
 mkdir -p ${STAGING_DIR}/.config
+rsync -rt ~/.config/qrev-ai ${STAGING_DIR}/.config
 rsync -rt ~/.config/qai ${STAGING_DIR}/.config
 rsync -rt ~/.config/qai-ai ${STAGING_DIR}/.config
 rsync -rt ~/.config/qai-scraper ${STAGING_DIR}/.config
 rsync -rt ~/.config/qai-storage ${STAGING_DIR}/.config
 rsync -rt ~/.config/dpypi ${STAGING_DIR}/.config
 
+## Copy pyproject.toml and poetry.lock
+rsync -rt ${PROJECT_DIR}/pyproject.toml ${STAGING_DIR}/
+rsync -rt ${PROJECT_DIR}/poetry.lock ${STAGING_DIR}/
+
 ## Update configs with dynamic values
 #sed -i '' "s/.*build_time.*/build_time = '$(shell date +%F)'/" ${STAGING_DIR}/.config/chatbot/config.toml
 #sed -i '' "s/.*git_hash.*/git_hash = '$(git rev-parse HEAD)'/" ${STAGING_DIR}/.config/chatbot/config.toml
 
-poetry export --without-hashes --format=requirements.txt > ${STAGING_DIR}/requirements.txt
+# poetry export --without-hashes --format=requirements.txt > ${STAGING_DIR}/requirements.txt

@@ -7,17 +7,17 @@ import traceback
 from dataclasses import dataclass, field
 from datetime import datetime
 from logging import getLogger
-from typing import Any, Set, Union, Optional
+from typing import Any, Optional, Set, Union
 from urllib.parse import urlsplit
 
 # import chromedriver_autoinstaller
 import undetected_chromedriver as uc
 from bs4 import BeautifulSoup
 from qai.core import Meta, MetaBase, MetaDir, MetaFile, MetaPath
+from selenium.webdriver.chrome.webdriver import WebDriver
 
 from qai.scraper.scrapers.meta import ScrapeMeta
 from qai.scraper.utils.bs_utils import get_links, url_with_path
-from selenium.webdriver.chrome.webdriver import WebDriver
 
 log = getLogger(__name__)
 
@@ -61,11 +61,11 @@ class Scraper:
 
     def _new_driver(
         self,
-        quit=True,
-        options=None,
-        driver=None,
-        random_user_agent=False,
-        version_main=None,  ## Specific version of chrome to use
+        quit: bool =True,
+        options : Optional[uc.ChromeOptions] =None,
+        driver: Optional[uc.Chrome]=None,
+        random_user_agent: bool=False,
+        version_main: Optional[str]=None,  ## Specific version of chrome to use
     ) -> WebDriver:
         if quit:
             self.quit()
@@ -73,23 +73,29 @@ class Scraper:
             options = uc.ChromeOptions()
             options.add_argument("--disable-blink-features=AutomationControlled")
             options.add_argument("--headless=True")
+            options.add_argument('--ignore-certificate-errors')
+            options.add_argument('--ignore-ssl-errors')
+        if random_user_agent:
+            agent = random.choice(user_agents)
+        else:
+            agent = user_agents[0]
+        options.add_argument(f'user-agent={agent}')
         if driver is None:
             try:
                 driver = uc.Chrome(use_subprocess=True, options=options, version_main=version_main)
             except Exception as e:
                 log.error(f"Failed to create driver, uc.version={uc.__version__}")
                 log.error(e)
+                raise e
 
-                return
-
-            if random_user_agent:
-                agent = random.choice(user_agents)
-            else:
-                agent = user_agents[0]
-            driver.execute_cdp_cmd(
-                "Network.setUserAgentOverride",
-                {"userAgent": agent},
-            )
+            # if random_user_agent:
+            #     agent = random.choice(user_agents)
+            # else:
+            #     agent = user_agents[0]
+            # driver.execute_cdp_cmd(
+            #     "Network.setUserAgentOverride",
+            #     {"userAgent": agent},
+            # )
 
         return driver
 

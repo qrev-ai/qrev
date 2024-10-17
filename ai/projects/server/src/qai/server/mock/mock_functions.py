@@ -6,7 +6,7 @@ from qai.server.mock.mock_responses import (
     company_response,
     people_response,
 )
-from qai.server.models import CampaignInputModel
+from qai.server.models.models import CampaignInputModel
 
 
 def campaign():
@@ -22,5 +22,10 @@ def campaign():
     else:
         return jsonify(campaign_response), 200
 
+
 def company_chat():
     return {"response": "Mocked Response"}, 200
+
+
+def research_from_list():
+    return {"response": "Mocked Response for research_from_list"}, 200

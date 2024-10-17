@@ -6,7 +6,7 @@ from pathlib import Path
 from qai.agent.agents.campaign_agent import CampaignAgent
 
 from qai.server import ROOT_DIR
-from qai.server.models import CampaignInputModel, CompanyChatbotModel
+from qai.server.models.models import CampaignInputModel, CompanyChatbotModel
 
 PROJECT_DIR = Path(ROOT_DIR).parent.parent.parent
 REQUESTS_DIR = os.path.join(PROJECT_DIR, "examples", "requests")

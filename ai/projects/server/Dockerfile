@@ -1,87 +1,88 @@
-## This script is used to build the docker image for the qai-server project
-# It assumes that it is run from the root of the qai directory
-# Example:
-# docker build -t qai-chat -f builds/qai-chat/Dockerfile .
 # syntax=docker/dockerfile:1
 
+# Base image with common dependencies
 FROM python:3.11-slim as base
 
 ARG STAGEDIR=docker_staging-qai-server
 ARG PROJECT_NAME=qai-server
 ARG PROJECT_DIR=projects/server
 
-ENV \
-    # python
-    PYTHONUNBUFFERED=1 \
-    # pip
+ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=on \
     PIP_DEFAULT_TIMEOUT=100 \
-    \
-    # Poetry
-    # https://python-poetry.org/docs/configuration/#using-environment-variables
-    # do not ask any interactive question
     POETRY_NO_INTERACTION=1 \
-    # never create virtual environment automatically, only use env prepared by us
     POETRY_VIRTUALENVS_CREATE=false \
-    # this is where our requirements + virtual environment will live
-    VIRTUAL_ENV="/venv" 
+    VIRTUAL_ENV="/venv" \
+    PATH="/venv/bin:$PATH" \
+    PYTHONPATH="/app" \
+    CFLAGS="-g0 -Wl,--strip-all -I/usr/include:/usr/local/include -L/usr/lib:/usr/local/lib"
 
 WORKDIR /app
-# prepend venv to path
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# prepare virtual env
-RUN python -m venv $VIRTUAL_ENV
+RUN python -m venv $VIRTUAL_ENV && \
+    apt-get update && \
+    apt-get -y install --no-install-recommends coreutils build-essential curl git tmux vim && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    echo 'alias ll="ls -lh"' >> ~/.bashrc && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel poetry gunicorn
 
-ENV PYTHONPATH="/app"
-EXPOSE 8081
+# Build stage for common dependencies
+FROM base as common-deps
+COPY pyproject.toml poetry.lock ./
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    poetry install --no-root
 
-RUN apt-get update && apt-get -y install coreutils build-essential curl git tmux vim
-RUN echo 'alias ll="ls -lh"' >> ~/.bashrc
-RUN \
-    # --mount=type=cache,target=/root/.cache/pip \
-    CFLAGS="-g0 -Wl,--strip-all -I/usr/include:/usr/local/include -L/usr/lib:/usr/local/lib" \
-    pip install \
-    --no-cache-dir \
-    --compile \
-    --upgrade pip setuptools wheel dynamic-pypi poetry gunicorn
+# Build stages for individual projects
+FROM common-deps as project-agent
+COPY projects/agent ./projects/agent
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    cd projects/agent && poetry install
 
-FROM base as build
-WORKDIR /app
+FROM common-deps as project-ai
+COPY projects/ai ./projects/ai
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    cd projects/ai && poetry install
 
-## COPY files from the staging directory
+FROM common-deps as project-chat
+COPY projects/chat ./projects/chat
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    cd projects/chat && poetry install
+
+FROM common-deps as project-core
+COPY projects/core ./projects/core
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    cd projects/core && poetry install
+
+FROM common-deps as project-server
+COPY projects/server ./projects/server
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    cd projects/server && poetry install
+
+FROM common-deps as project-storage
+COPY projects/storage ./projects/storage
+RUN --mount=type=cache,target=/root/.cache/pypoetry \
+    cd projects/storage && poetry install
+
+# Final stage
+FROM base as final
+
+# Copy installed packages from individual project builds
+COPY --from=project-agent /venv /venv
+COPY --from=project-ai /venv /venv
+COPY --from=project-chat /venv /venv
+COPY --from=project-core /venv /venv
+COPY --from=project-server /venv /venv
+COPY --from=project-storage /venv /venv
+
+# Copy project files
+COPY projects ./projects
+
+# Copy configuration files
 COPY ${STAGEDIR}/.config /root/.config
 COPY ${STAGEDIR}/.aws /root/.aws
 COPY ${STAGEDIR}/nltk_data /root/nltk_data
 
-RUN mkdir -p /root/.cache 
+WORKDIR /app/${PROJECT_DIR}
 
-
-COPY projects ./projects
-WORKDIR /app/projects/server
-
-# COPY ${PROJECT_DIR}/pyproject.toml ${PROJECT_DIR}/poetry.lock ./
-COPY ${STAGEDIR}/requirements.txt ./requirements.txt
-RUN pip install -r requirements.txt
-# RUN poetry install
-
-COPY ${PROJECT_DIR}/scripts ${PROJECT_DIR}/src/qai ./
-FROM base as final_app
-
-WORKDIR /app
-COPY --from=build /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=build $VIRTUAL_ENV $VIRTUAL_ENV
-
-COPY --from=build /app/projects/server/scripts ./scripts
-COPY --from=build /root/.config /root/.config
-COPY --from=build /root/.aws /root/.aws
-## Projects
-COPY --from=build /app/projects/agent/src/qai ./qai
-COPY --from=build /app/projects/ai/src/qai ./qai
-COPY --from=build /app/projects/chat/src/qai ./qai
-COPY --from=build /app/projects/core/src/qai ./qai
-COPY --from=build /app/projects/server/src/qai ./qai
-COPY --from=build /app/projects/storage/src/qai ./qai
-
-# # COPY scripts/run_server.sh run_server.sh
-CMD [ "sh", "scripts/run_server.sh"]
+CMD ["sh", "scripts/run_server.sh"]

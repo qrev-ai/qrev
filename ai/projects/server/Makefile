@@ -38,22 +38,27 @@ publish:: .build
 	poetry publish
 
 
-
 ## Testing the Server Commands
-heartbeat::
+test_heartbeat::
 	curl -s -f http://${IP}:8081/heartbeat | jq .
 
 LEVEL?=debug
-loglevel::
+test_version::
+	curl -H 'Content-Type: application/json' -d \
+		'{"token" : "${TOKEN}"}' \
+		http://${IP}:8081/system/version
+
+LEVEL?=debug
+test_loglevel::
 	curl -H 'Content-Type: application/json' -d \
 		'{"token" : "${TOKEN}"}' \
 		http://${IP}:8081/set_loglevel/${LEVEL} | jq .
 
-list_collections::
-	curl -s -H 'Content-Type: application/json' http://${CHROMA_IP}:8000/api/v1/collections | jq .
+test_list_collections::
+	curl -s -H 'Content-Type: application/json' http://${CHROMA_IP}:8000/api/v1/collections & jq .
 
 CQUERY?="get me a list of companies in Alaska and send the head of sales a email"
-campaign:: 
+test_campaign:: 
 	set -o pipefail ; \
 	curl -H 'Content-Type: application/json' -d \
 		'{ \

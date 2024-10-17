@@ -17,14 +17,10 @@ chromadb = "^0.5.5"
 llama-index = "^0.10.6"
 llama-index-embeddings-huggingface = "^0.1.4"
 llama-index-vector-stores-chroma = "^0.1.6"
-pi-conf = "^0.8.5"
+pi-conf = "^0.8.5.1"
 pip = "^24.0"
 python-dotenv = "^1.0.1"
 toml = "^0.10.2"
-torch = [
-    {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", python = ">=3.10,<3.11", url = "https://download.pytorch.org/whl/cpu/torch-2.2.1-cp310-none-macosx_11_0_arm64.whl"},
-    {markers = "sys_platform == 'linux'", python = ">=3.10,<3.11", url = "https://download.pytorch.org/whl/cpu-cxx11-abi/torch-2.2.1%2Bcpu.cxx11.abi-cp310-cp310-linux_x86_64.whl"},
-]
 
 [tool.tomlsort]
 all = true

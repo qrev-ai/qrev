@@ -18,8 +18,8 @@ import pandas as pd
 from qai.core import Meta
 
 from qai.scraper import Scraper
-from qai.scraper.filters.filter import MultiFilter
 from qai.scraper.filters.basic_filter import filter_cfg
+from qai.scraper.filters.filter import MultiFilter
 from qai.scraper.scrapers.scraper import Scraper
 from qai.scraper.scrapers.scraper_factory import get_scraper
 from qai.scraper.scrapers.stealthscraper import StealthScraper
@@ -42,7 +42,7 @@ def scrape_filter(company, urls: str | list[str], dest_dir: str, max_depth=1, fi
             url = f"https://{url}"
     scraper = Scraper()
     scraper.scrape(urls, dest_dir, max_depth=max_depth, meta=meta)
-    filter = MultiFilter([filter_config], meta= meta)
+    filter = MultiFilter([filter_config], meta=meta)
     filter.process_directory(in_group="raw")
     meta.save(overwrite=True)
 
