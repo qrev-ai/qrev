@@ -166,7 +166,7 @@ export const listAgents = functionWrapper(fileName, "listAgents", _listAgents);
 
 async function getAnalyzedProspects() {
     const AnalyzedProspects = getAnalyzedProspectsCollection();
-    return await AnalyzedProspects.find({}).lean();
+    return await AnalyzedProspects.find({}).limit(25).lean();
 }
 
 async function getMatchingProspects(upIds) {
