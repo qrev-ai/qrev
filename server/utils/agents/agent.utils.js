@@ -6,6 +6,10 @@ import { v4 as uuidv4 } from "uuid";
 
 import { Agent } from "../../models/agents/agent.model.js";
 import { SupportedAgentTypes } from "../../config/agents/agent.config.js";
+import {
+    getAnalyzedProspectsCollection,
+    getProspectsCollection,
+} from "../../models/agents/analyzed.prospects.model.js";
 
 const fileName = "Agent Utils";
 
@@ -160,6 +164,43 @@ async function _listAgents({ accountId, userId }, { txid, logg, funcName }) {
 
 export const listAgents = functionWrapper(fileName, "listAgents", _listAgents);
 
+async function getAnalyzedProspects() {
+    const AnalyzedProspects = getAnalyzedProspectsCollection();
+    return await AnalyzedProspects.find({}).lean();
+}
+
+async function getMatchingProspects(upIds) {
+    const Prospects = getProspectsCollection();
+    return await Prospects.find({ up_id: { $in: upIds } }).lean();
+}
+
+function combineTextArray(textArray, field) {
+    return textArray
+        .map((item) => {
+            let text = item[field];
+            if (!text.endsWith(".")) {
+                text += ".";
+            }
+            return text + " ";
+        })
+        .join("")
+        .trim();
+}
+
+function createProspectObject(prospect, analyzedProspect) {
+    return {
+        first_name: prospect.first_name,
+        last_name: prospect.last_name,
+        email: prospect.business_email,
+        linkedin_url: prospect.linkedin_url,
+        insights: combineTextArray(analyzedProspect.reasoning, "reason"),
+        score: analyzedProspect.score,
+        job_title: prospect.job_title,
+        company_name: prospect.company_name,
+        references: combineTextArray(analyzedProspect.reasoning, "source_text"),
+    };
+}
+
 async function _dailyProspectUpdates(
     { accountId, userId },
     { txid, logg, funcName }
@@ -168,95 +209,26 @@ async function _dailyProspectUpdates(
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
 
-    // Updated fields: first name, last name, email, linkedin_url, insights, score, job_title
-    let tempData = [
-        {
-            first_name: "John",
-            last_name: "Doe",
-            email: "john.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
-            insights: "Insights about John Doe",
-            score: 85,
-            job_title: "Senior Software Engineer",
-            company_name: "Tech Corp",
-            references: "References about John Doe",
-        },
-        {
-            first_name: "Jane",
-            last_name: "Smith",
-            email: "jane.smith@example.com",
-            linkedin_url: "https://www.linkedin.com/in/jane-smith-0987654321",
-            insights: "Insights about Jane Smith",
-            score: 92,
-            job_title: "Product Manager",
-            company_name: "Tech Corp",
-            references: "References about Jane Smith",
-        },
-        {
-            first_name: "Michael",
-            last_name: "Johnson",
-            email: "michael.johnson@example.com",
-            linkedin_url:
-                "https://www.linkedin.com/in/michael-johnson-2468101214",
-            insights: "Insights about Michael Johnson",
-            score: 78,
-            job_title: "Marketing Director",
-            company_name: "Tech Corp",
-            references: "References about Michael Johnson",
-        },
-        {
-            first_name: "Emily",
-            last_name: "Williams",
-            email: "emily.williams@example.com",
-            linkedin_url:
-                "https://www.linkedin.com/in/emily-williams-3690257812",
-            insights: "Insights about Emily Williams",
-            score: 89,
-            job_title: "Data Analyst",
-            company_name: "Tech Corp",
-            references: "References about Emily Williams",
-        },
-        {
-            first_name: "David",
-            last_name: "Brown",
-            email: "david.brown@example.com",
-            linkedin_url: "https://www.linkedin.com/in/david-brown-1592376480",
-            insights: "Insights about David Brown",
-            score: 76,
-            job_title: "UX/UI Designer",
-            company_name: "Tech Corp",
-            references: "References about David Brown",
-        },
-        {
-            first_name: "Sophia",
-            last_name: "Martinez",
-            email: "sophia.martinez@example.com",
-            linkedin_url:
-                "https://www.linkedin.com/in/sophia-martinez-4812592367",
-            insights: "Insights about Sophia Martinez",
-            score: 95,
-            job_title: "Financial Analyst",
-            company_name: "Tech Corp",
-            references: "References about Sophia Martinez",
-        },
-        {
-            first_name: "James",
-            last_name: "Garcia",
-            email: "james.garcia@example.com",
-            linkedin_url: "https://www.linkedin.com/in/james-garcia-5709841236",
-            insights: "Insights about James Garcia",
-            score: 82,
-            job_title: "Sales Manager",
-            company_name: "Tech Corp",
-            references: "References about James Garcia",
-        },
-    ];
+    const analyzedProspects = await getAnalyzedProspects();
+    logg.info(`analyzedProspects fetched: ${analyzedProspects.length}`);
+    const upIds = analyzedProspects.map((p) => p.up_id);
+    const prospects = await getMatchingProspects(upIds);
+
+    const prospectMap = new Map(prospects.map((p) => [p.up_id, p]));
+
+    const result = analyzedProspects
+        .map((ap) => {
+            const prospect = prospectMap.get(ap.up_id);
+            if (!prospect) return null;
+            return createProspectObject(prospect, ap);
+        })
+        .filter(Boolean);
 
     // Sort the data by descending order of score
-    tempData.sort((a, b) => b.score - a.score);
+    result.sort((a, b) => b.score - a.score);
 
     logg.info(`ended`);
-    return [tempData, null];
+    return [result, null];
 }
 
 export const dailyProspectUpdates = functionWrapper(
