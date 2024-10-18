@@ -159,3 +159,95 @@ async function _listAgents({ accountId, userId }, { txid, logg, funcName }) {
 }
 
 export const listAgents = functionWrapper(fileName, "listAgents", _listAgents);
+
+async function _dailyProspectUpdates(
+    { accountId, userId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+
+    // fields are first name, last name, email, linkedin_url, insights
+    let tempData = [
+        {
+            first_name: "John",
+            last_name: "Doe",
+            email: "john.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
+            insights: "Insights about John Doe",
+        },
+        {
+            first_name: "Jane",
+            last_name: "Doe",
+            email: "jane.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
+            insights: "Insights about Jane Doe",
+        },
+        {
+            first_name: "John",
+            last_name: "Doe",
+            email: "john.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
+            insights: "Insights about John Doe",
+        },
+        {
+            first_name: "Jane",
+            last_name: "Doe",
+            email: "jane.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
+            insights: "Insights about Jane Doe",
+        },
+        {
+            first_name: "John",
+            last_name: "Doe",
+            email: "john.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
+            insights: "Insights about John Doe",
+        },
+        {
+            first_name: "Jane",
+            last_name: "Doe",
+            email: "jane.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
+            insights: "Insights about Jane Doe",
+        },
+        {
+            first_name: "John",
+            last_name: "Doe",
+            email: "john.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
+            insights: "Insights about John Doe",
+        },
+        {
+            first_name: "Jane",
+            last_name: "Doe",
+            email: "jane.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
+            insights: "Insights about Jane Doe",
+        },
+        {
+            first_name: "John",
+            last_name: "Doe",
+            email: "john.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
+            insights: "Insights about John Doe",
+        },
+        {
+            first_name: "Jane",
+            last_name: "Doe",
+            email: "jane.doe@example.com",
+            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
+            insights: "Insights about Jane Doe",
+        },
+    ];
+
+    logg.info(`ended`);
+    return [tempData, null];
+}
+
+export const dailyProspectUpdates = functionWrapper(
+    fileName,
+    "dailyProspectUpdates",
+    _dailyProspectUpdates
+);

@@ -9,4 +9,9 @@ router.get("/list", apiWrapper(AgentsApis.listAgentsApi));
 router.post("/update", apiWrapper(AgentsApis.updateAgentApi));
 router.get("/get", apiWrapper(AgentsApis.getAgentApi));
 
+router.get(
+    "/daily_prospect_updates",
+    apiWrapper(AgentsApis.dailyProspectUpdatesApi)
+);
+
 export default router;

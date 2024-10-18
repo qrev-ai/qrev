@@ -255,3 +255,74 @@ export async function listAgentsApi(req, res, next) {
         result: agents,
     });
 }
+
+export async function dailyProspectUpdatesApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "dailyProspectUpdatesApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [result, resultErr] = await AgentUtils.dailyProspectUpdates(
+        { accountId, userId },
+        { txid }
+    );
+    if (resultErr) {
+        logg.info(`resultErr:` + resultErr);
+        throw new CustomError(
+            `Error getting daily prospect updates`,
+            fileName,
+            funcName
+        );
+    }
+
+    /*
+    * Sample response: 
+    {
+        "success": true,
+        "message": "Daily prospect updates fetched successfully",
+        "result": [
+            {
+                first_name: "John",
+                last_name: "Doe",
+                email: "john.doe@example.com",
+                linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
+                insights: "Insights about John Doe",
+            },
+            {
+                first_name: "Jane",
+                last_name: "Doe",
+                email: "jane.doe@example.com",
+                linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
+                insights: "Insights about Jane Doe",
+            },
+        ]
+    }
+    */
+
+    res.status(200).json({
+        success: true,
+        message: "Daily prospect updates fetched successfully",
+        result: result,
+    });
+}
