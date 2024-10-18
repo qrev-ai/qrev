@@ -5,6 +5,9 @@ from flask import current_app as app
 from flask import request
 
 log = getLogger(__name__)
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def token_required(func):

@@ -59,6 +59,14 @@ class SexEnum(StrEnum):
     FEMALE = "female"
     INTERSEX = "intersex"
 
+    @classmethod
+    def _missing_(cls, value):
+        if value in {"m", "M"}:
+            return cls.MALE
+        if value in {"f", "F"}:
+            return cls.FEMALE
+        return super()._missing_(value)
+
 
 class GenderEnum(StrEnum):
     OTHER = "other"
@@ -68,3 +76,11 @@ class GenderEnum(StrEnum):
     GENDERQUEER = "genderqueer"
     AGENDER = "agender"
     GENDERFLUID = "genderfluid"
+
+    @classmethod
+    def _missing_(cls, value):
+        if value in {"m", "M"}:
+            return cls.MALE
+        if value in {"f", "F"}:
+            return cls.FEMALE
+        return super()._missing_(value)

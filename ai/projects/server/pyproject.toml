@@ -22,26 +22,16 @@ html2text = "^2020.1.16"
 llama-index = "^0.10.33"
 mysql-connector-python = "^8.4.0"
 qai-agent = "^0.6.1"
-qai-chat = "^0.6.0"
-torch = [
-  {markers = "sys_platform == 'darwin' and platform_machine == 'arm64'", source = "pypi", version = "^2.3.0"},
-  {platform = "darwin", source = "pypi", version = "^2.3.0"},
-  {platform = "linux", source = "pytorch-cpu-src", version = "=2.3.0+cpu"},
-  {platform = "win32", source = "pytorch-cpu-src", version = "=2.3.0+cpu"}
-]
-pi-blink = "^1.0.3"
+qai-chat = {path = "../chat", develop = true}
 opentelemetry-exporter-otlp-proto-grpc = "1.25.0"
 pi-conf = "^0.8.5.1"
+chromadb = "^0.5.5"
+pydantic = "^2.9.2"
 
 [tool.poetry.group.dev.dependencies]
 ecs-deploy = "^1.14.0"
 toml-sort = "^0.23.1"
 pytest = "^8.2.1"
-
-[[tool.poetry.source]]
-name = "pytorch-cpu-src"
-priority = "explicit"
-url = "https://download.pytorch.org/whl/cpu"
 
 [tool.tomlsort]
 all = true

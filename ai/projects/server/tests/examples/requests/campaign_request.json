@@ -1,0 +1,89 @@
+{
+  "query": "create a campaign using prospects mentioned in the uploaded CSV with 2 steps",
+  "company_id": "652a31a0a7e0abdf1796b9bf",
+  "user_id": "65269526e7e5e7f1d991e9f0",
+  "conversation": {
+    "_comment": "Conversation object is optional, if you want to send the conversation history to the assistant",
+    "conversation_id": "Session ID to be used for the conversation.",
+    "messages": [
+      {
+        "role": "user | assistant | system | ",
+        "content": "text content"
+      },
+      {
+        "role": "user | assistant | system | ",
+        "content": "text content"
+      }
+    ]
+  },
+  "sender_company": {
+    "name": "My company",
+    "website_url": "http://example.com",
+    "industry": " [Optional] industry of the company",
+    "_comment": "other params, as many as you want can be specified under sender_company"
+  },
+  "sender_person": {
+    "name": "First and Last",
+    "email": "person@example.com email of the person",
+    "title": "job title of the person",
+    "_comment": "other params, as many as you want can be specified under sender_company"
+  },
+  "token": "b546b803-cf83-4fd5-a187-f5f5c2b2ad21",
+  "asynchronous": "https://qrev/callback/uri",
+  "uploaded_data": [
+    {
+      "email": "exuser@gmail.com",
+      "name": "Ex User",
+      "timezone": "Asia/Calcutta"
+    },
+    {
+      "email": "exuser2@gmail.com",
+      "name": "Ex User2",
+      "timezone": "Asia/Calcutta"
+    }
+  ],
+  "sender_resource_documents": [
+    {
+      "name": "brand_doc",
+      "s3_links": ["....", "...."]
+    },
+    {
+      "name": "pain_points_doc",
+      "s3_links": ["....", "...."]
+    },
+    {
+      "name": "case_studies_doc",
+      "s3_links": ["....", "...."]
+    },
+    {
+      "name": "icp_doc",
+      "s3_links": ["....", "...."]
+    }
+  ],
+  "default_configurations": {
+    "exclude_domains": ["dom1.com","exdom2.com"],
+    "sequence_steps_template": [
+      {
+        "type": "ai_generated_email",
+        "time_of_dispatch": {
+          "time_value": 1,
+          "time_unit": "day"
+        }
+      },
+      {
+        "type": "ai_generated_email",
+        "time_of_dispatch": {
+          "time_value": 3,
+          "time_unit": "day"
+        }
+      },
+      {
+        "type": "ai_generated_email",
+        "time_of_dispatch": {
+          "time_value": 6,
+          "time_unit": "day"
+        }
+      }
+    ]
+  }
+}

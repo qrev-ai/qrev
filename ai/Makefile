@@ -8,3 +8,7 @@
 
 init: .clean-venv .venv
 
+build::
+	# sh projects/server/scripts/stage_docker.sh
+	# cd projects/server && docker compose -f compose.yml --verbose build
+	docker build -t your-image-name .

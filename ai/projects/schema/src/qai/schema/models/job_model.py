@@ -1,9 +1,17 @@
+from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 from beanie import PydanticObjectId
+from flexible_datetime import flextime
 from pydantic import Field
-
-from qai.schema.models.addons import CreatedAtDoc, DateRange, Deleteable, Labels, Provenance, Taggable
+from qai.schema.models.addons import (
+    CreatedAtDoc,
+    DateRange,
+    Deleteable,
+    Labels,
+    Provenance,
+    Taggable,
+)
 from qai.schema.models.address_model import Address
 from qai.schema.models.email_model import Email
 
@@ -26,8 +34,12 @@ class Job(CreatedAtDoc, Deleteable, Taggable, Labels, DateRange):
         equality_fields = ["title", "company_id"]
         keep_nulls = False
 
+def normalize_flextime(ft: flextime) -> flextime:
+    # Convert to a common precision (e.g., day precision)
+    return flextime(ft.to_datetime())
 
-def _sort_job_key(obj: Job):
+def _sort_job_key(obj: Job) -> tuple[flextime, flextime]:
     ## sort work_history by start_date and then end_date
-    end_value = obj.end if obj.end is not None else float("inf")
-    return (obj.start, end_value)
+    start_value = normalize_flextime(obj.start) if obj.start is not None else normalize_flextime(flextime(datetime.min))
+    end_value = normalize_flextime(obj.end) if obj.end is not None else normalize_flextime(flextime(datetime.max))
+    return (start_value, end_value)

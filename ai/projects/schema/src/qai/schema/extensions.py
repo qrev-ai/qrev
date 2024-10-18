@@ -1,9 +1,12 @@
 import asyncio
 import json
+import types
 from abc import abstractmethod
+from pathlib import Path
 from typing import (
     Any,
     Dict,
+    Generic,
     List,
     Mapping,
     Optional,
@@ -12,6 +15,7 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    cast,
 )
 from urllib.parse import urlparse
 
@@ -24,12 +28,15 @@ from beanie.odm.settings.document import DocumentSettings
 from beanie.odm.utils.self_validation import validate_self_before
 from beanie.odm.utils.state import save_state_after
 from motor.motor_asyncio import AsyncIOMotorCollection
+from pi_conf.config_settings import ConfigSettings, TomlConfigSource
 from pydantic._internal._model_construction import ModelMetaclass
 from pymongo.client_session import ClientSession
 from qai.schema.mergers.merge import NORMAL_PRIORITY, Priority, merge_model
 
 T = TypeVar("T", bound=Document)
 ET = TypeVar("ET", bound="ExtendedDocument")
+
+sentinel = types.new_class('Sentinel', (List[int],))()
 
 offline_settings = DocumentSettings()
 
@@ -62,6 +69,17 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
             """
             return None  # type: ignore
 
+    @classmethod
+    def from_config(cls: Type[T], **kwargs) -> T:
+        try:
+            return ConfigSettings.from_config(cls, **kwargs)
+        except Exception as e:
+            print(f"Validation error occurred: {e}")
+            raise
+            # raw_config = ConfigSettings(**kwargs).model_dump()
+            # filtered_data = cls._filter_and_transform_data(raw_config)
+            # return cls.model_validate(filtered_data)
+        
     @classmethod
     async def load(
         cls: type[ET],
@@ -158,7 +176,7 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
         cls: type[ET],
         document: ET,
         *args: Union[Mapping[str, Any], bool],
-        projection_model: Type["DocumentProjectionType"] = None,  # type: ignore
+        projection_model: Optional[Type["DocumentProjectionType"]] = None,  # type: ignore
         ignore_cache: bool = False,
         fetch_links: bool = False,
         with_children: bool = False,
@@ -192,11 +210,11 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
             with_children=with_children,
             nesting_depth=nesting_depth,
             nesting_depths_per_field=nesting_depths_per_field,
-            **find_kwargs
+            **find_kwargs,
         )
 
         if doc:
-            return doc
+            return cast(ET, doc)
         return await document.insert(
             session=session,
             link_rule=link_rule,
@@ -327,6 +345,60 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
         """
         return json.dumps(self.model_dump(exclude_none=True, **kwargs), indent=indent)
 
+    @property
+    def summary(self) -> str:
+        return json.dumps(self.summary_json())
+
+    def summary_json(
+        self,
+        include_ids: bool = False,
+        exclude_fields: Union[List[str], None] = sentinel,
+        exclude_empty: bool = True,
+    ) -> Optional[Union[Dict[str, Any], List[Any]]]:
+        """
+        Return a summary of the document as a dictionary.
+        Args:
+            include_ids: If False, strips out ID fields.
+            exclude_fields: List of additional field names to exclude.
+            exclude_empty: If True, excludes empty lists and dicts from the result.
+        Returns:
+            Dictionary representation of the model.
+        """
+        js = self.model_dump(exclude_none=True, mode="json")
+
+        if exclude_fields is sentinel:
+            exclude_fields = ["_id", "id"]
+
+        def strip_fields(data, fields_to_exclude, exclude_empty) -> Optional[dict[str, Any]]:
+            if isinstance(data, dict):
+                # Remove excluded fields and filter out empty dicts if needed
+                result = {
+                    key: strip_fields(value, fields_to_exclude, exclude_empty)
+                    for key, value in data.items()
+                    if key not in fields_to_exclude
+                }
+                if exclude_empty and not result:
+                    return None
+                return result
+            elif isinstance(data, list):
+                # Recursively strip fields and filter out empty lists if needed
+                result = [strip_fields(item, fields_to_exclude, exclude_empty) for item in data]
+                if exclude_empty and not result:
+                    return None
+                return result
+            else:
+                return data
+
+        fields_to_exclude = set(exclude_fields or [])
+        if not include_ids:
+            fields_to_exclude.update(["id", "_id"])
+            fields_to_exclude.update(key for key in js.keys() if key.endswith("_id"))
+
+        if fields_to_exclude:
+            js = strip_fields(js, fields_to_exclude, exclude_empty)
+
+        return js
+
 
 setattr(Document, "upsert", ExtendedDocument.upsert)
 
@@ -374,6 +446,12 @@ class DocExtensions:
         exclude_none: bool = True,
         **kwargs,
     ) -> str: ...
+
+    @abstractmethod
+    def summary_json(self, data: dict[str, Any], include_ids: bool = False) -> dict[str, Any]: ...
+
+    @property
+    def summary(self) -> str: ...
 
 
 def get_extended_documents(

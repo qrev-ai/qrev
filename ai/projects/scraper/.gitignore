@@ -61,6 +61,7 @@ test_retrieval_*
 tempdb
 t.csv
 errors.txt
+.private
 
 ## vscode
 .vscode

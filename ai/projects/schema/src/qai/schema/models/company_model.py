@@ -1,7 +1,9 @@
+import json
 from enum import StrEnum
 from typing import TYPE_CHECKING, Any, Optional, Self, cast
 
 from pydantic import Field, field_validator
+
 from qai.schema.models.addons import CreatedAtDoc, Deleteable, Labels, Taggable
 from qai.schema.models.address_model import Address
 from qai.schema.models.email_model import Email
@@ -31,9 +33,7 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
         default=None,
         description="The official business name of the company, government registered.",
     )
-    company_type: Optional[CompanyType] = Field(
-        default=None, description="The type of the company"
-    )
+    company_type: Optional[CompanyType] = Field(default=None, description="The type of the company")
     description: Optional[str] = Field(default=None, description="The description of the company")
     tagline: Optional[str] = Field(default=None, description="The tagline of the company")
     parent_company: Optional[Self] = None
@@ -140,3 +140,20 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
     def full_print(self):
         """Print the company with all its fields"""
         return self.model_dump(by_alias=True, exclude_none=True)
+
+    @property
+    def summary(self) -> str:
+        return json.dumps(
+            self.summary_json(
+                exclude_fields=[
+                    "start",
+                    "end",
+                    "source",
+                    "created_at",
+                    "updated_at",
+                    "deleted_at",
+                    "is_deleted",
+                ],
+                exclude_empty=True,
+            )
+        )

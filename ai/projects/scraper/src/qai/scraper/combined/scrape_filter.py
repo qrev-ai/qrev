@@ -37,6 +37,7 @@ def scrape_filter(
         urls = [urls]
     if filter_config is None:
         filter_config = filter_cfg
+    web_dir = os.path.expanduser(web_dir)
     if skip_if_existing and os.path.exists(web_dir):
         print(f"Skipping {company} as it already exists")
         return
