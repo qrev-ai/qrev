@@ -166,7 +166,15 @@ export const listAgents = functionWrapper(fileName, "listAgents", _listAgents);
 
 async function getAnalyzedProspects() {
     const AnalyzedProspects = getAnalyzedProspectsCollection();
-    return await AnalyzedProspects.find({}).limit(25).lean();
+    const Prospects = getProspectsCollection();
+
+    const analyzedProspects = await AnalyzedProspects.find({
+        score: { $gte: 0.9, $lte: 0.95 },
+    })
+        .limit(40)
+        .lean();
+
+    return analyzedProspects;
 }
 
 async function getMatchingProspects(upIds) {
@@ -194,7 +202,7 @@ function createProspectObject(prospect, analyzedProspect) {
         email: prospect.business_email,
         linkedin_url: prospect.linkedin_url,
         insights: combineTextArray(analyzedProspect.reasoning, "reason"),
-        score: analyzedProspect.score,
+        score: analyzedProspect.score * 100,
         job_title: prospect.job_title,
         company_name: prospect.company_name,
         references: combineTextArray(analyzedProspect.reasoning, "source_text"),
@@ -219,7 +227,7 @@ async function _dailyProspectUpdates(
     const result = analyzedProspects
         .map((ap) => {
             const prospect = prospectMap.get(ap.up_id);
-            if (!prospect) return null;
+            if (!prospect || !prospect.linkedin_url) return null;
             return createProspectObject(prospect, ap);
         })
         .filter(Boolean);
