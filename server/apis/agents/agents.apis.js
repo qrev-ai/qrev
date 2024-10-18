@@ -309,7 +309,9 @@ export async function dailyProspectUpdatesApi(req, res, next) {
                 linkedin_url: "https://www.linkedin.com/in/jane-smith-0987654321",
                 insights: "Insights about Jane Smith",
                 score: 92,
-                job_title: "Product Manager"
+                job_title: "Product Manager",
+                company_name: "Global Solutions Ltd.",
+                references: "Met at ProductCon 2023"
             },
             {
                 first_name: "John",
@@ -318,16 +320,9 @@ export async function dailyProspectUpdatesApi(req, res, next) {
                 linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
                 insights: "Insights about John Doe",
                 score: 85,
-                job_title: "Senior Software Engineer"
-            },
-            {
-                first_name: "Michael",
-                last_name: "Johnson",
-                email: "michael.johnson@example.com",
-                linkedin_url: "https://www.linkedin.com/in/michael-johnson-2468101214",
-                insights: "Insights about Michael Johnson",
-                score: 78,
-                job_title: "Marketing Director"
+                job_title: "Senior Software Engineer",
+                company_name: "Tech Innovators Inc.",
+                references: "Referred by Sarah Johnson"
             }
         ]
     }

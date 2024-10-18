@@ -178,6 +178,8 @@ async function _dailyProspectUpdates(
             insights: "Insights about John Doe",
             score: 85,
             job_title: "Senior Software Engineer",
+            company_name: "Tech Corp",
+            references: "References about John Doe",
         },
         {
             first_name: "Jane",
@@ -187,6 +189,8 @@ async function _dailyProspectUpdates(
             insights: "Insights about Jane Smith",
             score: 92,
             job_title: "Product Manager",
+            company_name: "Tech Corp",
+            references: "References about Jane Smith",
         },
         {
             first_name: "Michael",
@@ -197,6 +201,8 @@ async function _dailyProspectUpdates(
             insights: "Insights about Michael Johnson",
             score: 78,
             job_title: "Marketing Director",
+            company_name: "Tech Corp",
+            references: "References about Michael Johnson",
         },
         {
             first_name: "Emily",
@@ -207,6 +213,8 @@ async function _dailyProspectUpdates(
             insights: "Insights about Emily Williams",
             score: 89,
             job_title: "Data Analyst",
+            company_name: "Tech Corp",
+            references: "References about Emily Williams",
         },
         {
             first_name: "David",
@@ -216,6 +224,8 @@ async function _dailyProspectUpdates(
             insights: "Insights about David Brown",
             score: 76,
             job_title: "UX/UI Designer",
+            company_name: "Tech Corp",
+            references: "References about David Brown",
         },
         {
             first_name: "Sophia",
@@ -226,6 +236,8 @@ async function _dailyProspectUpdates(
             insights: "Insights about Sophia Martinez",
             score: 95,
             job_title: "Financial Analyst",
+            company_name: "Tech Corp",
+            references: "References about Sophia Martinez",
         },
         {
             first_name: "James",
@@ -235,6 +247,8 @@ async function _dailyProspectUpdates(
             insights: "Insights about James Garcia",
             score: 82,
             job_title: "Sales Manager",
+            company_name: "Tech Corp",
+            references: "References about James Garcia",
         },
     ];
 
