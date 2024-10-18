@@ -168,7 +168,7 @@ async function _dailyProspectUpdates(
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
 
-    // fields are first name, last name, email, linkedin_url, insights
+    // Updated fields: first name, last name, email, linkedin_url, insights, score, job_title
     let tempData = [
         {
             first_name: "John",
@@ -176,71 +176,70 @@ async function _dailyProspectUpdates(
             email: "john.doe@example.com",
             linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
             insights: "Insights about John Doe",
+            score: 85,
+            job_title: "Senior Software Engineer",
         },
         {
             first_name: "Jane",
-            last_name: "Doe",
-            email: "jane.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
-            insights: "Insights about Jane Doe",
+            last_name: "Smith",
+            email: "jane.smith@example.com",
+            linkedin_url: "https://www.linkedin.com/in/jane-smith-0987654321",
+            insights: "Insights about Jane Smith",
+            score: 92,
+            job_title: "Product Manager",
         },
         {
-            first_name: "John",
-            last_name: "Doe",
-            email: "john.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
-            insights: "Insights about John Doe",
+            first_name: "Michael",
+            last_name: "Johnson",
+            email: "michael.johnson@example.com",
+            linkedin_url:
+                "https://www.linkedin.com/in/michael-johnson-2468101214",
+            insights: "Insights about Michael Johnson",
+            score: 78,
+            job_title: "Marketing Director",
         },
         {
-            first_name: "Jane",
-            last_name: "Doe",
-            email: "jane.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
-            insights: "Insights about Jane Doe",
+            first_name: "Emily",
+            last_name: "Williams",
+            email: "emily.williams@example.com",
+            linkedin_url:
+                "https://www.linkedin.com/in/emily-williams-3690257812",
+            insights: "Insights about Emily Williams",
+            score: 89,
+            job_title: "Data Analyst",
         },
         {
-            first_name: "John",
-            last_name: "Doe",
-            email: "john.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
-            insights: "Insights about John Doe",
+            first_name: "David",
+            last_name: "Brown",
+            email: "david.brown@example.com",
+            linkedin_url: "https://www.linkedin.com/in/david-brown-1592376480",
+            insights: "Insights about David Brown",
+            score: 76,
+            job_title: "UX/UI Designer",
         },
         {
-            first_name: "Jane",
-            last_name: "Doe",
-            email: "jane.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
-            insights: "Insights about Jane Doe",
+            first_name: "Sophia",
+            last_name: "Martinez",
+            email: "sophia.martinez@example.com",
+            linkedin_url:
+                "https://www.linkedin.com/in/sophia-martinez-4812592367",
+            insights: "Insights about Sophia Martinez",
+            score: 95,
+            job_title: "Financial Analyst",
         },
         {
-            first_name: "John",
-            last_name: "Doe",
-            email: "john.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
-            insights: "Insights about John Doe",
-        },
-        {
-            first_name: "Jane",
-            last_name: "Doe",
-            email: "jane.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
-            insights: "Insights about Jane Doe",
-        },
-        {
-            first_name: "John",
-            last_name: "Doe",
-            email: "john.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
-            insights: "Insights about John Doe",
-        },
-        {
-            first_name: "Jane",
-            last_name: "Doe",
-            email: "jane.doe@example.com",
-            linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
-            insights: "Insights about Jane Doe",
+            first_name: "James",
+            last_name: "Garcia",
+            email: "james.garcia@example.com",
+            linkedin_url: "https://www.linkedin.com/in/james-garcia-5709841236",
+            insights: "Insights about James Garcia",
+            score: 82,
+            job_title: "Sales Manager",
         },
     ];
+
+    // Sort the data by descending order of score
+    tempData.sort((a, b) => b.score - a.score);
 
     logg.info(`ended`);
     return [tempData, null];

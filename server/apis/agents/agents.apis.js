@@ -303,19 +303,32 @@ export async function dailyProspectUpdatesApi(req, res, next) {
         "message": "Daily prospect updates fetched successfully",
         "result": [
             {
+                first_name: "Jane",
+                last_name: "Smith",
+                email: "jane.smith@example.com",
+                linkedin_url: "https://www.linkedin.com/in/jane-smith-0987654321",
+                insights: "Insights about Jane Smith",
+                score: 92,
+                job_title: "Product Manager"
+            },
+            {
                 first_name: "John",
                 last_name: "Doe",
                 email: "john.doe@example.com",
                 linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
                 insights: "Insights about John Doe",
+                score: 85,
+                job_title: "Senior Software Engineer"
             },
             {
-                first_name: "Jane",
-                last_name: "Doe",
-                email: "jane.doe@example.com",
-                linkedin_url: "https://www.linkedin.com/in/jane-doe-1234567890",
-                insights: "Insights about Jane Doe",
-            },
+                first_name: "Michael",
+                last_name: "Johnson",
+                email: "michael.johnson@example.com",
+                linkedin_url: "https://www.linkedin.com/in/michael-johnson-2468101214",
+                insights: "Insights about Michael Johnson",
+                score: 78,
+                job_title: "Marketing Director"
+            }
         ]
     }
     */
