@@ -6533,7 +6533,7 @@ async function _setCampaignDefaults(
     let updateResp = await CampaignConfig.findOneAndUpdate(
         { account: accountId },
         updateObj,
-        { new: true }
+        { new: true, upsert: true }
     );
 
     logg.info(`updateResp: ${JSON.stringify(updateResp)}`);
