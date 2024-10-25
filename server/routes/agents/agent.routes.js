@@ -14,4 +14,6 @@ router.get(
     apiWrapper(AgentsApis.dailyProspectUpdatesApi)
 );
 
+router.post("/archive", apiWrapper(AgentsApis.archiveAgentApi));
+
 export default router;
