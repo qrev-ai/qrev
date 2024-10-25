@@ -44,6 +44,7 @@ async function _createAgent(
         name,
         description,
         type,
+        status: "running: prospecting",
     };
 
     let agentDoc = await Agent.create(agentObj);
@@ -257,7 +258,11 @@ async function _archiveAgent(
 
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
-        { is_archived: true, updated_on: Date.now() },
+        { 
+            is_archived: true, 
+            status: 'archived',
+            updated_on: Date.now() 
+        },
         { new: true }
     );
 

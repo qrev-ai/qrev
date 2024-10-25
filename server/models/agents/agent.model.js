@@ -15,6 +15,7 @@ const AgentSchema = new Schema({
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
     is_archived: { type: Boolean, default: false },
+    status: { type: String, required: true },
 });
 
 export const Agent = mongoose.model("agent", AgentSchema, "agent");
