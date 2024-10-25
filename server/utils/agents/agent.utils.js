@@ -314,3 +314,36 @@ export const pauseAgent = functionWrapper(
     "pauseAgent",
     _pauseAgent
 );
+
+async function _resumeAgent(
+    { accountId, userId, agentId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+    if (!agentId) throw `agentId is invalid`;
+
+    let agentDoc = await Agent.findOneAndUpdate(
+        { _id: agentId, account: accountId },
+        { 
+            status: 'running: prospecting',
+            updated_on: Date.now() 
+        },
+        { new: true }
+    );
+
+    if (!agentDoc) {
+        throw new CustomError(`Agent not found`, fileName, funcName);
+    }
+
+    logg.info(`agentDoc resumed: ${JSON.stringify(agentDoc)}`);
+    logg.info(`ended`);
+    return [agentDoc, null];
+}
+
+export const resumeAgent = functionWrapper(
+    fileName,
+    "resumeAgent",
+    _resumeAgent
+);
