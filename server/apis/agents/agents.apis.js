@@ -376,3 +376,46 @@ export async function archiveAgentApi(req, res, next) {
         message: "Agent archived successfully",
     });
 }
+
+
+export async function pauseAgentApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "pauseAgentApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId, agent_id: agentId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [resp, agentErr] = await AgentUtils.pauseAgent(
+        { accountId, userId, agentId },
+        { txid }
+    );
+    if (agentErr) {
+        logg.info(`agentErr:` + agentErr);
+        throw new CustomError(`Error pausing agent`, fileName, funcName);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent paused successfully",
+    });
+}

@@ -280,3 +280,37 @@ export const archiveAgent = functionWrapper(
     "archiveAgent",
     _archiveAgent
 );
+
+// Pause an agent
+async function _pauseAgent(
+    { accountId, userId, agentId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+    if (!agentId) throw `agentId is invalid`;
+
+    let agentDoc = await Agent.findOneAndUpdate(
+        { _id: agentId, account: accountId },
+        { 
+            status: 'paused',
+            updated_on: Date.now() 
+        },
+        { new: true }
+    );
+
+    if (!agentDoc) {
+        throw new CustomError(`Agent not found`, fileName, funcName);
+    }
+
+    logg.info(`agentDoc paused: ${JSON.stringify(agentDoc)}`);
+    logg.info(`ended`);
+    return [agentDoc, null];
+}
+
+export const pauseAgent = functionWrapper(
+    fileName,
+    "pauseAgent",
+    _pauseAgent
+);

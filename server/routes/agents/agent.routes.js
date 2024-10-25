@@ -16,4 +16,6 @@ router.get(
 
 router.post("/archive", apiWrapper(AgentsApis.archiveAgentApi));
 
+router.post("/pause", apiWrapper(AgentsApis.pauseAgentApi));
+
 export default router;
