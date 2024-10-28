@@ -6550,3 +6550,28 @@ export const setCampaignDefaults = functionWrapper(
 export function getAllResourcesToBeConfigured() {
     return CampaignDefaults.resource_file_types;
 }
+
+async function _getSequenceList(
+    { accountId, getOnlyNames },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+
+    let query = { account: accountId };
+    let projection = getOnlyNames ? { name: 1 } : {};
+
+    let sequences = await SequenceModel.find(query, projection).sort({
+        created_on: -1,
+    });
+
+    logg.info(`found ${sequences.length} sequences`);
+    logg.info(`ended`);
+    return [sequences, null];
+}
+
+export const getSequenceList = functionWrapper(
+    fileName,
+    "getSequenceList",
+    _getSequenceList
+);

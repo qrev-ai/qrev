@@ -104,4 +104,6 @@ router.post(
     apiWrapper(CampaignApis.setCampaignDefaultsApi)
 );
 
+router.get("/sequence/list", apiWrapper(CampaignApis.getSequenceListApi));
+
 export default router;

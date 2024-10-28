@@ -883,3 +883,31 @@ export async function setCampaignDefaultsApi(req, res, next) {
         message: `${funcName} executed successfully`,
     });
 }
+
+export async function getSequenceListApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceListApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId, get_only_names: getOnlyNames } = req.query;
+    if (!accountId) throw `Missing account_id`;
+
+    getOnlyNames =
+        getOnlyNames === "true" || getOnlyNames === true ? true : false;
+    let [result, resultErr] = await CampaignUtils.getSequenceList(
+        { accountId, getOnlyNames },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
