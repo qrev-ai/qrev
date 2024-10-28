@@ -182,9 +182,16 @@ export async function getAllSequenceApi(req, res, next) {
     let userId = req.user && req.user.userId ? req.user.userId : null;
     if (!userId) throw `Missing userId from decoded access token`;
 
-    let { account_id: accountId } = req.query;
+    let {
+        account_id: accountId,
+        current_page_num: currentPageNum,
+        limit,
+    } = req.query;
 
     if (!accountId) throw `Missing account_id`;
+
+    // if (!currentPageNum) throw `Missing current_page_num`;
+    // if (!limit) limit = 10;
 
     /*
     let result = [
@@ -196,8 +203,10 @@ export async function getAllSequenceApi(req, res, next) {
             sequence_analytics: {
                 contacted: 12,
                 opened: 8,
+                unique_opened: 5,
                 clicked: 3,
                 replied: 1,
+                unique_replied: 1,
                 booked: 0,
             },
         },
@@ -209,8 +218,10 @@ export async function getAllSequenceApi(req, res, next) {
             sequence_analytics: {
                 contacted: 5,
                 opened: 3,
+                unique_opened: 2,
                 clicked: 1,
                 replied: 0,
+                unique_replied: 0,
                 booked: 0,
             },
         },
@@ -842,6 +853,7 @@ export async function setCampaignDefaultsApi(req, res, next) {
     const funcName = "setCampaignDefaultsApi";
     const logg = logger.child({ txid, funcName });
     logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
 
     let userId = req.user && req.user.userId ? req.user.userId : null;
     if (!userId)
