@@ -937,19 +937,17 @@ export async function updateSequenceMessageUsingAiApi(req, res, next) {
         spms_id: spmsId,
         update_instructions: updateInstructions,
         existing_message: existingMessage,
+        ai_query_type: aiQueryType,
     } = req.body;
 
     if (!spmsId) throw `Missing spms_id in body`;
-    if (!updateInstructions) throw `Missing update_instructions in body`;
     if (!existingMessage) throw `Missing existing_message in body`;
 
-    // let [result, resultErr] = await CampaignUtils.updateSequenceMessageUsingAi(
-    //     { spmsId, updateInstructions, existingMessage, accountId },
-    //     { txid }
-    // );
-    // if (resultErr) throw resultErr;
-
-    let result = "dummy";
+    let [result, resultErr] = await CampaignUtils.updateSequenceMessageUsingAi(
+        { spmsId, updateInstructions, existingMessage, accountId, aiQueryType },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
 
     logg.info(`ended successfully`);
     return res.json({

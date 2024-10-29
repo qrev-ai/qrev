@@ -6578,12 +6578,44 @@ export const getSequenceList = functionWrapper(
 );
 
 async function _updateSequenceMessageUsingAi(
-    { spmsId, updateInstructions, existingMessage, accountId },
+    { spmsId, updateInstructions, existingMessage, accountId, aiQueryType },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
 
-    const query = `Please update the following message according to these instructions:
+    let query;
+
+    let bottomInstruction =
+        "Please provide only the shortened message without any explanations or additional text. DO NOT ADD ANYTHING ELSE. NOT EVEN A WORD.";
+
+    switch (aiQueryType) {
+        case "improve":
+            query = `Please improve the writing of the following message while maintaining its core message and tone:
+            
+${existingMessage}
+
+${bottomInstruction}`;
+            break;
+
+        case "shorten":
+            query = `Please make this message more concise while keeping all relevant content:
+            
+${existingMessage}
+
+${bottomInstruction}`;
+            break;
+
+        case "grammar":
+            query = `Please fix any grammatical errors in the following message:
+            
+${existingMessage}
+
+${bottomInstruction}`;
+            break;
+
+        case "custom":
+        default:
+            query = `Please update the following message according to these instructions:
     
 Original message:
 ${existingMessage}
@@ -6591,15 +6623,18 @@ ${existingMessage}
 Update instructions:
 ${updateInstructions}
 
-Please provide only the updated message without any explanations or additional text.`;
+${bottomInstruction}`;
+    }
 
-    const [updatedMessage, error] = await OpenAIUtils.queryGpt40Mini({ query }, { logg, funcName });
-    
+    const [updatedMessage, error] = await OpenAIUtils.queryGpt40Mini(
+        { query },
+        { logg, funcName }
+    );
+
     if (error) {
         throw error;
     }
 
-    logg.info(`updatedMessage: ${updatedMessage}`);
     logg.info(`ended`);
     return [updatedMessage, null];
 }
