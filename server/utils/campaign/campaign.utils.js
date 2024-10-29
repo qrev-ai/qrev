@@ -23,6 +23,7 @@ import { IntermediateProspectMessage } from "../../models/campaign/intermediate.
 import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
 import * as S3Utils from "../aws/aws.s3.utils.js";
 import * as AccountUserUtils from "../account/account.user.utils.js";
+import * as OpenAIUtils from "../ai/openai.utils.js";
 
 import path from "path";
 
@@ -6574,4 +6575,37 @@ export const getSequenceList = functionWrapper(
     fileName,
     "getSequenceList",
     _getSequenceList
+);
+
+async function _updateSequenceMessageUsingAi(
+    { spmsId, updateInstructions, existingMessage, accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    const query = `Please update the following message according to these instructions:
+    
+Original message:
+${existingMessage}
+
+Update instructions:
+${updateInstructions}
+
+Please provide only the updated message without any explanations or additional text.`;
+
+    const [updatedMessage, error] = await OpenAIUtils.queryGpt40Mini({ query }, { logg, funcName });
+    
+    if (error) {
+        throw error;
+    }
+
+    logg.info(`updatedMessage: ${updatedMessage}`);
+    logg.info(`ended`);
+    return [updatedMessage, null];
+}
+
+export const updateSequenceMessageUsingAi = functionWrapper(
+    fileName,
+    "updateSequenceMessageUsingAi",
+    _updateSequenceMessageUsingAi
 );

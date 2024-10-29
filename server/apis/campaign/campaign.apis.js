@@ -911,3 +911,50 @@ export async function getSequenceListApi(req, res, next) {
         result,
     });
 }
+
+/*
+ * Added on 29th October 2024
+ * WHAT DOES THIS API DO?
+ * - This API is used to update an existing sequence prospect message using AI
+ * - It takes the existing message and update instructions as input and returns the updated message
+ * WHERE IS THIS API USED?
+ * - In the QRev Desktop App when user wants to modify an existing message using AI
+ */
+export async function updateSequenceMessageUsingAiApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "updateSequenceMessageUsingAiApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) throw `Missing account_id`;
+
+    let {
+        spms_id: spmsId,
+        update_instructions: updateInstructions,
+        existing_message: existingMessage,
+    } = req.body;
+
+    if (!spmsId) throw `Missing spms_id in body`;
+    if (!updateInstructions) throw `Missing update_instructions in body`;
+    if (!existingMessage) throw `Missing existing_message in body`;
+
+    // let [result, resultErr] = await CampaignUtils.updateSequenceMessageUsingAi(
+    //     { spmsId, updateInstructions, existingMessage, accountId },
+    //     { txid }
+    // );
+    // if (resultErr) throw resultErr;
+
+    let result = "dummy";
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
