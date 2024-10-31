@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from qai.agent.tools.str_utils import render_template
+from qai.agent.tools.str_utils import has_unmatched, render_template
 
 
 class Person:
@@ -105,6 +105,11 @@ def test_render_template_completely_unmatched():
         render_template("{{ unmatched.variable }}", test="data")
 
 
+def test_render_template_completely_unmatched_bracket():
+    with pytest.raises(ValueError):
+        render_template("[unmatched.variable]", variable_start_string="[", variable_end_string="]")
+
+
 def test_render_template_nested_escaped_braces():
     assert (
         render_template("{{ '{{' }}Outer {{ '{{' }}Inner{{ '}}' }}{{ '}}' }}", test="data")
@@ -130,6 +135,7 @@ def test_render_template_no_placeholders():
 def test_render_template_with_json_like_structure():
     result = render_template('JSON: {{ \'{"key": "value"}\' }}', test="data")
     assert result == 'JSON: {"key": "value"}'
+
 
 
 def test_render_template_with_json_and_placeholders():
@@ -275,6 +281,59 @@ def test_render_template_loop_logic():
 def test_render_property(sample_data):
     result = render_template("{{person.myproperty}}", **sample_data)
     assert result == "property"
+
+
+def test_has_unmatched_square_brackets():
+    # Basic cases
+    assert not has_unmatched("[test]", "[", "]")
+    assert not has_unmatched("[nested [test]]", "[", "]")
+    assert has_unmatched("[incomplete", "[", "]")
+    assert has_unmatched("incomplete]", "[", "]")
+
+    # Array-like cases
+    assert not has_unmatched("[1, 2, 3]", "[", "]")
+    assert not has_unmatched("[[1,2], [3,4]]", "[", "]")
+    assert has_unmatched("[1, 2,", "[", "]")
+    assert has_unmatched("1, 2]", "[", "]")
+
+    # Mixed with other brackets
+    assert not has_unmatched("[{test}]", "[", "]")
+    assert not has_unmatched("[(test)]", "[", "]")
+    assert has_unmatched("[{test", "[", "]")
+
+
+def test_has_unmatched_json_curly():
+    # Valid JSON should pass
+    assert not has_unmatched('{"key": "value"}')
+    assert not has_unmatched('{"nested": {"key": "value"}}')
+    assert not has_unmatched('{"array": [1,2,3]}')
+
+    # others that should pass
+    assert not has_unmatched("{key: value}")
+    assert not has_unmatched('{"key": value')
+
+    # json in template
+    assert not has_unmatched("Stuff: {{test}} Json: {'key': 'value'} ")
+
+
+def test_has_unmatched_curly_braces():
+    assert not has_unmatched("{test}", variable_start_string="{", variable_end_string="}")
+    assert not has_unmatched("{nested {test}}", variable_start_string="{", variable_end_string="}")
+    assert has_unmatched("{incomplete", variable_start_string="{", variable_end_string="}")
+    assert has_unmatched("incomplete}", variable_start_string="{", variable_end_string="}")
+    assert has_unmatched("{{extra}", variable_start_string="{", variable_end_string="}")
+
+
+def test_has_unmatched_double_curly():
+    assert not has_unmatched("{{test}}")
+    assert has_unmatched("{{incomplete")
+    # assert has_unmatched("incomplete}}") # maybe this should fail/pass?
+    assert has_unmatched("{{{extra}}")
+
+    # Test with whitespace stripped
+    assert not has_unmatched("{{ test }}".strip())
+    assert not has_unmatched("{{test }}".strip())
+    assert not has_unmatched("{{ test}}".strip())
 
 
 if __name__ == "__main__":

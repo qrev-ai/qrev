@@ -1,6 +1,7 @@
 import json
 import os
 import tomllib as toml
+from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional, TypeAlias, TypeVar
 
@@ -11,7 +12,6 @@ from beanie.odm.queries.find import FindOne as BeanieFindOne
 from pi_conf import ConfigDict, ConfigSettings
 from pi_conf.config_settings import ConfigDict, ConfigSettings
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
-
 from qai.schema.models.addons import (
     CreatedAtDoc,
     DateRange,
@@ -21,6 +21,7 @@ from qai.schema.models.addons import (
 )
 from qai.schema.models.company_model import Company
 from qai.schema.models.contact_model import Contact
+from qai.schema.models.data_source import DataSource
 from qai.schema.models.models import OutreachType
 from qai.schema.models.mongo_model import MongoConfig
 from qai.schema.models.outreach.email import Outreach
@@ -34,12 +35,8 @@ class EnrichmentSource(BaseModel):
     include: bool
 
 
-class DataSource(BaseModel):
-    source: str
-    type: str
 
-
-class ExcludeOptions(BaseModel):
+class IncExcOptions(BaseModel):
     domains: Optional[list[str]] = Field(default=None)
     emails: Optional[list[str]] = Field(default=None)
     titles: Optional[list[str]] = Field(default=None)
@@ -71,16 +68,11 @@ class ExcludeOptions(BaseModel):
             v = [domain.lstrip("http://").lstrip("https://").lstrip("www.") for domain in v]
         return v
 
+class ExcludeOptions(IncExcOptions):
+    pass
 
-# class CampaignOptions(ConfigSettings):
-#     name: str
-#     sources: list[DataSource]
-#     exclude: Optional[ExcludeOptions] = None
-#     enrichments: list[EnrichmentSource]
-#     outreach: Outreach
-
-#     model_config = ConfigDict(extra="allow")
-
+class IncludeOptions(IncExcOptions):
+    pass
 
 class ClientOptions(ConfigSettings):
     mongo: MongoConfig
@@ -91,6 +83,7 @@ class ClientOptions(ConfigSettings):
 
 class Campaign(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
     name: str = Field(..., description="The name of the campaign")
+
     description: Optional[str] = Field(default=None, description="The description of the campaign")
 
     contacts: Optional[list[Link[Contact]]] = Field(
@@ -103,22 +96,66 @@ class Campaign(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
         default=None, description="The outreach options of the campaign"
     )
 
-    # campaign_steps: Optional[list[Link["CampaignStep"]]] = Field(default_factory=list)
     exclude: Optional[ExcludeOptions] = Field(
         default=None, description="The exclude options of the campaign"
     )
+    include: Optional[IncludeOptions] = Field(
+        default=None, description="The include options of the campaign"
+    )
+
     enrichments: Optional[list[EnrichmentSource]] = Field(
         default=None, description="Which enrichments were used in the campaign. Linkedin, Web, etc"
     )
+
     sources: Optional[list[DataSource]] = Field(
         default=None, description="The sources of the campaign"
     )
-    ## TODO information about Ideal Customer Profile (ICP)
+
+    brand_docs: Optional[list[DataSource]] = Field(
+        default=None, description="Brand documents to use for this campaign."
+    )
+
+    customer_pain_points: Optional[list[DataSource]] = Field(
+        default=None, description="Customer pain points to use for this campaign."
+    )
+
+    case_studies: Optional[list[DataSource]] = Field(
+        default=None, description="Case studies to use for this campaign."
+    )
+    additional_docs: Optional[list[DataSource]] = Field(
+        default=None, description="Other documents to use for this campaign."
+    )
+
+    icps: Optional[list[DataSource]] = Field(
+        default=None, description="Ideal customer profiles to use for this campaign."
+    )
 
     class Settings:
         name = "campaigns"
         equality_fields = ["name"]
         keep_nulls = False
+
+    @property
+    def brand(self) -> Optional[str]:
+        s = ""
+        if not self.brand_docs:
+            return s
+        for doc in self.brand_docs:
+            if doc.type == "file":
+                with open(doc.path) as f:
+                    s += f.read()
+        return s
+    
+    @property
+    def pain_points(self) -> Optional[str]:
+        s = ""
+        if not self.customer_pain_points:
+            return s
+        for doc in self.customer_pain_points:
+            if doc.type == "file":
+                with open(doc.path) as f:
+                    s += f.read()
+        return s
 
 
 class CampaignStep(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):

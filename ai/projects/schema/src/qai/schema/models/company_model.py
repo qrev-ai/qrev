@@ -28,6 +28,7 @@ class CompanyType(StrEnum):
 
 class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
     name: str = Field(..., description="The name of the company")
+    qid: Optional[str] = Field(default=None, description="The QID of the company")
     domains: list[str] = Field(default_factory=list, description="The websites of the company")
     business_name: Optional[str] = Field(
         default=None,
@@ -157,3 +158,4 @@ class Company(CreatedAtDoc, Taggable, Labels, Deleteable):
                 exclude_empty=True,
             )
         )
+

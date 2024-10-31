@@ -4,6 +4,7 @@ from typing import Any, Optional
 
 from beanie import PydanticObjectId
 from pydantic import Field
+
 from qai.schema.models.addons import (
     CreatedAtDoc,
     Deleteable,
@@ -12,6 +13,7 @@ from qai.schema.models.addons import (
     Taggable,
 )
 from qai.schema.models.address_model import Address
+from qai.schema.models.education_model import Education
 from qai.schema.models.email_model import Email
 from qai.schema.models.job_model import Job, _sort_job_key
 from qai.schema.models.models import GenderEnum
@@ -43,7 +45,7 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
     work_history: Optional[list[Job]] = Field(
         default=None, description="The work history of the person"
     )
-    education_history: Optional[list[Job]] = Field(
+    education_history: Optional[list[Education]] = Field(
         default=None, description="The education history of the person"
     )
     sources: Optional[list[Provenance]] = Field(
@@ -103,6 +105,10 @@ class Person(CreatedAtDoc, Deleteable, Taggable, Labels):
             if sm.type == SocialMediaType.LINKEDIN:
                 return sm.url
         return None
+
+    def get_linkedin_vanityname(self) -> Optional[str]:
+        url = self.get_linkedin_url()
+        return url.split("/")[-1] if url else None
 
     def _get_work_email_from_personal_emails(self) -> Optional[Email]:
         if not self.emails:

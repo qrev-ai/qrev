@@ -183,7 +183,7 @@ class EmailFixedText(BaseModel):
 
 class Step(BaseModel):
     order: int = Field(..., description="The order of the step")
-    name: str = Field(..., description="The name of the step")
+    name: Optional[str] = Field(default=None, description="The name of the step")
     email_generation: Optional[EmailGeneratorSettings] = Field(default=None)
     email_fixed_text: Optional[EmailFixedText] = Field(default=None)
     email_settings: EmailSettings = Field(default_factory=EmailSettings)

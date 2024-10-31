@@ -25,6 +25,7 @@ class ExcludeReason(StrEnum):
     NO_PERSON = "no_person"
     NO_PHONE = "no_phone"
     NO_SOCIAL_MEDIA = "no_social_media"
+    NO_LINKEDIN_URL = "no_linkedin_url"
     PHONE_INVALID = "phone_invalid"
     SOCIAL_MEDIA_INVALID = "social_media_invalid"
     TITLE_FILTERED = "title_filtered"
@@ -69,6 +70,7 @@ class SexEnum(StrEnum):
 
 
 class GenderEnum(StrEnum):
+    UNKNOWN = "unknown"
     OTHER = "other"
     MALE = "male"
     FEMALE = "female"
@@ -76,11 +78,13 @@ class GenderEnum(StrEnum):
     GENDERQUEER = "genderqueer"
     AGENDER = "agender"
     GENDERFLUID = "genderfluid"
-
+    
     @classmethod
     def _missing_(cls, value):
         if value in {"m", "M"}:
             return cls.MALE
         if value in {"f", "F"}:
             return cls.FEMALE
+        if value in {"u", "U"}:
+            return cls.UNKNOWN
         return super()._missing_(value)
