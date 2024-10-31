@@ -182,9 +182,16 @@ export async function getAllSequenceApi(req, res, next) {
     let userId = req.user && req.user.userId ? req.user.userId : null;
     if (!userId) throw `Missing userId from decoded access token`;
 
-    let { account_id: accountId } = req.query;
+    let {
+        account_id: accountId,
+        current_page_num: currentPageNum,
+        limit,
+    } = req.query;
 
     if (!accountId) throw `Missing account_id`;
+
+    // if (!currentPageNum) throw `Missing current_page_num`;
+    // if (!limit) limit = 10;
 
     /*
     let result = [
@@ -196,8 +203,10 @@ export async function getAllSequenceApi(req, res, next) {
             sequence_analytics: {
                 contacted: 12,
                 opened: 8,
+                unique_opened: 5,
                 clicked: 3,
                 replied: 1,
+                unique_replied: 1,
                 booked: 0,
             },
         },
@@ -209,8 +218,10 @@ export async function getAllSequenceApi(req, res, next) {
             sequence_analytics: {
                 contacted: 5,
                 opened: 3,
+                unique_opened: 2,
                 clicked: 1,
                 replied: 0,
+                unique_replied: 0,
                 booked: 0,
             },
         },
@@ -842,6 +853,7 @@ export async function setCampaignDefaultsApi(req, res, next) {
     const funcName = "setCampaignDefaultsApi";
     const logg = logger.child({ txid, funcName });
     logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
 
     let userId = req.user && req.user.userId ? req.user.userId : null;
     if (!userId)
@@ -869,5 +881,78 @@ export async function setCampaignDefaultsApi(req, res, next) {
     return res.json({
         success: true,
         message: `${funcName} executed successfully`,
+    });
+}
+
+export async function getSequenceListApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getSequenceListApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId, get_only_names: getOnlyNames } = req.query;
+    if (!accountId) throw `Missing account_id`;
+
+    getOnlyNames =
+        getOnlyNames === "true" || getOnlyNames === true ? true : false;
+    let [result, resultErr] = await CampaignUtils.getSequenceList(
+        { accountId, getOnlyNames },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
+/*
+ * Added on 29th October 2024
+ * WHAT DOES THIS API DO?
+ * - This API is used to update an existing sequence prospect message using AI
+ * - It takes the existing message and update instructions as input and returns the updated message
+ * WHERE IS THIS API USED?
+ * - In the QRev Desktop App when user wants to modify an existing message using AI
+ */
+export async function updateSequenceMessageUsingAiApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "updateSequenceMessageUsingAiApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) throw `Missing account_id`;
+
+    let {
+        spms_id: spmsId,
+        update_instructions: updateInstructions,
+        existing_message: existingMessage,
+        ai_query_type: aiQueryType,
+    } = req.body;
+
+    if (!spmsId) throw `Missing spms_id in body`;
+    if (!existingMessage) throw `Missing existing_message in body`;
+
+    let [result, resultErr] = await CampaignUtils.updateSequenceMessageUsingAi(
+        { spmsId, updateInstructions, existingMessage, accountId, aiQueryType },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
     });
 }

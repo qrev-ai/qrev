@@ -104,4 +104,11 @@ router.post(
     apiWrapper(CampaignApis.setCampaignDefaultsApi)
 );
 
+router.get("/sequence/list", apiWrapper(CampaignApis.getSequenceListApi));
+
+router.post(
+    "/sequence/message/update_using_ai",
+    apiWrapper(CampaignApis.updateSequenceMessageUsingAiApi)
+);
+
 export default router;

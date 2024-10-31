@@ -23,6 +23,7 @@ import { IntermediateProspectMessage } from "../../models/campaign/intermediate.
 import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
 import * as S3Utils from "../aws/aws.s3.utils.js";
 import * as AccountUserUtils from "../account/account.user.utils.js";
+import * as OpenAIUtils from "../ai/openai.utils.js";
 
 import path from "path";
 
@@ -6533,7 +6534,7 @@ async function _setCampaignDefaults(
     let updateResp = await CampaignConfig.findOneAndUpdate(
         { account: accountId },
         updateObj,
-        { new: true }
+        { new: true, upsert: true }
     );
 
     logg.info(`updateResp: ${JSON.stringify(updateResp)}`);
@@ -6550,3 +6551,96 @@ export const setCampaignDefaults = functionWrapper(
 export function getAllResourcesToBeConfigured() {
     return CampaignDefaults.resource_file_types;
 }
+
+async function _getSequenceList(
+    { accountId, getOnlyNames },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+
+    let query = { account: accountId };
+    let projection = getOnlyNames ? { name: 1 } : {};
+
+    let sequences = await SequenceModel.find(query, projection).sort({
+        created_on: -1,
+    });
+
+    logg.info(`found ${sequences.length} sequences`);
+    logg.info(`ended`);
+    return [sequences, null];
+}
+
+export const getSequenceList = functionWrapper(
+    fileName,
+    "getSequenceList",
+    _getSequenceList
+);
+
+async function _updateSequenceMessageUsingAi(
+    { spmsId, updateInstructions, existingMessage, accountId, aiQueryType },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let query;
+
+    let bottomInstruction =
+        "Please provide only the shortened message without any explanations or additional text. DO NOT ADD ANYTHING ELSE. NOT EVEN A WORD.";
+
+    switch (aiQueryType) {
+        case "improve":
+            query = `Please improve the writing of the following message while maintaining its core message and tone:
+            
+${existingMessage}
+
+${bottomInstruction}`;
+            break;
+
+        case "shorten":
+            query = `Please make this message more concise while keeping all relevant content:
+            
+${existingMessage}
+
+${bottomInstruction}`;
+            break;
+
+        case "grammar":
+            query = `Please fix any grammatical errors in the following message:
+            
+${existingMessage}
+
+${bottomInstruction}`;
+            break;
+
+        case "custom":
+        default:
+            query = `Please update the following message according to these instructions:
+    
+Original message:
+${existingMessage}
+
+Update instructions:
+${updateInstructions}
+
+${bottomInstruction}`;
+    }
+
+    const [updatedMessage, error] = await OpenAIUtils.queryGpt40Mini(
+        { query },
+        { logg, funcName }
+    );
+
+    if (error) {
+        throw error;
+    }
+
+    logg.info(`ended`);
+    return [updatedMessage, null];
+}
+
+export const updateSequenceMessageUsingAi = functionWrapper(
+    fileName,
+    "updateSequenceMessageUsingAi",
+    _updateSequenceMessageUsingAi
+);

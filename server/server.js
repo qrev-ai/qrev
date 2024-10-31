@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import expressRequestId from "express-request-id";
 // configure .env using package dotenv
 dotenv.config({ path: "./.env" });
-import { dbConnect } from "./db.connect.js";
+import { dbConnect, connectToQRevAnalyticsMongoDb } from "./db.connect.js";
 
 import { invalidRouteHandler } from "./middleware/invalid.route.js";
 import { errorHandler } from "./middleware/error.handler.js";
@@ -17,6 +17,7 @@ import { setRoutes } from "./routes.js";
 import { setupOpenAi } from "./setup.openai.js";
 
 dbConnect();
+export const QRevAnalyticsMongoDbClient = connectToQRevAnalyticsMongoDb();
 
 awsSdkSetup();
 

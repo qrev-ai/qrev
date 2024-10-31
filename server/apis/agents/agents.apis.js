@@ -255,3 +255,210 @@ export async function listAgentsApi(req, res, next) {
         result: agents,
     });
 }
+
+export async function dailyProspectUpdatesApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "dailyProspectUpdatesApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [result, resultErr] = await AgentUtils.dailyProspectUpdates(
+        { accountId, userId },
+        { txid }
+    );
+    if (resultErr) {
+        logg.info(`resultErr:` + resultErr);
+        throw new CustomError(
+            `Error getting daily prospect updates`,
+            fileName,
+            funcName
+        );
+    }
+
+    /*
+    * Sample response: 
+    {
+        "success": true,
+        "message": "Daily prospect updates fetched successfully",
+        "result": [
+            {
+                first_name: "Jane",
+                last_name: "Smith",
+                email: "jane.smith@example.com",
+                linkedin_url: "https://www.linkedin.com/in/jane-smith-0987654321",
+                insights: "Insights about Jane Smith",
+                score: 92,
+                job_title: "Product Manager",
+                company_name: "Global Solutions Ltd.",
+                references: "Met at ProductCon 2023"
+            },
+            {
+                first_name: "John",
+                last_name: "Doe",
+                email: "john.doe@example.com",
+                linkedin_url: "https://www.linkedin.com/in/john-doe-1234567890",
+                insights: "Insights about John Doe",
+                score: 85,
+                job_title: "Senior Software Engineer",
+                company_name: "Tech Innovators Inc.",
+                references: "Referred by Sarah Johnson"
+            }
+        ]
+    }
+    */
+
+    res.status(200).json({
+        success: true,
+        message: "Daily prospect updates fetched successfully",
+        result: result,
+    });
+}
+
+export async function archiveAgentApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "archiveAgentApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId, agent_id: agentId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [resp, agentErr] = await AgentUtils.archiveAgent(
+        { accountId, userId, agentId },
+        { txid }
+    );
+    if (agentErr) {
+        logg.info(`agentErr:` + agentErr);
+        throw new CustomError(`Error archiving agent`, fileName, funcName);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent archived successfully",
+    });
+}
+
+
+export async function pauseAgentApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "pauseAgentApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId, agent_id: agentId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [resp, agentErr] = await AgentUtils.pauseAgent(
+        { accountId, userId, agentId },
+        { txid }
+    );
+    if (agentErr) {
+        logg.info(`agentErr:` + agentErr);
+        throw new CustomError(`Error pausing agent`, fileName, funcName);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent paused successfully",
+    });
+}
+
+
+export async function resumeAgentApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "resumeAgentApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId, agent_id: agentId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [resp, agentErr] = await AgentUtils.resumeAgent(
+        { accountId, userId, agentId },
+        { txid }
+    );
+    if (agentErr) {
+        logg.info(`agentErr:` + agentErr);
+        throw new CustomError(`Error resuming agent`, fileName, funcName);
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent resumed successfully",
+    });
+}
