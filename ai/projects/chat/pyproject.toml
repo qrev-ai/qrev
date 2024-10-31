@@ -20,9 +20,9 @@ openai = "^1.23.2"
 pi-conf = "^0.8.5.1"
 pi-log = "^0.5.8.1"
 python-dotenv = "^1.0.1"
-qai-ai = "^0.6.0"
-qai-core = "^0.6.0"
-qai-agent = "^0.6.1"
+qai-ai = {develop = true, path = "../ai"}
+qai-core = {develop = true, path = "../core"}
+qai-agent = {develop = true, path = "../agent"}
 
 [tool.poetry.dev-dependencies]
 autoflake = "^2.2.1"
