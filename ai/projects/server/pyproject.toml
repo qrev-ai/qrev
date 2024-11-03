@@ -24,7 +24,7 @@ mysql-connector-python = "^8.4.0"
 qai-agent = "^0.6.1"
 qai-chat = {path = "../chat", develop = true}
 opentelemetry-exporter-otlp-proto-grpc = "1.25.0"
-pi-conf = "^0.8.5.1"
+pi-conf = "^0.8.5.2"
 chromadb = "^0.5.5"
 pydantic = "^2.9.2"
 
