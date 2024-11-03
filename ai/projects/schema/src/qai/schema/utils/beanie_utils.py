@@ -12,7 +12,7 @@ log = getLogger(__name__)
 
 async def init(
     mongo_uri: str, mongo_db: Optional[str] = None, mongo_config: Optional[MongoConfig] = None
-) -> AsyncIOMotorDatabase[_DocumentType]:
+) -> AsyncIOMotorDatabase:
     if mongo_config:
         mongo_uri = mongo_config.uri
         mongo_db = mongo_config.db
