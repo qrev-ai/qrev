@@ -1,11 +1,14 @@
 import json
 import tomllib as toml
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 
+from beanie import PydanticObjectId
 from pi_conf import ConfigDict, ConfigSettings
 from pi_conf.config_settings import ConfigDict, ConfigSettings
 from pydantic import BaseModel, Field, field_validator, model_validator
+from qai.schema import ExtendedDocument
+from qai.schema.models.addons import CreatedAtDoc, Deleteable, Labels, Taggable
 
 MIN_SCORE = 1
 MAX_SCORE = 10
@@ -157,6 +160,7 @@ class EmailSettings(InheritableSettings):
     generated_intermediate_emails_directory: Optional[str] = Field(default=None)
     sender_person_file: Optional[str] = Field(default=None)
     sender_company_file: Optional[str] = Field(default=None)
+    per_iteration_model: Optional[dict[int, str]] = Field(default=None)
 
 
 class EmailGeneratorSettings(ConfigSettings):
@@ -167,12 +171,12 @@ class EmailGeneratorSettings(ConfigSettings):
     scoring: Scoring = Field(
         default_factory=Scoring, description="The rules to evaluate the email against"
     )
+    iterations: int = 3
 
     model_config = ConfigDict(
         toml_table_header="outreach.steps.email_generation",
     )
     email_settings: EmailSettings = Field(default_factory=EmailSettings)
-    iterations: int = 3
 
 
 class EmailFixedText(BaseModel):
@@ -208,3 +212,35 @@ class Outreach(BaseModel):
     def apply_email_settings_inheritance(self):
         for step in self.steps:
             step.apply_email_settings_inheritance(self.email_settings)
+
+class EmailModel(CreatedAtDoc, Taggable):
+    email: Email
+    contact_type: str = "Email"
+    contact_id: PydanticObjectId = Field(..., description="The contact id")
+    person_id: PydanticObjectId = Field(..., description="The person id")
+    step: int = Field(default=None, description="The step of the email model")
+    version: Optional[int] = Field(default=None, description="The version of the email model")
+
+    class Settings:
+        name = "outreach_emails"
+        equality_fields = ["person_id", "contact_id"]
+        keep_nulls = False
+
+    def match_query(self) -> dict[str, Any]:
+        query: list[dict[str, Any]] = []
+
+        # Match by ID
+        if self.id:
+            query.append({"_id": self.id})
+        else:
+            # Match by contact ID
+            query.append({"contact_id": self.contact_id})
+            # Match by person ID
+            query.append({"person_id": self.person_id})
+            # Match by version
+            if self.version:
+                query.append({"version": self.version})
+            # Match by step
+            query.append({"step": self.version})
+
+        return {"$or": query}

@@ -3,7 +3,7 @@ import os
 import tomllib as toml
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional, TypeAlias, TypeVar
+from typing import TYPE_CHECKING, Any, Optional, TypeAlias, TypeVar
 
 from beanie import Document
 from beanie import Link as BeanieLink
@@ -26,6 +26,7 @@ from qai.schema.models.models import OutreachType
 from qai.schema.models.mongo_model import MongoConfig
 from qai.schema.models.outreach.email import Outreach
 from qai.schema.models.qbeanie import Link
+from qai.schema.utils.open_func import open_func as open
 
 sentinel = object()
 
@@ -83,6 +84,7 @@ class ClientOptions(ConfigSettings):
 
 class Campaign(CreatedAtDoc, Deleteable, DateRange, Taggable, Labels):
     name: str = Field(..., description="The name of the campaign")
+    alias: Optional[str] = Field(default=None, description="The alias of the campaign")
 
     description: Optional[str] = Field(default=None, description="The description of the campaign")
 
