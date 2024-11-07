@@ -220,6 +220,7 @@ class EmailModel(CreatedAtDoc, Taggable):
     person_id: PydanticObjectId = Field(..., description="The person id")
     step: int = Field(default=None, description="The step of the email model")
     version: Optional[int] = Field(default=None, description="The version of the email model")
+    address: str = Field(..., description="The email address")
 
     class Settings:
         name = "outreach_emails"
