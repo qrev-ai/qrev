@@ -793,7 +793,7 @@ perHourLimit: 20
 perDayLimit: 500
 senderList: ["email1","email2",...]
 */
-function scheduleTimeForSequenceProspects(
+export function scheduleTimeForSequenceProspects(
     {
         prospects,
         perHourLimit,
@@ -809,6 +809,7 @@ function scheduleTimeForSequenceProspects(
         prevStepTimeValue,
         ignoreSchedulingBeforeTimes,
         replyToUser,
+        senderScheduleMap,
     },
     { txid }
 ) {
@@ -822,11 +823,11 @@ function scheduleTimeForSequenceProspects(
         );
         scheduleTimeHours = {
             sun: [],
-            mon: [{ start: "09:00", end: "17:00" }],
-            tue: [{ start: "09:00", end: "17:00" }],
-            wed: [{ start: "09:00", end: "17:00" }],
-            thu: [{ start: "09:00", end: "17:00" }],
-            fri: [{ start: "09:00", end: "17:00" }],
+            mon: [{ start: "09:00", end: "22:00" }],
+            tue: [{ start: "09:00", end: "22:00" }],
+            wed: [{ start: "09:00", end: "22:00" }],
+            thu: [{ start: "09:00", end: "22:00" }],
+            fri: [{ start: "09:00", end: "22:00" }],
             sat: [],
         };
     }
@@ -842,11 +843,13 @@ function scheduleTimeForSequenceProspects(
         { txid }
     );
 
-    let senderScheduleMap = {};
-    for (let i = 0; i < senderCount; i++) {
-        let sender = senderList[i];
-        let senderEmail = sender.email;
-        senderScheduleMap[senderEmail] = {};
+    if (!senderScheduleMap || JSON.stringify(senderScheduleMap) === "{}") {
+        senderScheduleMap = {};
+        for (let i = 0; i < senderCount; i++) {
+            let sender = senderList[i];
+            let senderEmail = sender.email;
+            senderScheduleMap[senderEmail] = {};
+        }
     }
 
     let scheduleList = [];
@@ -924,7 +927,7 @@ function scheduleTimeForProspects(
             perDayLimit,
             scheduleTimeHours,
             timezone,
-            senderScheduleMap,
+            // senderScheduleMap,
         })}`
     );
 
@@ -973,7 +976,7 @@ function scheduleTimeForProspects(
         }
     }
 
-    let endRangeTime = initialRangeTime + 30 * 24 * 60 * 60 * 1000;
+    let endRangeTime = initialRangeTime + 200 * 24 * 60 * 60 * 1000;
 
     let scheduleTimes =
         SlotGen_utils.createFreeFromBusySlotsOpenLinkNewCustomHours(
@@ -1121,6 +1124,11 @@ function scheduleTimeForProspects(
 
         // prospect.scheduled_email_time = selectedTime;
         // prospect.sender_email = selectedSender;
+        // create map of sendeerList with key as email and value as user_id
+        let senderMap = {};
+        for (const sender of senderList) {
+            senderMap[sender.email] = sender.user_id;
+        }
 
         let item = {
             // _id: uuidv4(),
@@ -1130,6 +1138,7 @@ function scheduleTimeForProspects(
             sequence_step: sequenceStepId,
             sequence_prospect: prospect._id,
             sender_email: selectedSender,
+            sender: senderMap[selectedSender],
             message_scheduled_time: new Date(selectedTime),
             message_status: "pending",
             prospect_timezone: timezone,
@@ -3009,6 +3018,7 @@ async function _hasProspectRepliedToPreviousStep(
     let emailThreadId =
         prevMessageResponse && prevMessageResponse.email_thread_id;
     let senderUserId = prevSpmsDoc.sender;
+
     if (emailThreadId && senderUserId) {
         let [senderAuthObj, authObjErr] =
             await GoogleUtils.refreshOrReturnToken(
@@ -3034,7 +3044,7 @@ async function _hasProspectRepliedToPreviousStep(
     return [false, null];
 }
 
-const hasProspectRepliedToPreviousStep = functionWrapper(
+export const hasProspectRepliedToPreviousStep = functionWrapper(
     fileName,
     "hasProspectRepliedToPreviousStep",
     _hasProspectRepliedToPreviousStep
@@ -5688,6 +5698,7 @@ export const getCampaignDefaults = functionWrapper(
     "getCampaignDefaults",
     _getCampaignDefaults
 );
+
 /*
 * Context: 
 *   * Our potential customer Scripbox wanted to have a different email ID for the “Reply To” field in the email that we send to the prospects as part of the campaign.
