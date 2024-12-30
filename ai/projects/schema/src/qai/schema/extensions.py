@@ -36,7 +36,7 @@ from qai.schema.mergers.merge import NORMAL_PRIORITY, Priority, merge_model
 T = TypeVar("T", bound=Document)
 ET = TypeVar("ET", bound="ExtendedDocument")
 
-sentinel = types.new_class('Sentinel', (List[int],))()
+sentinel = types.new_class("Sentinel", (List[int],))()
 
 offline_settings = DocumentSettings()
 
@@ -79,7 +79,7 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
             # raw_config = ConfigSettings(**kwargs).model_dump()
             # filtered_data = cls._filter_and_transform_data(raw_config)
             # return cls.model_validate(filtered_data)
-        
+
     @classmethod
     async def load(
         cls: type[ET],
@@ -343,7 +343,7 @@ class ExtendedDocument(Document, metaclass=CombinedMeta):
         """
         Pretty format the document
         """
-        return json.dumps(self.model_dump(exclude_none=True, **kwargs), indent=indent)
+        return json.dumps(self.model_dump(exclude_none=True, mode="json", **kwargs), indent=indent)
 
     @property
     def summary(self) -> str:

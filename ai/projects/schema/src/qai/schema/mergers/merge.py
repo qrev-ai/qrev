@@ -7,14 +7,14 @@ T = TypeVar("T")
 
 log = logging.getLogger(__name__)
 
-Priority = NewType("Priority", int)
+PriorityType = NewType("Priority", int)
+Priority = PriorityType | int
 
-
-LOWER_PRIORITY = Priority(30)
-LOW_PRIORITY = Priority(40)
-NORMAL_PRIORITY = Priority(50)
-HIGH_PRIORITY = Priority(60)
-HIGHER_PRIORITY = Priority(70)
+LOWER_PRIORITY = PriorityType(30)
+LOW_PRIORITY = PriorityType(40)
+NORMAL_PRIORITY = PriorityType(50)
+HIGH_PRIORITY = PriorityType(60)
+HIGHER_PRIORITY = PriorityType(70)
 
 
 class MergeStrategy(Generic[T]):
