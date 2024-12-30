@@ -1084,3 +1084,45 @@ export const storeAutoCampaignMessageReplyAnalytic = functionWrapper(
     "storeAutoCampaignMessageReplyAnalytic",
     _storeAutoCampaignMessageReplyAnalytic
 );
+
+async function _getAutoReplyDraftInfos(
+    { accountId, sortByCreatedOnDesc = true },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let queryObj = {
+        account: accountId,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        "analytic_metadata.auto_reply_draft.status": "generated",
+    };
+
+    let analytics = await VisitorAnalytics.find(queryObj);
+    logg.info(`analytics.length: ${analytics.length}`);
+
+    if (sortByCreatedOnDesc) {
+        analytics.sort(
+            (a, b) =>
+                (b.updated_on || b.created_on) - (a.updated_on || a.created_on)
+        );
+    }
+
+    let draftInfos = analytics.map((analytic) => {
+        return {
+            _id: analytic._id,
+            tag: analytic.analytic_metadata.auto_reply_draft.tag,
+            draft: analytic.analytic_metadata.auto_reply_draft.draft,
+        };
+    });
+
+    logg.info(`draftInfos: ${JSON.stringify(draftInfos)}`);
+
+    logg.info(`ended`);
+    return [draftInfos, null];
+}
+
+export const getAutoReplyDraftInfos = functionWrapper(
+    fileName,
+    "getAutoReplyDraftInfos",
+    _getAutoReplyDraftInfos
+);

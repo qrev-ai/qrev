@@ -6655,3 +6655,25 @@ export const updateSequenceMessageUsingAi = functionWrapper(
     "updateSequenceMessageUsingAi",
     _updateSequenceMessageUsingAi
 );
+
+async function _getAllGeneratedAutoReplyDrafts(
+    { accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let [draftInfos, draftInfosErr] = await AnalyticUtils.getAutoReplyDraftInfos(
+        { accountId, sortByCreatedOnDesc: true },
+        { txid }
+    );
+    if (draftInfosErr) throw draftInfosErr;
+
+    logg.info(`ended`);
+    return [draftInfos, null];
+}
+
+export const getAllGeneratedAutoReplyDrafts = functionWrapper(
+    fileName,
+    "getAllGeneratedAutoReplyDrafts",
+    _getAllGeneratedAutoReplyDrafts
+);

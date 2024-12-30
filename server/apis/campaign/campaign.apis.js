@@ -956,3 +956,38 @@ export async function updateSequenceMessageUsingAiApi(req, res, next) {
         result,
     });
 }
+
+/*
+ * Added on 28th December 2024
+ * WHAT DOES THIS API DO?
+ * - This API is used to get all the generated auto reply drafts for a given account
+ * User can then review and approve the draft to be sent to the prospect
+ * WHERE IS THIS API USED?
+ * - In the QRev Desktop App under 'Review Mails' UI when user wants to review and approve the auto reply drafts
+ */
+export async function getAllGeneratedAutoReplyDraftsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getAllGeneratedAutoReplyDraftsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) throw `Missing account_id`;
+
+    let [draftInfos, draftInfosErr] =
+        await CampaignUtils.getAllGeneratedAutoReplyDrafts(
+            { accountId },
+            { txid }
+        );
+    if (draftInfosErr) throw draftInfosErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result: draftInfos,
+    });
+}
