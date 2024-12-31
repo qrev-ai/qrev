@@ -1144,7 +1144,7 @@ export const getAutoReplyDraftInfos = functionWrapper(
     _getAutoReplyDraftInfos
 );
 
-async function getSequenceReplyAnalytic(
+async function _getSequenceReplyAnalytic(
     { accountId, replyAnalyticId },
     { txid, logg, funcName }
 ) {
