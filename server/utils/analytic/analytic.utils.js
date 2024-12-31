@@ -1106,8 +1106,7 @@ async function _getAutoReplyDraftInfos(
         action_type: AnalyticActionTypes.campaign_message_reply,
         "analytic_metadata.auto_reply_draft.status": "generated",
     };
-
-    let analytics = await VisitorAnalytics.find(queryObj);
+    let analytics = await VisitorAnalytics.find(queryObj).lean();
     logg.info(`analytics.length: ${analytics.length}`);
 
     if (sortByCreatedOnDesc) {
@@ -1117,20 +1116,22 @@ async function _getAutoReplyDraftInfos(
         );
     }
 
-    let draftInfos = analytics.map((analytic) => {
+    let draftInfos = [];
+
+    for (const analytic of analytics) {
         let msgDetails = analytic.analytic_metadata.message_details;
-        let [userMsg, msgErr] = GoogleUtils.parseEmailMessage(
+        let [userMsg, msgErr] = await GoogleUtils.parseEmailMessage(
             { messageData: msgDetails },
             { txid }
         );
         if (msgErr) throw msgErr;
-        return {
+        draftInfos.push({
             _id: analytic._id,
             tag: analytic.analytic_metadata.auto_reply_draft.tag,
             draft: analytic.analytic_metadata.auto_reply_draft.draft,
             user_message: userMsg,
-        };
-    });
+        });
+    }
 
     logg.info(`draftInfos: ${JSON.stringify(draftInfos)}`);
 
