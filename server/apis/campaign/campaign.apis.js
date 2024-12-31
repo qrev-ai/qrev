@@ -1019,7 +1019,7 @@ export async function sendAutoReplyDraftApi(req, res, next) {
     if (!replyTxtMessage) throw `Missing reply_txt_message in body`;
 
     let [result, resultErr] = await CampaignUtils.sendAutoReplyDraft(
-        { accountId, replyAnalyticId, replyTxtMessage },
+        { accountId, replyAnalyticId, replyTxtMessage, userId },
         { txid }
     );
     if (resultErr) throw resultErr;
