@@ -1173,3 +1173,32 @@ export const getSequenceReplyAnalytic = functionWrapper(
     "getSequenceReplyAnalytic",
     _getSequenceReplyAnalytic
 );
+
+async function _updateAutoDraftStatusToSent(
+    { accountId, replyAnalyticId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    let queryObj = {
+        account: accountId,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        _id: replyAnalyticId,
+    };
+    let updateObj = {
+        "analytic_metadata.auto_reply_draft.status": "sent",
+    };
+    let updatedDoc = await VisitorAnalytics.findOneAndUpdate(
+        queryObj,
+        updateObj,
+        { new: true }
+    );
+    logg.info(`updatedDoc: ${JSON.stringify(updatedDoc)}`);
+    logg.info(`ended`);
+    return [updatedDoc, null];
+}
+
+export const updateAutoDraftStatusToSent = functionWrapper(
+    fileName,
+    "updateAutoDraftStatusToSent",
+    _updateAutoDraftStatusToSent
+);

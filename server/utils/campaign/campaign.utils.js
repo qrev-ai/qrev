@@ -6757,6 +6757,13 @@ async function _sendAutoReplyDraft(
     );
     if (sendReplyErr) throw sendReplyErr;
 
+    let [statusUpdateResp, statusUpdateErr] =
+        await AnalyticUtils.updateAutoDraftStatusToSent(
+            { accountId, replyAnalyticId },
+            { txid }
+        );
+    if (statusUpdateErr) throw statusUpdateErr;
+
     logg.info(`ended`);
     return [true, null];
 }
