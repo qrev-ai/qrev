@@ -1053,6 +1053,7 @@ async function _storeAutoCampaignMessageReplyAnalytic(
         repliedOnDate,
         originalReplyId,
         updateAutoDraftReply,
+        sentByUserId,
     },
     { txid, logg, funcName }
 ) {
@@ -1066,6 +1067,9 @@ async function _storeAutoCampaignMessageReplyAnalytic(
     }
     if (updateAutoDraftReply) {
         amDoc.is_auto_draft_reply = true;
+    }
+    if (sentByUserId) {
+        amDoc.sent_by_user_id = sentByUserId;
     }
     let analytic = new VisitorAnalytics({
         session_id: sessionId,

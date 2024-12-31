@@ -4116,6 +4116,7 @@ async function _sendReplyToMessage(
         isAutoReply = true,
         htmlBody = null,
         originalReplyId = null,
+        sentByUserId = null,
     },
     { txid, logg, funcName }
 ) {
@@ -4191,6 +4192,9 @@ async function _sendReplyToMessage(
         // so keep this in mind
         replyObj.original_reply_id = originalReplyId;
     }
+    if (sentByUserId) {
+        replyObj.sent_by_user_id = sentByUserId;
+    }
     let updateObj = { $addToSet: { replies: replyObj } };
     let spmsUpdateResp = await SequenceProspectMessageSchedule.updateOne(
         { _id: spmsId, account: accountId },
@@ -4213,13 +4217,14 @@ async function _sendReplyToMessage(
                     replyId,
                     replyObj,
                     repliedOnDate: new Date(),
+                    sentByUserId,
                 },
                 { txid }
             );
         if (replyAnalyticErr) throw replyAnalyticErr;
     } else {
         let [replyAnalyticResp, replyAnalyticErr] =
-                await AnalyticUtils.storeAutoCampaignMessageReplyAnalytic(
+            await AnalyticUtils.storeAutoCampaignMessageReplyAnalytic(
                 {
                     sessionId: spmsDoc.analytic_session_id,
                     spmsId,
@@ -4233,6 +4238,7 @@ async function _sendReplyToMessage(
                     originalReplyId,
                     updateAutoDraftReply: originalReplyId ? true : false,
                     repliedOnDate: new Date(),
+                    sentByUserId,
                 },
                 { txid }
             );
@@ -6723,7 +6729,7 @@ export const getAllGeneratedAutoReplyDrafts = functionWrapper(
 );
 
 async function _sendAutoReplyDraft(
-    { accountId, replyAnalyticId, replyTxtMessage },
+    { accountId, replyAnalyticId, replyTxtMessage, userId },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -6745,6 +6751,7 @@ async function _sendAutoReplyDraft(
             isAutoReply: false,
             htmlBody: replyTxtMessage,
             originalReplyId: replyAnalyticId,
+            sentByUserId: userId,
         },
         { txid, logg, funcName }
     );
