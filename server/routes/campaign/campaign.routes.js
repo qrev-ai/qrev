@@ -116,4 +116,9 @@ router.get(
     apiWrapper(CampaignApis.getAllGeneratedAutoReplyDraftsApi)
 );
 
+router.post(
+    "/auto_reply_drafts/send",
+    apiWrapper(CampaignApis.sendAutoReplyDraftApi)
+);
+
 export default router;

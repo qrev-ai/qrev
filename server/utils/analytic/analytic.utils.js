@@ -1051,18 +1051,27 @@ async function _storeAutoCampaignMessageReplyAnalytic(
         replyId,
         replyObj,
         repliedOnDate,
+        originalReplyId,
+        updateAutoDraftReply,
     },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
+    let amDoc = {
+        reply_id: replyId,
+        reply_obj: replyObj,
+    };
+    if (originalReplyId) {
+        amDoc.original_reply_id = originalReplyId;
+    }
+    if (updateAutoDraftReply) {
+        amDoc.is_auto_draft_reply = true;
+    }
     let analytic = new VisitorAnalytics({
         session_id: sessionId,
         app_type: AnalyticAppTypes.campaign,
         action_type: AnalyticActionTypes.campaign_message_auto_reply,
-        analytic_metadata: {
-            reply_id: replyId,
-            reply_obj: replyObj,
-        },
+        analytic_metadata: amDoc,
         sequence_prospect_message: spmsId,
         account: accountId,
         sequence: sequenceId,
@@ -1132,4 +1141,29 @@ export const getAutoReplyDraftInfos = functionWrapper(
     fileName,
     "getAutoReplyDraftInfos",
     _getAutoReplyDraftInfos
+);
+
+async function getSequenceReplyAnalytic(
+    { accountId, replyAnalyticId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let queryObj = {
+        account: accountId,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        _id: replyAnalyticId,
+    };
+
+    let analytic = await VisitorAnalytics.findOne(queryObj).lean();
+    logg.info(`analytic: ${JSON.stringify(analytic)}`);
+
+    logg.info(`ended`);
+    return [analytic, null];
+}
+
+export const getSequenceReplyAnalytic = functionWrapper(
+    fileName,
+    "getSequenceReplyAnalytic",
+    _getSequenceReplyAnalytic
 );

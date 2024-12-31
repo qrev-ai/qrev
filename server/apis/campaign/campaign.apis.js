@@ -958,7 +958,7 @@ export async function updateSequenceMessageUsingAiApi(req, res, next) {
 }
 
 /*
- * Added on 28th December 2024
+ * Added on 30th December 2024
  * WHAT DOES THIS API DO?
  * - This API is used to get all the generated auto reply drafts for a given account
  * User can then review and approve the draft to be sent to the prospect
@@ -989,5 +989,44 @@ export async function getAllGeneratedAutoReplyDraftsApi(req, res, next) {
         success: true,
         message: `${funcName} executed successfully`,
         result: draftInfos,
+    });
+}
+
+/*
+ * Added on 31st December 2024
+ * WHAT DOES THIS API DO?
+ * - This API is used to send an auto reply draft to the prospect
+ * WHERE IS THIS API USED?
+ * - In the QRev Desktop App under 'Review Mails' UI when user wants to send an auto reply draft to the prospect
+ */
+export async function sendAutoReplyDraftApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "sendAutoReplyDraftApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) throw `Missing userId from decoded access token`;
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) throw `Missing account_id`;
+
+    let {
+        reply_analytic_id: replyAnalyticId,
+        reply_txt_message: replyTxtMessage,
+    } = req.body;
+    if (!replyAnalyticId) throw `Missing reply_analytic_id in body`;
+    if (!replyTxtMessage) throw `Missing reply_txt_message in body`;
+
+    let [result, resultErr] = await CampaignUtils.sendAutoReplyDraft(
+        { accountId, replyAnalyticId, replyTxtMessage },
+        { txid }
+    );
+    if (resultErr) throw resultErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
     });
 }

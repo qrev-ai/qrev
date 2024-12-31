@@ -4098,8 +4098,25 @@ const checkIfMessageSentForPrevSteps = functionWrapper(
     _checkIfMessageSentForPrevSteps
 );
 
+/*
+ * Updated on 31st December 2024
+ * Refitted this function to send auto draft reply to a prospect reply
+ * Originally this was used to send auto reply when a prospect opens the campaign email
+ * Now making this function generic so that it can be used to send auto draft reply to a prospect reply to a campaign email
+ * Why to refit?
+ * This also adds the tracking tag to the reply message
+ * So to avoid duplication, refitted this function rather than creating a new function
+ */
 async function _sendReplyToMessage(
-    { accountId, spmsId, spmsDoc, contactDoc },
+    {
+        accountId,
+        spmsId,
+        spmsDoc,
+        contactDoc,
+        isAutoReply = true,
+        htmlBody = null,
+        originalReplyId = null,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -4128,14 +4145,12 @@ async function _sendReplyToMessage(
 
     let replyId = uuidv4();
 
-    let htmlBody = `Any thoughts, ${contactFirstName}?`;
+    if (isAutoReply && !htmlBody) {
+        htmlBody = `Any thoughts, ${contactFirstName}?`;
+    }
 
     let finalHtmlBody = convertToHtmlAndAddTags(
-        {
-            emailBody: htmlBody,
-            campaignProspectId: spmsId,
-            replyId,
-        },
+        { emailBody: htmlBody, campaignProspectId: spmsId, replyId },
         { txid }
     );
 
@@ -4170,6 +4185,12 @@ async function _sendReplyToMessage(
         reply: htmlBody,
         message_response: sendResp,
     };
+    if (originalReplyId) {
+        // * added 'original_reply_id' to differentiate between auto reply and reply
+        // for previous replies sent before 31st December 2024, we are not adding this field
+        // so keep this in mind
+        replyObj.original_reply_id = originalReplyId;
+    }
     let updateObj = { $addToSet: { replies: replyObj } };
     let spmsUpdateResp = await SequenceProspectMessageSchedule.updateOne(
         { _id: spmsId, account: accountId },
@@ -4178,23 +4199,45 @@ async function _sendReplyToMessage(
     logg.info(`spmsUpdateResp: ${JSON.stringify(spmsUpdateResp)}`);
 
     // store the reply in the analytics
-    let [replyAnalyticResp, replyAnalyticErr] =
-        await AnalyticUtils.storeAutoCampaignMessageReplyAnalytic(
-            {
-                sessionId: spmsDoc.analytic_session_id,
-                spmsId,
-                accountId,
-                sequenceId: spmsDoc.sequence,
-                contactId: contactDoc._id,
-                sequenceStepId: spmsDoc.sequence_step,
-                sequenceProspectId: spmsDoc.sequence_prospect,
-                replyId,
-                replyObj,
-                repliedOnDate: new Date(),
-            },
-            { txid }
-        );
-    if (replyAnalyticErr) throw replyAnalyticErr;
+    if (isAutoReply) {
+        let [replyAnalyticResp, replyAnalyticErr] =
+            await AnalyticUtils.storeAutoCampaignMessageReplyAnalytic(
+                {
+                    sessionId: spmsDoc.analytic_session_id,
+                    spmsId,
+                    accountId,
+                    sequenceId: spmsDoc.sequence,
+                    contactId: contactDoc._id,
+                    sequenceStepId: spmsDoc.sequence_step,
+                    sequenceProspectId: spmsDoc.sequence_prospect,
+                    replyId,
+                    replyObj,
+                    repliedOnDate: new Date(),
+                },
+                { txid }
+            );
+        if (replyAnalyticErr) throw replyAnalyticErr;
+    } else {
+        let [replyAnalyticResp, replyAnalyticErr] =
+                await AnalyticUtils.storeAutoCampaignMessageReplyAnalytic(
+                {
+                    sessionId: spmsDoc.analytic_session_id,
+                    spmsId,
+                    accountId,
+                    sequenceId: spmsDoc.sequence,
+                    contactId: contactDoc._id,
+                    sequenceStepId: spmsDoc.sequence_step,
+                    sequenceProspectId: spmsDoc.sequence_prospect,
+                    replyId,
+                    replyObj,
+                    originalReplyId,
+                    updateAutoDraftReply: originalReplyId ? true : false,
+                    repliedOnDate: new Date(),
+                },
+                { txid }
+            );
+        if (replyAnalyticErr) throw replyAnalyticErr;
+    }
 
     logg.info(`ended`);
     return [sendResp, null];
@@ -6677,4 +6720,42 @@ export const getAllGeneratedAutoReplyDrafts = functionWrapper(
     fileName,
     "getAllGeneratedAutoReplyDrafts",
     _getAllGeneratedAutoReplyDrafts
+);
+
+async function _sendAutoReplyDraft(
+    { accountId, replyAnalyticId, replyTxtMessage },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let [replyAnalyticDoc, replyAnalyticErr] =
+        await AnalyticUtils.getSequenceReplyAnalytic(
+            { accountId, replyAnalyticId },
+            { txid }
+        );
+    if (replyAnalyticErr) throw replyAnalyticErr;
+    if (!replyAnalyticDoc) {
+        throw new CustomError(`Reply analytic not found`, fileName, funcName);
+    }
+
+    let [sendReplyResp, sendReplyErr] = await sendReplyToMessage(
+        {
+            accountId,
+            spmsId: replyAnalyticDoc.sequence_prospect_message,
+            isAutoReply: false,
+            htmlBody: replyTxtMessage,
+            originalReplyId: replyAnalyticId,
+        },
+        { txid, logg, funcName }
+    );
+    if (sendReplyErr) throw sendReplyErr;
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const sendAutoReplyDraft = functionWrapper(
+    fileName,
+    "sendAutoReplyDraft",
+    _sendAutoReplyDraft
 );
