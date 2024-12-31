@@ -1374,7 +1374,7 @@ async function _parseEmailMessage({ messageData }, { txid, logg, funcName }) {
     if (!htmlText) throw `not able to parse htmlText from messageData`;
 
     logg.info(`ended`);
-    return htmlText;
+    return [htmlText, null];
 }
 
 export const parseEmailMessage = functionWrapper(

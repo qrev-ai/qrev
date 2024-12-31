@@ -1119,10 +1119,11 @@ async function _getAutoReplyDraftInfos(
 
     let draftInfos = analytics.map((analytic) => {
         let msgDetails = analytic.analytic_metadata.message_details;
-        let userMsg = GoogleUtils.parseEmailMessage(
+        let [userMsg, msgErr] = GoogleUtils.parseEmailMessage(
             { messageData: msgDetails },
             { txid }
         );
+        if (msgErr) throw msgErr;
         return {
             _id: analytic._id,
             tag: analytic.analytic_metadata.auto_reply_draft.tag,
