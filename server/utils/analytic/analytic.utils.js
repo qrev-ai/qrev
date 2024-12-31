@@ -7,6 +7,7 @@ import {
     AnalyticActionTypes,
     AnalyticAppTypes,
 } from "../../config/analytic.config.js";
+import * as GoogleUtils from "../google/google.auth.utils.js";
 
 const fileName = "Analytic Utils";
 
@@ -1108,10 +1109,16 @@ async function _getAutoReplyDraftInfos(
     }
 
     let draftInfos = analytics.map((analytic) => {
+        let msgDetails = analytic.analytic_metadata.message_details;
+        let userMsg = GoogleUtils.parseEmailMessage(
+            { messageData: msgDetails },
+            { txid }
+        );
         return {
             _id: analytic._id,
             tag: analytic.analytic_metadata.auto_reply_draft.tag,
             draft: analytic.analytic_metadata.auto_reply_draft.draft,
+            user_message: userMsg,
         };
     });
 

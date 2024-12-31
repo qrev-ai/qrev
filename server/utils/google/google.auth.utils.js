@@ -1365,3 +1365,20 @@ function extractTrackingTagValues(htmlString) {
 
     return matches;
 }
+
+async function _parseEmailMessage({ messageData }, { txid, logg, funcName }) {
+    logg.info(`started`);
+
+    let parsedMessage = GmailParseMessage(messageData);
+    let htmlText = parsedMessage && parsedMessage.textHtml;
+    if (!htmlText) throw `not able to parse htmlText from messageData`;
+
+    logg.info(`ended`);
+    return htmlText;
+}
+
+export const parseEmailMessage = functionWrapper(
+    fileName,
+    "parseEmailMessage",
+    _parseEmailMessage
+);

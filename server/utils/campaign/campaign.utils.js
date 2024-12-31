@@ -6662,10 +6662,11 @@ async function _getAllGeneratedAutoReplyDrafts(
 ) {
     logg.info(`started`);
 
-    let [draftInfos, draftInfosErr] = await AnalyticUtils.getAutoReplyDraftInfos(
-        { accountId, sortByCreatedOnDesc: true },
-        { txid }
-    );
+    let [draftInfos, draftInfosErr] =
+        await AnalyticUtils.getAutoReplyDraftInfos(
+            { accountId, sortByCreatedOnDesc: true },
+            { txid }
+        );
     if (draftInfosErr) throw draftInfosErr;
 
     logg.info(`ended`);
