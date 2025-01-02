@@ -1138,7 +1138,7 @@ async function _getAutoReplyDraftInfos(
         );
         if (msgErr) throw msgErr;
         draftInfos.push({
-            _id: analytic._id,
+            id: analytic._id.toString(),
             tag: analytic.analytic_metadata.auto_reply_draft.tag,
             draft: analytic.analytic_metadata.auto_reply_draft.draft,
             user_message: userMsg,
