@@ -1118,7 +1118,9 @@ async function _getAutoReplyDraftInfos(
         return [analyticsCount, null];
     }
 
-    let analytics = await VisitorAnalytics.find(queryObj).lean();
+    let analytics = await VisitorAnalytics.find(queryObj)
+        .populate("contact", "email first_name last_name")
+        .lean();
     logg.info(`analytics.length: ${analytics.length}`);
 
     if (sortByCreatedOnDesc) {
@@ -1132,16 +1134,30 @@ async function _getAutoReplyDraftInfos(
 
     for (const analytic of analytics) {
         let msgDetails = analytic.analytic_metadata.message_details;
-        let [userMsg, msgErr] = await GoogleUtils.parseEmailMessage(
-            { messageData: msgDetails },
-            { txid }
-        );
+        let [{ htmlText, subject }, msgErr] =
+            await GoogleUtils.parseEmailMessage(
+                { messageData: msgDetails, returnSubject: true },
+                { txid }
+            );
         if (msgErr) throw msgErr;
+
+        let userName = analytic.contact.first_name || "";
+        if (analytic.contact.last_name) {
+            userName += " " + analytic.contact.last_name;
+        }
+        userName = userName.trim();
+
+        let userEmail = analytic.contact.email;
+
         draftInfos.push({
             id: analytic._id.toString(),
             tag: analytic.analytic_metadata.auto_reply_draft.tag,
             draft: analytic.analytic_metadata.auto_reply_draft.draft,
-            user_message: userMsg,
+            user_message: htmlText,
+            subject: subject,
+            message_sent_on: analytic.created_on,
+            user_email: userEmail,
+            user_name: userName,
         });
     }
 
