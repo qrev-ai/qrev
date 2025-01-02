@@ -6773,3 +6773,32 @@ export const sendAutoReplyDraft = functionWrapper(
     "sendAutoReplyDraft",
     _sendAutoReplyDraft
 );
+
+/*
+ * Added on 2nd Jan 2025
+ * This function will fetch the count of email replies and suggested drafts for a given account.
+ * This will be used to show the count of email replies and suggested drafts in the Qai bot.
+ * We will only fetch the pending replies that were not approved before
+ */
+async function _getEmailRepliesCount(
+    { accountId, userId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let [draftCount, draftCountErr] =
+        await AnalyticUtils.getAutoReplyDraftInfos(
+            { accountId, returnCountOnly: true },
+            { txid }
+        );
+    if (draftCountErr) throw draftCountErr;
+
+    logg.info(`ended`);
+    return [draftCount, null];
+}
+
+export const getEmailRepliesCount = functionWrapper(
+    fileName,
+    "getEmailRepliesCount",
+    _getEmailRepliesCount
+);

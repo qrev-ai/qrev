@@ -1100,7 +1100,7 @@ export const storeAutoCampaignMessageReplyAnalytic = functionWrapper(
 );
 
 async function _getAutoReplyDraftInfos(
-    { accountId, sortByCreatedOnDesc = true },
+    { accountId, sortByCreatedOnDesc = true, returnCountOnly = false },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -1110,6 +1110,14 @@ async function _getAutoReplyDraftInfos(
         action_type: AnalyticActionTypes.campaign_message_reply,
         "analytic_metadata.auto_reply_draft.status": "generated",
     };
+
+    if (returnCountOnly) {
+        let analyticsCount = await VisitorAnalytics.countDocuments(queryObj);
+        logg.info(`analytics count: ${analyticsCount}`);
+        logg.info(`ended`);
+        return [analyticsCount, null];
+    }
+
     let analytics = await VisitorAnalytics.find(queryObj).lean();
     logg.info(`analytics.length: ${analytics.length}`);
 

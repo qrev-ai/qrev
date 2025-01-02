@@ -632,3 +632,79 @@ export const deleteConversation = functionWrapper(
     "_deleteConversation",
     _deleteConversation
 );
+
+/*
+ * Added on 2nd Jan 2025
+ * When a QRev user opens the QDA front end app, we have designed UI such that in Qai bot, they will see any updates as a separate chat item.
+ * This will let user know of any updates in Campaign Replies, Upcoming Meeting Battle Cards, New Qualified Leads.
+ * So we need to fetch the count of above mentioned items and return it to the user.
+ * Note: Currently we have only implemented Campaign Replies. Others need to be implemented later.
+ * 
+ * Sample response:
+[
+    {
+        type: "email_replies_and_suggested_drafts",
+        value: {
+            count: 5,
+        },
+    },
+    {
+        type: "demo_calls",
+        value: {
+            count: 5,
+        },
+    },
+    {
+        type: "new_prospects",
+        value: {
+            count: 20,
+        },
+    },
+]
+ */
+async function _getReviewUpdates(
+    { accountId, userId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let [emailRepliesCount, emailRepliesErr] =
+        await CampaignUtils.getEmailRepliesCount(
+            { accountId, userId },
+            { txid }
+        );
+    if (emailRepliesErr) {
+        throw emailRepliesErr;
+    }
+
+    if (!emailRepliesCount) {
+        emailRepliesCount = 0;
+    }
+    let demoCallsCount = 0; // * Since we have not implemented demo calls yet, so setting it to 0
+    let newProspectsCount = 20; // * We have a demo version of this feature, so setting it to a random static number 20.
+
+    let result = [
+        {
+            type: "email_replies_and_suggested_drafts",
+            value: { count: emailRepliesCount },
+        },
+        {
+            type: "demo_calls",
+            value: { count: demoCallsCount },
+        },
+        {
+            type: "new_prospects",
+            value: { count: newProspectsCount },
+        },
+    ];
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getReviewUpdates = functionWrapper(
+    fileName,
+    "_getReviewUpdates",
+    _getReviewUpdates
+);

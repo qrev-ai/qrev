@@ -287,3 +287,65 @@ export async function deleteConversationApi(req, res, next) {
         message: `${funcName} executed successfully`,
     });
 }
+
+/*
+ * Added on 2nd Jan 2025
+ * When a QRev user opens the QDA front end app, we have designed UI such that in Qai bot, they will see any updates as a separate chat item.
+ * This will let user know of any updates in Campaign Replies, Upcoming Meeting Battle Cards, New Qualified Leads.
+ * So we need to fetch the count of above mentioned items and return it to the user.
+ * Note: Currently we have only implemented Campaign Replies. Others need to be implemented later.
+ * 
+ * Sample response:
+{
+    "result": [
+        {
+            type: "email_replies_and_suggested_drafts",
+            value: {
+                count: 5,
+            },
+        },
+        {
+            type: "demo_calls",
+            value: {
+                count: 5,
+            },
+        },
+        {
+            type: "new_prospects",
+            value: {
+                count: 20,
+            },
+        },
+    ]
+}
+ */
+export async function getReviewUpdatesApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "qai-getReviewUpdatesApi";
+    const logg = logger.child({ txid, funcName });
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId } = req.query;
+
+    let [reviewUpdates, reviewUpdatesErr] = await QAiBotUtils.getReviewUpdates(
+        { accountId, userId },
+        { txid }
+    );
+    if (reviewUpdatesErr) throw reviewUpdatesErr;
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result: reviewUpdates,
+    });
+}

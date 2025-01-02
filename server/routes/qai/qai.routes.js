@@ -21,4 +21,6 @@ router.post(
     apiWrapper(QaiBotApis.deleteConversationApi)
 );
 
+router.get("/review-updates", apiWrapper(QaiBotApis.getReviewUpdatesApi));
+
 export default router;
