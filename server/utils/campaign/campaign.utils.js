@@ -6705,15 +6705,21 @@ export const updateSequenceMessageUsingAi = functionWrapper(
     _updateSequenceMessageUsingAi
 );
 
+/*
+ * Added on 2nd Jan 2025
+ * fetchType is either "pending" or "sent"
+ * if fetchType is "pending", then we will fetch only the pending drafts
+ * if fetchType is "sent", then we will fetch only the sent drafts
+ */
 async function _getAllGeneratedAutoReplyDrafts(
-    { accountId },
+    { accountId, fetchType },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
 
     let [draftInfos, draftInfosErr] =
         await AnalyticUtils.getAutoReplyDraftInfos(
-            { accountId, sortByCreatedOnDesc: true },
+            { accountId, sortByCreatedOnDesc: true, fetchType },
             { txid }
         );
     if (draftInfosErr) throw draftInfosErr;

@@ -972,14 +972,34 @@ export async function getAllGeneratedAutoReplyDraftsApi(req, res, next) {
     logg.info(`started with query:` + JSON.stringify(req.query));
 
     let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) throw `Missing userId from decoded access token`;
+    if (!userId) {
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
 
-    let { account_id: accountId } = req.query;
-    if (!accountId) throw `Missing account_id`;
+    let { account_id: accountId, fetch_type: fetchType } = req.query;
+    if (!accountId) {
+        throw new CustomError(`Missing account_id`, fileName, funcName);
+    }
+
+    if (!fetchType) fetchType = "pending";
+    let validFetchTypes = ["pending", "sent"];
+    if (!validFetchTypes.includes(fetchType)) {
+        throw new CustomError(
+            `Invalid fetch_type: ${fetchType}. Should be one of these values: ${JSON.stringify(
+                validFetchTypes
+            )}`,
+            fileName,
+            funcName
+        );
+    }
 
     let [draftInfos, draftInfosErr] =
         await CampaignUtils.getAllGeneratedAutoReplyDrafts(
-            { accountId },
+            { accountId, fetchType },
             { txid }
         );
     if (draftInfosErr) throw draftInfosErr;

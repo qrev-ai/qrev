@@ -1099,17 +1099,38 @@ export const storeAutoCampaignMessageReplyAnalytic = functionWrapper(
     _storeAutoCampaignMessageReplyAnalytic
 );
 
+/*
+ * Added on 2nd Jan 2025
+ * fetchType is either "pending" or "sent"
+ * if fetchType is "pending", then we will fetch only the pending drafts
+ * if fetchType is "sent", then we will fetch only the sent drafts
+ */
 async function _getAutoReplyDraftInfos(
-    { accountId, sortByCreatedOnDesc = true, returnCountOnly = false },
+    {
+        accountId,
+        sortByCreatedOnDesc = true,
+        returnCountOnly = false,
+        fetchType,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
 
+    let statusValue = fetchType === "sent" ? "sent" : "generated";
+
     let queryObj = {
         account: accountId,
         action_type: AnalyticActionTypes.campaign_message_reply,
-        "analytic_metadata.auto_reply_draft.status": "generated",
+        "analytic_metadata.auto_reply_draft.status": statusValue,
     };
+
+    if (fetchType === "sent") {
+        // when we are fetching sent drafts, we need to fetch only the drafts sent recently.
+        // so fetch drafts sent in last 2 days
+        let currTime = new Date().getTime();
+        let twoDaysAgoTime = currTime - 2 * 24 * 60 * 60 * 1000;
+        queryObj.created_on = { $gte: new Date(twoDaysAgoTime) };
+    }
 
     if (returnCountOnly) {
         let analyticsCount = await VisitorAnalytics.countDocuments(queryObj);
