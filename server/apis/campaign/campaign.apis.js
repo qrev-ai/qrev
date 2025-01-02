@@ -1015,8 +1015,19 @@ export async function sendAutoReplyDraftApi(req, res, next) {
         reply_analytic_id: replyAnalyticId,
         reply_txt_message: replyTxtMessage,
     } = req.body;
-    if (!replyAnalyticId) throw `Missing reply_analytic_id in body`;
-    if (!replyTxtMessage) throw `Missing reply_txt_message in body`;
+    if (!replyAnalyticId) {
+        throw new CustomError(
+            `Missing reply_analytic_id in body`,
+            fileName,
+            funcName
+        );
+    }
+    if (!replyTxtMessage)
+        throw new CustomError(
+            `Missing reply_txt_message in body`,
+            fileName,
+            funcName
+        );
 
     let [result, resultErr] = await CampaignUtils.sendAutoReplyDraft(
         { accountId, replyAnalyticId, replyTxtMessage, userId },
