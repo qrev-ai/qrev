@@ -322,7 +322,7 @@ async function _getConversations(
     } else {
         conversations = await QaiConversation.find(queryObj).lean();
     }
-    logg.info(`conversations: ${JSON.stringify(conversations)}`);
+    logg.info(`conversations.length: ${conversations.length}`);
 
     logg.info(`ended`);
     return [conversations, null];
@@ -330,7 +330,7 @@ async function _getConversations(
 
 export const getConversations = functionWrapper(
     fileName,
-    "_getConversations",
+    "getConversations",
     _getConversations
 );
 
