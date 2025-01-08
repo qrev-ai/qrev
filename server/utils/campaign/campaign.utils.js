@@ -24,6 +24,7 @@ import { CampaignDefaults } from "../../config/campaign/campaign.config.js";
 import * as S3Utils from "../aws/aws.s3.utils.js";
 import * as AccountUserUtils from "../account/account.user.utils.js";
 import * as OpenAIUtils from "../ai/openai.utils.js";
+import * as DemoAutoDraftRepliesUtils from "./demo.autodraft.replies.js";
 
 import path from "path";
 
@@ -6717,6 +6718,14 @@ async function _getAllGeneratedAutoReplyDrafts(
 ) {
     logg.info(`started`);
 
+    let showDemoData =
+        DemoAutoDraftRepliesUtils.shouldUserBeShownDemoAutoDraftReplies(userId);
+
+    if (showDemoData) {
+        let demoDrafts = DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies();
+        return [demoDrafts, null];
+    }
+
     let [draftInfos, draftInfosErr] =
         await AnalyticUtils.getAutoReplyDraftInfos(
             { accountId, sortByCreatedOnDesc: true, fetchType },
@@ -6739,6 +6748,14 @@ async function _sendAutoReplyDraft(
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
+
+    let showDemoData =
+        DemoAutoDraftRepliesUtils.shouldUserBeShownDemoAutoDraftReplies(userId);
+
+    if (showDemoData) {
+        DemoAutoDraftRepliesUtils.setSentStatus(replyAnalyticId);
+        return [true, null];
+    }
 
     let [replyAnalyticDoc, replyAnalyticErr] =
         await AnalyticUtils.getSequenceReplyAnalytic(
@@ -6791,6 +6808,15 @@ async function _getEmailRepliesCount(
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
+
+    let showDemoData =
+        DemoAutoDraftRepliesUtils.shouldUserBeShownDemoAutoDraftReplies(userId);
+
+    if (showDemoData) {
+        let demoDraftCount =
+            DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies(true);
+        return [demoDraftCount, null];
+    }
 
     let [draftCount, draftCountErr] =
         await AnalyticUtils.getAutoReplyDraftInfos(
