@@ -5149,8 +5149,75 @@ function checkActivity({ activities, type }, { txid }) {
     return isFound;
 }
 
+async function _updateAllSequenceStepProspectMessages(
+    { sequenceId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!sequenceId) {
+        throw new CustomError(`sequenceId is invalid`, fileName, funcName);
+    }
+
+    let docs;
+    // format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
+
+    let sequenceDoc = await SequenceModel.findOne({ _id: sequenceId }).lean();
+    if (!sequenceDoc) {
+        throw new CustomError(
+            `failed to find sequenceDoc for sequenceId: ${sequenceId}`,
+            fileName,
+            funcName
+        );
+    }
+
+    let sequenceSteps = await SequenceStep.find({ sequence: sequenceId })
+        .sort({ order: 1 })
+        .lean();
+    if (!sequenceSteps || !sequenceSteps.length) {
+        throw new CustomError(
+            `failed to find sequenceSteps for sequenceId: ${sequenceId}`,
+            fileName,
+            funcName
+        );
+    }
+
+    // call updateSequenceStepProspectMessages for each sequenceStep
+    for (let i = 0; i < sequenceSteps.length; i++) {
+        let sequenceStep = sequenceSteps[i];
+        let { _id: sequenceStepId } = sequenceStep;
+    // docs format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
+        let seqStepProspectMessageDocs = docs.map((d) => {
+            let { sequence_id, prospect_email, prospect_name, generated_messages } =
+                d;
+            return {
+                sequence_id: sequenceId,
+                sequence_step_id: sequenceStepId,
+                prospect_email,
+                prospect_name,
+                message_subject: generated_messages[i].subject,
+                message_body: generated_messages[i].body,
+            };
+        });
+
+        let [spmsDocs, spmsDocsErr] = await updateSequenceStepProspectMessages(
+            { sequenceId, sequenceStepId, interProspectMessageDocs: seqStepProspectMessageDocs },
+            { txid }
+        );
+        if (spmsDocsErr) throw spmsDocsErr;
+    }
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const updateAllSequenceStepProspectMessages = functionWrapper(
+    fileName,
+    "updateAllSequenceStepProspectMessages",
+    _updateAllSequenceStepProspectMessages
+);
+
 async function _updateSequenceStepProspectMessages(
-    { sequenceId, sequenceStepId },
+    { sequenceId, sequenceStepId, interProspectMessageDocs = null },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -5206,6 +5273,7 @@ async function _updateSequenceStepProspectMessages(
                 sequenceStepDoc,
                 accountId,
                 seqProspects,
+                interProspectMessageDocs,
             },
             { txid }
         );
@@ -5284,7 +5352,7 @@ export const updateSequenceStepProspectMessages = functionWrapper(
 );
 
 async function _createSpmsDocsFromIntermediateProspectMessage(
-    { sequenceId, sequenceStepId, sequenceStepDoc, accountId, seqProspects },
+    { sequenceId, sequenceStepId, sequenceStepDoc, accountId, seqProspects, interProspectMessageDocs = null },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -5295,10 +5363,12 @@ async function _createSpmsDocsFromIntermediateProspectMessage(
     // 1. query 'IntermediateProspectMessage' collection to get the prospect messages for the sequenceStepId
     // 2. create SequenceProspectMessage documents for the prospect messages
 
-    let interProspectMessageDocs = await IntermediateProspectMessage.find({
-        sequence_id: sequenceId,
-        sequence_step_id: sequenceStepId,
-    }).lean();
+    if (!interProspectMessageDocs || !interProspectMessageDocs.length) {
+        interProspectMessageDocs = await IntermediateProspectMessage.find({
+            sequence_id: sequenceId,
+            sequence_step_id: sequenceStepId,
+        }).lean();
+    }
 
     logg.info(
         `interProspectMessageDocs.length: ${interProspectMessageDocs.length}`
@@ -6713,7 +6783,7 @@ export const updateSequenceMessageUsingAi = functionWrapper(
  * if fetchType is "sent", then we will fetch only the sent drafts
  */
 async function _getAllGeneratedAutoReplyDrafts(
-    { accountId, fetchType },
+    { accountId, fetchType, userId },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -6722,7 +6792,8 @@ async function _getAllGeneratedAutoReplyDrafts(
         DemoAutoDraftRepliesUtils.shouldUserBeShownDemoAutoDraftReplies(userId);
 
     if (showDemoData) {
-        let demoDrafts = DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies();
+        logg.info(`since this is demo user, showing demo data`);
+        let demoDrafts = DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies(fetchType);
         return [demoDrafts, null];
     }
 
@@ -6753,6 +6824,7 @@ async function _sendAutoReplyDraft(
         DemoAutoDraftRepliesUtils.shouldUserBeShownDemoAutoDraftReplies(userId);
 
     if (showDemoData) {
+        logg.info(`since this is demo user, setting demo data status to sent`);
         DemoAutoDraftRepliesUtils.setSentStatus(replyAnalyticId);
         return [true, null];
     }
@@ -6813,8 +6885,9 @@ async function _getEmailRepliesCount(
         DemoAutoDraftRepliesUtils.shouldUserBeShownDemoAutoDraftReplies(userId);
 
     if (showDemoData) {
+        logg.info(`since this is demo user, showing demo data count`);
         let demoDraftCount =
-            DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies(true);
+            DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies("pending",true);
         return [demoDraftCount, null];
     }
 

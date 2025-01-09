@@ -1,4 +1,4 @@
-import CustomError from "../../std/custom.error";
+import CustomError from "../../std/custom.error.js";
 
 const fileName = "Demo Autodraft Replies";
 
@@ -21,7 +21,7 @@ let AutoDraftReplies = [
         user_email: "sarah.parker@innovatorshub.net",
         subject: "Re: AI based GTM",
         user_message:
-            "Thanks for the email. The concept is intriguing, but how easy is it to adapt? Would love some more information on how it works. \n\n?",
+            "Thanks for the email. The concept is intriguing, but how easy is it to adapt? Would love some more information on how it works. \n\n",
         message_sent_on: "2024-09-17T10:10:07",
         tag: "slightly positive",
         status: "pending",
@@ -33,7 +33,7 @@ let AutoDraftReplies = [
         user_email: "jessica.taylor@financecloud.io",
         subject: "Re: AI based GTM",
         user_message:
-            "We are looking to implement a new AI based GTM. \n\n. You reached out at the perfect time. We are just about to start a new project and would love to chat.",
+            "We are looking to implement a new AI based GTM.\n\nYou reached out at the perfect time. We are just about to start a new project and would love to chat.",
         message_sent_on: "2024-09-15T10:10:07",
         tag: "positive",
         status: "pending",
@@ -45,7 +45,7 @@ let AutoDraftReplies = [
         user_email: "david.wilson@mediclinx.org",
         subject: "Re: AI based GTM",
         user_message:
-            "Thanks but I think you'd be better off talking to my colleague Anna. She's the new Director of Sales.\n\nher email is anna.smith@mediclinx.org",
+            "Thanks but I think you'd be better off talking to my colleague Anna. She's the new Director of Sales.\n\nHer email is anna.smith@mediclinx.org",
         message_sent_on: "2024-10-14T10:10:07",
         tag: "slightly negative",
         status: "pending",
@@ -57,7 +57,7 @@ let AutoDraftReplies = [
         user_email: "isabella.thomas@skyreachsystems.com",
         subject: "Re: AI based GTM",
         user_message:
-            "We've used Apollo, Sales navigator and few others. \n\nWhat makes QRev different from those?.\n\n And does it integrate with our Salesforce?",
+            "We've used Apollo, Sales navigator and few others. \n\nWhat makes QRev different from those?\n\n And does it integrate with our Salesforce?",
         message_sent_on: "2024-09-22T10:10:07",
         tag: "slightly negative",
         status: "sent",
@@ -77,26 +77,26 @@ let AutoDraftReplies = [
     },
 ];
 
-export function getPendingAutoDraftReplies(returnCountOnly = false) {
-    let pendingData = AutoDraftReplies.filter(
-        (reply) => reply.status === "pending"
+export function getPendingAutoDraftReplies(fetchType, returnCountOnly = false) {
+    let data = AutoDraftReplies.filter(
+        (reply) => reply.status === fetchType
     );
 
     // if pendingData is empty, then set status of every AutoDraftReplies to 'pending'
-    if (pendingData.length === 0) {
+    if (data.length === 0 && fetchType === "pending") {
         AutoDraftReplies.forEach((reply) => {
             reply.status = "pending";
         });
 
-        pendingData = AutoDraftReplies;
+        data = AutoDraftReplies;
     }
 
     // return every field excpet status
-    pendingData = pendingData.map((reply) => {
+    data = data.map((reply) => {
         let { status, ...rest } = reply;
         return rest;
     });
-    return returnCountOnly ? pendingData.length : pendingData;
+    return returnCountOnly ? data.length : data;
 }
 
 export function getSentAutoDraftReplies() {

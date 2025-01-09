@@ -116,14 +116,22 @@ export async function sequenceAsyncCallbackApi(req, res, next) {
     }
 
     if (type === "sequence_step_personalized_messages") {
-        if (!sequenceStepId) throw `Missing sequence_step_id in query`;
-
-        let [updateResp, updateErr] =
-            await CampaignUtils.updateSequenceStepProspectMessages(
-                { sequenceId, sequenceStepId },
-                { txid }
-            );
-        if (updateErr) throw updateErr;
+        if (!sequenceStepId) {
+            let [updateResp, updateErr] =
+                await CampaignUtils.updateAllSequenceStepProspectMessages(
+                    { sequenceId },
+                    { txid }
+                );
+            if (updateErr) throw updateErr;
+        } else {
+            // this is the old version of the API. check above function
+            let [updateResp, updateErr] =
+                await CampaignUtils.updateSequenceStepProspectMessages(
+                    { sequenceId, sequenceStepId },
+                    { txid }
+                );
+            if (updateErr) throw updateErr;
+        }
     } else {
         let [updateResp, updateErr] =
             await CampaignUtils.updateSequenceProspects(
@@ -999,7 +1007,7 @@ export async function getAllGeneratedAutoReplyDraftsApi(req, res, next) {
 
     let [draftInfos, draftInfosErr] =
         await CampaignUtils.getAllGeneratedAutoReplyDrafts(
-            { accountId, fetchType },
+            { accountId, fetchType, userId },
             { txid }
         );
     if (draftInfosErr) throw draftInfosErr;
