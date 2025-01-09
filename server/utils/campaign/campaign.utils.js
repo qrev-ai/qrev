@@ -6825,7 +6825,7 @@ async function _sendAutoReplyDraft(
 
     if (showDemoData) {
         logg.info(`since this is demo user, setting demo data status to sent`);
-        DemoAutoDraftRepliesUtils.setSentStatus(replyAnalyticId);
+        DemoAutoDraftRepliesUtils.setSentStatus(replyAnalyticId, replyTxtMessage);
         return [true, null];
     }
 

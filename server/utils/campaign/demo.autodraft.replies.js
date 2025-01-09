@@ -111,11 +111,12 @@ export function shouldUserBeShownDemoAutoDraftReplies(userId) {
     return userId === demoAutoDraftRepliesUserId;
 }
 
-export function setSentStatus(id) {
+export function setSentStatus(id, replyTxtMessage) {
     const funcName = "setSentStatus";
     let reply = AutoDraftReplies.find((reply) => reply.id === id);
     if (reply) {
         reply.status = "sent";
+        reply.draft = replyTxtMessage;
     } else {
         throw new CustomError(`Reply not found`, fileName, funcName);
     }
