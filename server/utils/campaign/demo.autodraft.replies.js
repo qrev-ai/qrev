@@ -83,7 +83,9 @@ export function getPendingAutoDraftReplies(fetchType, returnCountOnly = false) {
     );
 
     // if pendingData is empty, then set status of every AutoDraftReplies to 'pending'
-    if (data.length === 0 && fetchType === "pending") {
+    // only if returnCountOnly is true because before showing the pending data, we show the count
+    // so for the demo version, when we fetch the count, we will make sure to mark all the replies as pending
+    if (data.length === 0 && fetchType === "pending" && returnCountOnly) {
         AutoDraftReplies.forEach((reply) => {
             reply.status = "pending";
         });
