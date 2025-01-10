@@ -144,6 +144,11 @@ async function _setupCampaignFromQai(
     if (!stepsInfo || !stepsInfo.length) {
         throw `stepsInfo is invalid or empty for campaignSequenceId: ${campaignSequenceId}`;
     }
+    stepsInfo = stepsInfo.map((x) => {
+        // * added this on 10th Jan 2025 to fix the issue of adding id to sequence steps if not provided
+        if (!x.id) x.id = uuidv4();
+        return x;
+    });
 
     let [sequenceStepDocs, sequenceStepDocErr] =
         await createCampaignSequenceStepsFromQAi(
