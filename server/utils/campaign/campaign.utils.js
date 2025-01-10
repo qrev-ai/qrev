@@ -5190,10 +5190,14 @@ async function _updateAllSequenceStepProspectMessages(
     for (let i = 0; i < sequenceSteps.length; i++) {
         let sequenceStep = sequenceSteps[i];
         let { _id: sequenceStepId } = sequenceStep;
-    // docs format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
+        // docs format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
         let seqStepProspectMessageDocs = docs.map((d) => {
-            let { sequence_id, prospect_email, prospect_name, generated_messages } =
-                d;
+            let {
+                sequence_id,
+                prospect_email,
+                prospect_name,
+                generated_messages,
+            } = d;
             return {
                 sequence_id: sequenceId,
                 sequence_step_id: sequenceStepId,
@@ -5205,7 +5209,11 @@ async function _updateAllSequenceStepProspectMessages(
         });
 
         let [spmsDocs, spmsDocsErr] = await updateSequenceStepProspectMessages(
-            { sequenceId, sequenceStepId, interProspectMessageDocs: seqStepProspectMessageDocs },
+            {
+                sequenceId,
+                sequenceStepId,
+                interProspectMessageDocs: seqStepProspectMessageDocs,
+            },
             { txid }
         );
         if (spmsDocsErr) throw spmsDocsErr;
@@ -5357,7 +5365,14 @@ export const updateSequenceStepProspectMessages = functionWrapper(
 );
 
 async function _createSpmsDocsFromIntermediateProspectMessage(
-    { sequenceId, sequenceStepId, sequenceStepDoc, accountId, seqProspects, interProspectMessageDocs = null },
+    {
+        sequenceId,
+        sequenceStepId,
+        sequenceStepDoc,
+        accountId,
+        seqProspects,
+        interProspectMessageDocs = null,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -6798,7 +6813,8 @@ async function _getAllGeneratedAutoReplyDrafts(
 
     if (showDemoData) {
         logg.info(`since this is demo user, showing demo data`);
-        let demoDrafts = DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies(fetchType);
+        let demoDrafts =
+            DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies(fetchType);
         return [demoDrafts, null];
     }
 
@@ -6830,7 +6846,10 @@ async function _sendAutoReplyDraft(
 
     if (showDemoData) {
         logg.info(`since this is demo user, setting demo data status to sent`);
-        DemoAutoDraftRepliesUtils.setSentStatus(replyAnalyticId, replyTxtMessage);
+        DemoAutoDraftRepliesUtils.setSentStatus(
+            replyAnalyticId,
+            replyTxtMessage
+        );
         return [true, null];
     }
 
@@ -6892,7 +6911,10 @@ async function _getEmailRepliesCount(
     if (showDemoData) {
         logg.info(`since this is demo user, showing demo data count`);
         let demoDraftCount =
-            DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies("pending",true);
+            DemoAutoDraftRepliesUtils.getPendingAutoDraftReplies(
+                "pending",
+                true
+            );
         return [demoDraftCount, null];
     }
 
