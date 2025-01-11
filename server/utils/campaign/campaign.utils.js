@@ -27,6 +27,7 @@ import * as OpenAIUtils from "../ai/openai.utils.js";
 import * as DemoAutoDraftRepliesUtils from "./demo.autodraft.replies.js";
 
 import path from "path";
+import { AIServerGeneratedEmail } from "../../models/campaign/ai.server.generated.email.model.js";
 
 const fileName = "Campaign Utils";
 
@@ -303,7 +304,14 @@ const createCampaignSequenceStepsFromQAi = functionWrapper(
 );
 
 async function _createCampaignSequenceProspectsFromQAi(
-    { campaignSequenceId, accountId, userId, conversationId, uploadedData },
+    {
+        campaignSequenceId,
+        accountId,
+        userId,
+        conversationId,
+        uploadedData,
+        selectedProspects = null,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -311,11 +319,15 @@ async function _createCampaignSequenceProspectsFromQAi(
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
 
-    let intermediateDataQuery = { sequence_id: campaignSequenceId };
-    let prospects = await IntermediateProspectData.find(
-        intermediateDataQuery
-    ).lean();
-    let prospectsCount = prospects.length;
+    if (!selectedProspects) {
+        // * this is old version code. This model is no longer used. Check the new model: AIServerGeneratedEmail
+        let intermediateDataQuery = { sequence_id: campaignSequenceId };
+        selectedProspects = await IntermediateProspectData.find(
+            intermediateDataQuery
+        ).lean();
+    }
+
+    let prospectsCount = selectedProspects.length;
     logg.info(`prospectsCount: ${prospectsCount}`);
     if (!prospectsCount) {
         logg.error(
@@ -332,10 +344,11 @@ async function _createCampaignSequenceProspectsFromQAi(
      */
     let verifyProspectService = process.env.VERIFY_PROSPECT_EMAIL_BY_SERVICE;
     if (verifyProspectService && verifyProspectService !== "none") {
+        // * this is outdated. this will be already done by AI server as one of its job
         let [pvResult, verifyErr] =
             await ProspectVerifyUtils.verifyProspectsEmails(
                 {
-                    prospects,
+                    prospects: selectedProspects,
                     serviceName: verifyProspectService,
                     campaignSequenceId,
                     accountId,
@@ -348,7 +361,7 @@ async function _createCampaignSequenceProspectsFromQAi(
         if (!verifiedProspects || !verifiedProspects.length) {
             throw `verifiedProspects is empty`;
         }
-        prospects = verifiedProspects;
+        selectedProspects = verifiedProspects;
 
         if (prospectVerifyFileId) {
             let sequenceDocUpdateResp = await SequenceModel.updateOne(
@@ -386,7 +399,7 @@ async function _createCampaignSequenceProspectsFromQAi(
         }
     }
 
-    let contacts = prospects.map((x) => {
+    let contacts = selectedProspects.map((x) => {
         let {
             prospect_email: email,
             prospect_name: name,
@@ -4859,7 +4872,6 @@ async function _prepareScheduleMap(
         let contactDoc = spmsDoc.contact;
         let senderDoc = spmsDoc.sender;
         let contactEmail = contactDoc.email;
-        let senderEmail = senderDoc.email;
         let msgScheduledTime = spmsDoc.message_scheduled_time;
         if (!msgScheduledTime) {
             logg.error(
@@ -4870,8 +4882,8 @@ async function _prepareScheduleMap(
             continue;
         }
         msgScheduledTime = new Date(msgScheduledTime).getTime();
-        if (!prospectSenderMap[contactEmail]) {
-            prospectSenderMap[contactEmail] = senderEmail;
+        if (!prospectSenderMap[contactEmail] && senderDoc && senderDoc.email) {
+            prospectSenderMap[contactEmail] = senderDoc.email;
         }
 
         if (!prospectLastScheduleTimeMap[contactEmail]) {
@@ -5064,7 +5076,7 @@ export const sendReplyIfNotSentBefore = functionWrapper(
 );
 
 async function _updateSequenceProspects(
-    { sequenceId },
+    { sequenceId, selectedProspects = null },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -5101,6 +5113,7 @@ async function _updateSequenceProspects(
                 accountId,
                 userId,
                 conversationId,
+                selectedProspects,
             },
             { txid }
         );
@@ -5163,8 +5176,62 @@ async function _updateAllSequenceStepProspectMessages(
         throw new CustomError(`sequenceId is invalid`, fileName, funcName);
     }
 
-    let docs;
+    // ! commented below for testing locally purposes
+    // let docs = await AIServerGeneratedEmail.find({
+    //     sequence_id: sequenceId,
+    // }).lean();
+    // logg.info(`generated messages count: ${docs.length}`);
+    // if (docs.length <= 10) {
+    //     logg.info(`generated messages: ${JSON.stringify(docs)}`);
+    // }
+    let docs = [
+        {
+            sequence_id: sequenceId,
+            prospect_email: "sanjugr7022@gmail.com",
+            prospect_name: "Daisey Ostrander",
+            generated_messages: [
+                {
+                    subject: "Automate tedious tasks, focus on closing deals",
+                    body: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi Daisey,</p><p>I noticed your background and thought you might be interested in eliminating the time-consuming manual tasks that keep your team from closing more deals. Our AI-driven platform has helped sales teams reduce time spent on research and outreach by 70%, allowing them to focus exclusively on high-value activities and relationship building.</p><p>Would you be open to a brief conversation about how we could help automate your team's repetitive tasks while scaling your outreach efforts?</p><p>Best regards,<br>Sanjay G R<br>sanjay.gowdru.r@gmail.com<br>Sanjay account</p></body></html>`,
+                },
+                {
+                    subject: "Scale your sales outreach infinitely",
+                    body: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi Daisey,</p><p>Many sales teams struggle with effectively managing and scaling their outreach efforts while maintaining personalization. We've helped organizations automate their prospect research and campaign sequences while maintaining the human touch that's crucial for building relationships.</p><p>What are your current challenges when it comes to scaling your sales operations?</p><p>Best regards,<br>Sanjay G R<br>sanjay.gowdru.r@gmail.com<br>Sanjay account</p></body></html>`,
+                },
+                {
+                    subject: "Parting thoughts on sales automation",
+                    body: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi Daisey,</p><p>I understand you're likely juggling multiple priorities in your sales operations. Since we haven't had the chance to connect, I wanted to reach out one final time about how our AI-powered platform could help streamline your team's daily tasks.</p><p>If you're interested in exploring how we can help you scale your sales efforts while reducing manual workload, feel free to reach out when the timing is better for you.</p><p>Best regards,<br>Sanjay G R<br>sanjay.gowdru.r@gmail.com<br>Sanjay account</p></body></html>`,
+                },
+            ],
+        },
+        {
+            sequence_id: sequenceId,
+            prospect_email: "sanjugr.unitedweare@gmail.com",
+            prospect_name: "Erik Preiss",
+            generated_messages: [
+                {
+                    subject: `Automate tedious sales tasks & focus on closing`,
+                    body: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi Erik,</p><p>I noticed your sales team at United We Are might be spending valuable time on manual research and outreach tasks instead of focusing on closing deals. At Sanjay account, we help teams like yours automate these repetitive tasks through our AI-powered platform, typically saving sales teams 15+ hours per week while maintaining personal touchpoints with prospects.</p><p>Would you be interested in learning how we could help your team focus more on high-value activities?</p><p>Best regards,<br>Sanjay G R<br>sanjay.gowdru.r@gmail.com</p></body></html>`,
+                },
+                {
+                    subject: `Scale your sales outreach effortlessly`,
+                    body: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi Erik,</p><p>Many sales teams struggle with effectively managing growing lead volumes while maintaining quality interactions. We've helped organizations similar to United We Are scale their outreach infinitely through our AI platform, ensuring each prospect receives timely, personalized communication without increasing manual effort.</p><p>What are your current challenges around scaling your sales operations?</p><p>Best regards,<br>Sanjay G R<br>sanjay.gowdru.r@gmail.com</p></body></html>`,
+                },
+                {
+                    subject: `One last thought about sales automation`,
+                    body: `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi Erik,</p><p>I understand that leading sales initiatives at United We Are keeps you extremely busy. Since we haven't had the chance to connect, I wanted to reach out one final time about how we could help automate your sales processes and improve response times.</p><p>If you're interested in exploring how AI can transform your sales operations, feel free to reach out whenever it makes sense for you.</p><p>Best regards,<br>Sanjay G R<br>sanjay.gowdru.r@gmail.com</p></body></html>`,
+                },
+            ],
+        },
+    ];
+
     // format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
+
+    let [upProspectResp, upProspectErr] = await updateSequenceProspects(
+        { sequenceId, selectedProspects: docs },
+        { txid }
+    );
+    if (upProspectErr) throw upProspectErr;
 
     let sequenceDoc = await SequenceModel.findOne({ _id: sequenceId }).lean();
     if (!sequenceDoc) {
@@ -5192,12 +5259,7 @@ async function _updateAllSequenceStepProspectMessages(
         let { _id: sequenceStepId } = sequenceStep;
         // docs format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
         let seqStepProspectMessageDocs = docs.map((d) => {
-            let {
-                sequence_id,
-                prospect_email,
-                prospect_name,
-                generated_messages,
-            } = d;
+            let { prospect_email, prospect_name, generated_messages } = d;
             return {
                 sequence_id: sequenceId,
                 sequence_step_id: sequenceStepId,
@@ -5563,6 +5625,12 @@ async function _scheduleSequenceProspectMessages(
         campaignConfigDoc && campaignConfigDoc.reply_to_user
             ? campaignConfigDoc.reply_to_user.toString()
             : null;
+    
+    let [senderScheduleMap, senderScheduleMapErr] = await generateSenderScheduleMap(
+        { accountId, senderList },
+        { txid }
+    );
+    if (senderScheduleMapErr) throw senderScheduleMapErr;
 
     let scheduleList = scheduleTimeForSequenceProspects(
         {
@@ -5580,6 +5648,7 @@ async function _scheduleSequenceProspectMessages(
             scheduleTimeHours:
                 campaignConfigDoc && campaignConfigDoc.message_schedule_window,
             replyToUser,
+            senderScheduleMap,
         },
         { txid }
     );
@@ -6934,3 +7003,64 @@ export const getEmailRepliesCount = functionWrapper(
     "getEmailRepliesCount",
     _getEmailRepliesCount
 );
+
+async function _generateSenderScheduleMap(
+    { accountId, senderList },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let senderScheduleMap = {};
+
+    let [bouncedAnalytics, bouncedAnalyticsErr] = await AnalyticUtils.getBouncedAnalytics(
+        { accountId },
+        { txid }
+    );
+    if (bouncedAnalyticsErr) throw bouncedAnalyticsErr;
+
+    let bouncedProspects = bouncedAnalytics.map((ba) => ba.sequence_prospect);
+
+    let spmsQueryObj = {
+        account: accountId,
+        sender: { $in: senderList.map((x) => x.user_id) },
+        // message_scheduled_time exists
+        message_scheduled_time: {
+            $exists: true,
+            // gte from now
+            $gte: new Date(),
+        },
+        message_status: "pending",
+    };
+    if (bouncedProspects && bouncedProspects.length > 0) {
+        spmsQueryObj.sequence_prospect = { $nin: bouncedProspects };
+    }
+    let spmsDocs = await SequenceProspectMessageSchedule.find(spmsQueryObj)
+        .populate("sender", "_id email")
+        .select("_id sender message_scheduled_time")
+        .lean();
+
+    for (let spmsDoc of spmsDocs) {
+        let senderEmail = spmsDoc.sender.email;
+        let messageScheduledTime = spmsDoc.message_scheduled_time;
+
+        if (!senderScheduleMap[senderEmail]) {
+            senderScheduleMap[senderEmail] = {};
+        }
+
+        let mst = new Date(messageScheduledTime).getTime();
+        if (!senderScheduleMap[senderEmail][mst]) {
+            senderScheduleMap[senderEmail][mst] = 0;
+        }
+        senderScheduleMap[senderEmail][mst]++;
+    }
+
+    logg.info(`ended`);
+    return [senderScheduleMap, null];
+}
+
+const generateSenderScheduleMap = functionWrapper(
+    fileName,
+    "generateSenderScheduleMap",
+    _generateSenderScheduleMap
+);
+

@@ -1247,3 +1247,34 @@ export const updateAutoDraftStatusToSent = functionWrapper(
     "updateAutoDraftStatusToSent",
     _updateAutoDraftStatusToSent
 );
+
+async function _getBouncedAnalytics(
+    { accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let bouncedAnalytics = await VisitorAnalytics.find({
+        account: accountId,
+        app_type: AnalyticAppTypes.campaign,
+        action_type: AnalyticActionTypes.campaign_message_reply,
+        "analytic_metadata.has_bounced": true,
+    })
+        .select("sequence_prospect_message _id sequence_prospect")
+        .lean();
+
+    logg.info(`bouncedAnalytics.length: ${bouncedAnalytics.length}`);
+    if (bouncedAnalytics.length < 10) {
+        logg.info(`bouncedAnalytics: ${JSON.stringify(bouncedAnalytics)}`);
+    }
+
+    logg.info(`ended`);
+    return [bouncedAnalytics, null];
+}
+
+export const getBouncedAnalytics = functionWrapper(
+    fileName,
+    "getBouncedAnalytics",
+    _getBouncedAnalytics
+);
+

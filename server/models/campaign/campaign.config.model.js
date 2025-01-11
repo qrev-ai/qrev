@@ -88,6 +88,16 @@ const CampaignConfigSchema = new Schema({
      */
     resource_documents: [],
 
+    /*
+     * Added "brand_doc" and "pain_points" on 8th Jan 2025.
+     * brand_doc will store the brand document uploaded by the user.
+     * pain_points will store the pain points document uploaded by the user.
+     * These should be decoded from the uploaded resource_documents.
+     TODO: The decoding part is not yet implemented. Need to implement this
+     */
+    brand_doc: {},
+    pain_points: [],
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });
