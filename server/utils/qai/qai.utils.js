@@ -14,6 +14,15 @@ const fileName = "QAi Utils";
 
 const NEW_CONVERSATION_TITLE = "New chat";
 
+const StandardErrorResponse = {
+    actions: [
+        {
+            action: "text",
+            response: "Sorry, could not find any results",
+        },
+    ],
+};
+
 /*
 ! disabling previous version of converse function
 async function _converse(
@@ -162,12 +171,18 @@ async function _converse(
         );
     if (campaignSetupErr) throw campaignSetupErr;
 
-    if (!uploadedData) {
-        throw new CustomError(
-            `uploadedData is required for campaign setup`,
-            fileName,
-            funcName
-        );
+    if (!(uploadedCsvFilePath && uploadedData)) {
+        logg.info(`uploadedCsvFilePath or uploadedData not found`);
+        let csvUploadErrResp = {
+            actions: [
+                {
+                    action: "text",
+                    response:
+                        "Sorry, I was not able to understand the query. Please upload a CSV file to create a campaign.",
+                },
+            ],
+        };
+        return [csvUploadErrResp, null];
     }
 
     let linkedinJsessionId = process.env.LINKEDIN_JSESSION_ID;
@@ -241,7 +256,8 @@ async function _converse(
             },
             {
                 action: "text",
-                response: "QAi has successfully created your campaign as requested.",
+                response:
+                    "QAi has successfully created your campaign as requested.",
             },
             {
                 type: "email_sequence_draft",
@@ -254,7 +270,7 @@ async function _converse(
     return [botResp, null];
 }
 
-export const converse = functionWrapper(fileName, "_converse", _converse);
+export const converse = functionWrapper(fileName, "converse", _converse);
 
 async function _callAiServer({ jsonBody, filePath }, { txid, logg, funcName }) {
     logg.info(`started`);
@@ -669,6 +685,7 @@ async function _updateTitleUsingAiSummaryIfNotDone(
         return [true, null];
     }
 
+    logg.info(`query: ${query}`);
     let [summary, openAiError] = await OpenAiUtils.queryGpt40Mini(
         {
             query: `Summarize the following query for an AI bot in 6 words or less: \n${query}\n\n Do not add any full stop or other symbolsat the end of the summary.`,
@@ -778,14 +795,7 @@ async function _addQaiResponseToConversation(
         messageObj = {
             message_id: messageId,
             type: "bot",
-            value: {
-                actions: [
-                    {
-                        action: "text",
-                        response: "Sorry, could not find any results",
-                    },
-                ],
-            },
+            value: StandardErrorResponse,
             created_on: new Date(),
         };
     } else {
@@ -815,12 +825,13 @@ async function _addQaiResponseToConversation(
     logg.info(`conversationResp: ${JSON.stringify(conversationResp)}`);
 
     logg.info(`ended`);
-    return [messageId, null];
+
+    return [messageObj.value, null];
 }
 
 export const addQaiResponseToConversation = functionWrapper(
     fileName,
-    "_addQaiResponseToConversation",
+    "addQaiResponseToConversation",
     _addQaiResponseToConversation
 );
 

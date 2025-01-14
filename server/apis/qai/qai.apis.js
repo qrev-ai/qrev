@@ -32,6 +32,10 @@ export async function converseApi(req, res, next) {
     let uploadedCsvFile = req.file;
     let uploadedCsvFilePath =
         uploadedCsvFile && uploadedCsvFile.path ? uploadedCsvFile.path : null;
+
+    let conversationInfo = null,
+        accountInfo = null,
+        userInfo = null;
     try {
         if (uploadedCsvFilePath) {
             logg.info(`uploadedCsvFilePath: ${uploadedCsvFilePath}`);
@@ -57,7 +61,9 @@ export async function converseApi(req, res, next) {
             );
         if (conversationDocErr) throw conversationDocErr;
         if (!conversationDocResp) throw `Conversation not found`;
-        let { conversationInfo, accountInfo, userInfo } = conversationDocResp;
+        conversationInfo = conversationDocResp.conversationInfo;
+        accountInfo = conversationDocResp.accountInfo;
+        userInfo = conversationDocResp.userInfo;
         if (!conversationInfo) throw `Conversation not found`;
         if (!accountInfo) throw `Account not found`;
         if (!userInfo) throw `User not found`;
@@ -102,16 +108,6 @@ export async function converseApi(req, res, next) {
         );
 
         if (botErr) {
-            // add default error bot response to conversation
-            await QAiBotUtils.addQaiResponseToConversation(
-                {
-                    accountId,
-                    conversationId,
-                    isError: true,
-                    conversation: conversationInfo,
-                },
-                { txid, sendErrorMsg: true }
-            );
             throw botErr;
         }
 
@@ -210,8 +206,25 @@ export async function converseApi(req, res, next) {
                 );
             }
         }
+        logg.info(`error in code: ${errorInCode}`);
+        logg.info(`error happened`);
+        let [errResp, errRespErr] =
+            await QAiBotUtils.addQaiResponseToConversation(
+                {
+                    accountId,
+                    conversationId,
+                    isError: true,
+                    conversation: conversationInfo,
+                },
+                { txid, sendErrorMsg: true }
+            );
+        if (errRespErr) throw errRespErr;
 
-        throw errorInCode;
+        return res.json({
+            success: true,
+            message: `${funcName} executed unsuccessfully`,
+            result: errResp,
+        });
     }
 }
 
