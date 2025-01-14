@@ -20,6 +20,15 @@ const AIServerGeneratedEmailSchema = new Schema({
      */
     generated_messages: [],
 
+    /*
+     * Added to_be_deleted on 14th Jan 2025.
+     * So that we can delete the object later.
+     * AI server communicates with backend server using this collection to return list of prospect details and messages.
+     * After this communication is complete, we can delete the object from this collection. SO adding this flag
+     * Structure: { status: true, created_on: Date obj }
+     */
+    to_be_deleted: {},
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });
