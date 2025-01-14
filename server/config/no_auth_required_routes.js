@@ -13,6 +13,7 @@ export const FreeRoutes = [
     "/api/google/message/recieve_webhook",
     "/api/campaign/unsubscribe",
     "/api/campaign/confirm_unsubscribe",
+    "/api/test/test",
 ];
 
 export const isFreeRoute = (path) => {
