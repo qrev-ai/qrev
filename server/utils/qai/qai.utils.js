@@ -129,6 +129,21 @@ async function _converse(
 ) {
     logg.info(`started`);
 
+    let [actionsToBeDone, aiServerErr] = await callAiServerQueryInterpreterApi(
+        { userQuery: query },
+        { txid, logg, funcName }
+    );
+    if (aiServerErr) throw aiServerErr;
+
+    let actionToBeDone = actionsToBeDone[0];
+    if (actionToBeDone.action_type !== "generate_campaign") {
+        throw new CustomError(
+            `Expected action_type to be generate_campaign, but got ${actionToBeDone.action_type}`,
+            fileName,
+            funcName
+        );
+    }
+
     let aiServerToken = process.env.AI_BOT_SERVER_TOKEN;
 
     let senderCompany = formatCompanyInfo({ accountInfo }, { txid });
@@ -147,9 +162,7 @@ async function _converse(
         asyncUrl = process.env.SERVER_URL_PATH + asyncUrl;
     }
 
-    // TODO: get date in format of YYYY-MM-DD
-    let dateStr = new Date().toISOString().split("T")[0];
-    let sequenceName = `New campaign ${dateStr}`;
+    let sequenceName = actionToBeDone.parameters.campaign_name;
     let steps = campaignConfig.sequence_steps_template;
     let sequenceDetails = {
         id: sequenceId,
@@ -227,6 +240,7 @@ async function _converse(
             {
                 type: "email_generation",
                 value: {
+                    user_query: query,
                     sequence_id: sequenceId,
                     num_steps: numSteps,
                     sender_info: senderPerson,
@@ -241,7 +255,7 @@ async function _converse(
     };
 
     logg.info(`aiServerApiBody: ${JSON.stringify(aiServerApiBody)}`);
-    let [resp, aiCallErr] = await callAiServer(
+    let [resp, aiCallErr] = await callAiServerCampaignJobsApi(
         { jsonBody: aiServerApiBody, filePath: uploadedCsvFilePath },
         { txid }
     );
@@ -272,7 +286,10 @@ async function _converse(
 
 export const converse = functionWrapper(fileName, "converse", _converse);
 
-async function _callAiServer({ jsonBody, filePath }, { txid, logg, funcName }) {
+async function _callAiServerCampaignJobsApi(
+    { jsonBody, filePath },
+    { txid, logg, funcName }
+) {
     logg.info(`started`);
 
     const aiServerPath = process.env.AI_BOT_SERVER_URL;
@@ -312,11 +329,48 @@ async function _callAiServer({ jsonBody, filePath }, { txid, logg, funcName }) {
     logg.info(`ended`);
     return [resp.data, null];
 }
-
-export const callAiServer = functionWrapper(
+export const callAiServerCampaignJobsApi = functionWrapper(
     fileName,
-    "_callAiServer",
-    _callAiServer
+    "callAiServerCampaignJobsApi",
+    _callAiServerCampaignJobsApi
+);
+
+/*
+    Response structure:
+    [
+        {
+            "action_type": "generate_campaign",
+            "parameters": {
+                "campaign_name": "New campaign"
+            }
+        }
+    ]
+
+*/
+async function _callAiServerQueryInterpreterApi(
+    { userQuery, campaignCreationDatetime = new Date() },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    let serverUrl =
+        process.env.AI_BOT_SERVER_URL + "/flaskapi/query_interpreter";
+    let token = process.env.AI_BOT_SERVER_TOKEN;
+    let data = {
+        user_query: userQuery,
+        secret_key: token,
+        campaign_creation_datetime: campaignCreationDatetime.toISOString(),
+    };
+    let resp = await axios.post(serverUrl, data);
+    logg.info(`resp: ${JSON.stringify(resp.data)}`);
+    let actions = resp.data.actions;
+    logg.info(`ended`);
+    return [actions, null];
+}
+export const callAiServerQueryInterpreterApi = functionWrapper(
+    fileName,
+    "callAiServerQueryInterpreterApi",
+    _callAiServerQueryInterpreterApi
 );
 
 export function isCampaignCreatedInAIResponse(
