@@ -201,8 +201,6 @@ async function _converse(
     let linkedinJsessionId = process.env.LINKEDIN_JSESSION_ID;
     let linkedinLiAt = process.env.LINKEDIN_LI_AT;
 
-    let numSteps = steps.length;
-
     let brandDoc =
         campaignConfig && campaignConfig.brand_doc
             ? campaignConfig.brand_doc
@@ -212,9 +210,12 @@ async function _converse(
             ? campaignConfig.pain_points
             : [];
 
-    let { requirementRules, emailTemplates } =
-        getCampaignRequirementsAndEmailTemplates(
-            { accountId, numSteps },
+    let { requirementRules, messageTemplates, numSteps } =
+        getCampaignRequirementsAndMessageTemplates(
+            {
+                accountId,
+                sequenceTemplates: campaignConfig.sequence_steps_template,
+            },
             { txid }
         );
 
@@ -238,7 +239,7 @@ async function _converse(
                 },
             },
             {
-                type: "email_generation",
+                type: "message_generation",
                 value: {
                     user_query: query,
                     sequence_id: sequenceId,
@@ -247,7 +248,7 @@ async function _converse(
                     sender_company: senderCompany,
                     brand_info: brandDoc,
                     pain_points: painPoints,
-                    email_templates: emailTemplates,
+                    message_templates: messageTemplates,
                     requirements: requirementRules,
                 },
             },
@@ -990,111 +991,181 @@ export const getReviewUpdates = functionWrapper(
     _getReviewUpdates
 );
 
-function getCampaignRequirementsAndEmailTemplates(
-    { accountId, numSteps },
+function getCampaignRequirementsAndMessageTemplates(
+    { accountId, sequenceTemplates },
     { txid }
 ) {
     const requirementRules = [
         "Do Not Use Templates Verbatim: Use existing templates as a reference but generate personalized content for each recipient. Be creative.",
         "Craft subject lines that are specific, compelling, and highlight a clear benefit or pain point relevant to the recipient. Keep them concise, ideally under 7 words.",
         "Do not include your company name or overly promotional terms in the subject line.",
-        "For the follow up emails, do not include 'Re: ' in the subject line",
-        "Incorporate specific details about the recipient's company, role, industry trends or needs to demonstrate genuine interest and understanding to show you've done your research..",
+        "For the follow up messages, do not include 'Re: ' in the subject line.",
+        "Incorporate specific details about the recipient's company, role, industry trends or needs to demonstrate genuine interest and understanding to show you've done your research.",
         "Address issues directly related to their responsibilities and known challenges.",
         "Position yourself as a partner looking to help solve their problems, not just sell a product or service.",
         "Use personal pronouns (you, your, your team) to create a personalized feel.",
         "Keep the language approachable while remaining professional.",
         "Use clear and straightforward language.",
-        "Limit the email to essential information that captures interest. Aim for brevity without sacrificing personalization.",
+        "Limit the message to essential information that captures interest. Aim for brevity without sacrificing personalization.",
         "Keep it concise, 2-3 short sentences, then the call to action.",
         "Focus on One Key Value Proposition: Avoid overwhelming the recipient with multiple offerings.",
         "Place Compelling Points Early: Mention the most compelling points in the first few sentences to capture attention.",
-        "Avoid Generic Greetings: Do not use phrases like 'Hope this email finds you well.' Start with a personalized greeting using their name.",
+        "Avoid Generic Greetings: Do not use phrases like 'Hope this message finds you well.' Start with a personalized greeting using their name.",
         "Remove Placeholders: Eliminate any placeholders like [your contact info], [phone], etc.",
         "Make the CTA Clear and Simple: Encourage a low-commitment response that directly relates to the recipient's challenges or goals.",
-        "Personalize the CTA Timing: Ask for their availability instead of suggesting a specific time",
-        "Make sure sender info mentioned below is accurate and included in the email.",
+        "Personalize the CTA Timing: Ask for their availability instead of suggesting a specific time.",
+        "Make sure sender info mentioned below is accurate and included in the message.",
         "Make sure no phone number, linkedin url or any other sender contact is present. Only above sender info is allowed.",
         "Align with Brand Guidelines: Ensure the tone, messaging, and value proposition strictly adhere to the brand guidelines provided.",
         "Demonstrate Understanding: Show that you understand the recipient's challenges to build rapport and trust.",
         "Focus exclusively on the specific pain points (mentioned in json below) without introducing additional problems like cybersecurity, AI or security",
         "Utilize HTML to enhance readability— bold text for key phrases, and ensure mobile optimization.",
-        "Make sure no markdown or richtext is used in the email.",
+        "Make sure no markdown or richtext is used in the message.",
         "Build Credibility Briefly: Mention relevant success stories or expertise without overwhelming the recipient.",
         "Ask open-ended questions to encourage replies and make it easy for the recipient to respond.",
     ];
     const allEmailTemplates = [
         {
+            type: "email",
             name: "Initial outreach",
             template:
                 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi [Recipient Name],</p><p>As the [Recipient Position] at [Recipient Company], you\'re likely focused on [specific pain point relevant to their role], especially regarding [related challenge]. At [Sender Company], we specialize in helping organizations like yours [specific benefit or outcome], leveraging our unique hybrid delivery model. This approach offers you [a unique selling point that correlates to recipient role, industry and company]].</p><p>Would you be open to a brief discussion about how we can support your goals?</p>[Sender Signature]</body></html>',
         },
         {
+            type: "email",
             name: "Follow-up",
             template:
                 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi [Recipient Name],</p><p>I wanted to reach out again regarding the challenges many companies face in [specific challenges based on one pain point that aligns with recipient role or industry or company]. At [Sender Company], we have successfully helped similar organizations streamline their [relevant_area] operations, reducing costs through our proven model while improving overall efficiency.</p><p>Are there specific outcomes you\'re targeting that an optimized [relevant_area] could support?</p>[Sender Signature]</body></html>',
         },
         {
+            type: "email",
             name: "Value proposition",
             template:
                 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi [Recipient Name],</p><p>I noticed your impressive work as [Recipient Position] at [Recipient Company]. We recently helped a similar company in [Recipient Industry] reduce their data processing time by [any relavant facts about Sender Company if applicable]. Given your experience in [Relevant Expertise], I believe we could deliver comparable results for [Recipient Company].</p><p>If you\'d be interested in discussing how we might replicate this success with your team, just let me know I\'d be happy to set up a quick call.</p>[Sender Signature]</body></html>',
         },
         {
+            type: "email",
             name: "Case study highlight",
             template:
                 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi [Recipient Name],</p><p>Following our earlier conversation, I thought you might find it valuable to see a quick example of our work in action. We recently partnered with a company in [Recipient Industry] to tackle [key issue], resulting in [specific improvement or measurable metric]. By applying a similar approach, we could help [Recipient Company] achieve comparable gains.</p><p>Would you like me to share additional details about this case study or discuss how we might adapt these methods to your team?</p>[Sender Signature]</body></html>',
         },
         {
+            type: "email",
             name: "Strategic alignment",
             template:
                 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi [Recipient Name],</p><p>I hope you’ve had a chance to review the results we discussed. It’s often beneficial at this stage to talk through strategic priorities in greater detail. Understanding your roadmap for [upcoming initiatives or relevant focus area] can help us align our solution precisely with your goals.</p><p>Would you be open to scheduling a short strategy session to explore potential collaboration opportunities and determine the best path forward?</p>[Sender Signature]</body></html>',
         },
         {
+            type: "email",
             name: "Break-up",
             template:
                 '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"></head><body><p>Hi [Recipient Name],</p><p>I know that your role as [Recipient Role] at [Recipient Company] keeps you engaged with a multitude of high-priority initiatives. Since we haven\'t connected yet, I wanted to reach out one last time before stepping back.</p><p>If you\'d like to discuss how [Sender Company] can support your goals, feel free to reach out at a time that suits you. We\'re here to help whenever the timing aligns.</p>[Sender Signature]</body></html>',
         },
     ];
 
-    /*
-    if numSteps is 6 or more, then return all email templates.
-    if numSteps is 1, then return the first email template.
-    if numSteps is 2, then return the first and last email templates.
-    if numSteps is 3, then return the first two and last email templates.
-    if numSteps is 4, then return the first three and last email templates.
-    if numSteps is 5, then return the first four and last email templates.
-    if numSteps is 0, then return empty array.
-    */
-    let emailTemplates = [];
-    if (numSteps === 0) {
-        emailTemplates = [];
-    } else if (numSteps === 1) {
-        emailTemplates = [allEmailTemplates[0]];
-    } else if (numSteps === 2) {
-        emailTemplates = [allEmailTemplates[0], allEmailTemplates[5]];
-    } else if (numSteps === 3) {
-        emailTemplates = [
-            allEmailTemplates[0],
-            allEmailTemplates[1],
-            allEmailTemplates[5],
-        ];
-    } else if (numSteps === 4) {
-        emailTemplates = [
-            allEmailTemplates[0],
-            allEmailTemplates[1],
-            allEmailTemplates[2],
-            allEmailTemplates[5],
-        ];
-    } else if (numSteps === 5) {
-        emailTemplates = [
-            allEmailTemplates[0],
-            allEmailTemplates[1],
-            allEmailTemplates[2],
-            allEmailTemplates[3],
-            allEmailTemplates[5],
-        ];
-    } else {
-        emailTemplates = allEmailTemplates;
+    const LinkedinTemplate = {
+        type: "linkedin_connect_request",
+        name: "Linkedin connection request",
+        template: `Hi [Recipient Name],
+As the [Recipient Position] at [Recipient Company], I thought it would be valuable to connect. I’m with [Sender Company], where we help teams tackle [specific pain point] through [specific solution/approach].
+
+Would love to connect and explore how we could support your goals.
+
+[Sender Name]`,
+    };
+
+    let messageTemplates = [];
+
+    if (!sequenceTemplates || sequenceTemplates.length === 0) {
+        messageTemplates = [];
+        return { requirementRules, messageTemplates };
     }
-    return { requirementRules, emailTemplates };
+
+    let shouldAddLinkedinTemplate = false,
+        isLinkedinTemplatePresent = false;
+    // if there is 'type' as 'linkedin_connect_request' and 'should_have_ai_generated_message' is true, then add the linkedin template.
+    for (let template of sequenceTemplates) {
+        if (
+            template.type === "linkedin_connect_request" &&
+            template.should_have_ai_generated_message
+        ) {
+            shouldAddLinkedinTemplate = true;
+            break;
+        } else if (template.type === "linkedin_connect_request") {
+            isLinkedinTemplatePresent = true;
+        }
+    }
+
+    const addEmailTemplateFunc = (numSteps, allEmailTemplates) => {
+        /*
+        if numSteps is 6 or more, then return all email templates.
+        if numSteps is 1, then return the first email template.
+        if numSteps is 2, then return the first and last email templates.
+        if numSteps is 3, then return the first two and last email templates.
+        if numSteps is 4, then return the first three and last email templates.
+        if numSteps is 5, then return the first four and last email templates.
+        if numSteps is 0, then return empty array.
+        */
+        let messageTemplates = [];
+        if (numSteps === 0) {
+            messageTemplates = [];
+        } else if (numSteps === 1) {
+            messageTemplates = [allEmailTemplates[0]];
+        } else if (numSteps === 2) {
+            messageTemplates = [allEmailTemplates[0], allEmailTemplates[5]];
+        } else if (numSteps === 3) {
+            messageTemplates = [
+                allEmailTemplates[0],
+                allEmailTemplates[1],
+                allEmailTemplates[5],
+            ];
+        } else if (numSteps === 4) {
+            messageTemplates = [
+                allEmailTemplates[0],
+                allEmailTemplates[1],
+                allEmailTemplates[2],
+                allEmailTemplates[5],
+            ];
+        } else if (numSteps === 5) {
+            messageTemplates = [
+                allEmailTemplates[0],
+                allEmailTemplates[1],
+                allEmailTemplates[2],
+                allEmailTemplates[3],
+                allEmailTemplates[5],
+            ];
+        } else {
+            messageTemplates = allEmailTemplates;
+        }
+        return messageTemplates;
+    };
+
+    let numSteps = 0;
+    if (!isLinkedinTemplatePresent) {
+        messageTemplates = addEmailTemplateFunc(
+            sequenceTemplates.length,
+            allEmailTemplates
+        );
+        numSteps = sequenceTemplates.length;
+    } else if (!shouldAddLinkedinTemplate) {
+        messageTemplates = addEmailTemplateFunc(
+            sequenceTemplates.length - 1,
+            allEmailTemplates
+        );
+        numSteps = sequenceTemplates.length - 1;
+    } else {
+        let emailTemplates = addEmailTemplateFunc(
+            sequenceTemplates.length - 1,
+            allEmailTemplates
+        );
+        let positionOfLinkedinTemplate = sequenceTemplates.findIndex(
+            (template) => template.type === "linkedin_connect_request"
+        );
+        // add the linkedin template at the position of the linkedin template in the emailTemplates array.
+        emailTemplates.splice(positionOfLinkedinTemplate, 0, LinkedinTemplate);
+        messageTemplates = emailTemplates;
+        numSteps = sequenceTemplates.length;
+    }
+
+    return { requirementRules, messageTemplates, numSteps };
 }

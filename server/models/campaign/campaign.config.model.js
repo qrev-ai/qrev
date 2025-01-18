@@ -23,6 +23,7 @@ const CampaignConfigSchema = new Schema({
     /*
     * Added 'sequence_steps_template' on 30th July 2024
     * sequence_steps_template size will indicate the number of steps in the sequence.
+    * 18Jan2025 Update: This will also support linkedin connection request also.
     * Sample structure: 
     [
         { //We will support other types like WhatsApp, linkedin_connect_message in future
@@ -45,6 +46,14 @@ const CampaignConfigSchema = new Schema({
                 "time_value": 6,
                 "time_unit": "day"
             }
+        },
+        {
+            "type": "linkedin_connect_request",
+            "time_of_dispatch": {
+                "time_value": 9,
+                "time_unit": "day"
+            },
+            should_have_ai_generated_message: true
         }
     ]
     */
