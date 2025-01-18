@@ -5184,7 +5184,7 @@ async function _updateAllSequenceStepProspectMessages(
         logg.info(`generated messages: ${JSON.stringify(docs)}`);
     }
 
-    // format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
+    // format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”, id: “…”, type: "email" or "linkedin_connection_request"},…]
 
     let [upProspectResp, upProspectErr] = await updateSequenceProspects(
         { sequenceId, selectedProspects: docs },
@@ -5224,8 +5224,8 @@ async function _updateAllSequenceStepProspectMessages(
                 sequence_step_id: sequenceStepId,
                 prospect_email,
                 prospect_name,
-                message_subject: generated_messages[i].subject,
-                message_body: generated_messages[i].body,
+                message_subject: generated_messages[i].subject || "",
+                message_body: generated_messages[i].body || "",
             };
         });
 

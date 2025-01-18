@@ -1068,7 +1068,7 @@ function getCampaignRequirementsAndMessageTemplates(
     ];
 
     const LinkedinTemplate = {
-        type: "linkedin_connect_request",
+        type: "linkedin_connection_request",
         name: "Linkedin connection request",
         template: `Hi [Recipient Name],
 As the [Recipient Position] at [Recipient Company], I thought it would be valuable to connect. I’m with [Sender Company], where we help teams tackle [specific pain point] through [specific solution/approach].
@@ -1087,15 +1087,15 @@ Would love to connect and explore how we could support your goals.
 
     let shouldAddLinkedinTemplate = false,
         isLinkedinTemplatePresent = false;
-    // if there is 'type' as 'linkedin_connect_request' and 'should_have_ai_generated_message' is true, then add the linkedin template.
+    // if there is 'type' as 'linkedin_connection_request' and 'should_have_ai_generated_message' is true, then add the linkedin template.
     for (let step of sequenceSteps) {
         if (
-            step.type === "linkedin_connect_request" &&
+            step.type === "linkedin_connection_request" &&
             step.should_have_ai_generated_message
         ) {
             shouldAddLinkedinTemplate = true;
             break;
-        } else if (step.type === "linkedin_connect_request") {
+        } else if (step.type === "linkedin_connection_request") {
             isLinkedinTemplatePresent = true;
         }
     }
@@ -1175,7 +1175,7 @@ Would love to connect and explore how we could support your goals.
         numSteps = sequenceSteps.length;
     } else if (!shouldAddLinkedinTemplate) {
         let linkedinRemovedSteps = sequenceSteps.filter(
-            (step) => step.type !== "linkedin_connect_request"
+            (step) => step.type !== "linkedin_connection_request"
         );
         messageTemplates = addEmailTemplateFunc(
             linkedinRemovedSteps.length,
@@ -1184,14 +1184,14 @@ Would love to connect and explore how we could support your goals.
         numSteps = sequenceSteps.length - 1;
     } else {
         let linkedinRemovedSteps = sequenceSteps.filter(
-            (step) => step.type !== "linkedin_connect_request"
+            (step) => step.type !== "linkedin_connection_request"
         );
         let emailTemplates = addEmailTemplateFunc(
             linkedinRemovedSteps.length,
             allEmailTemplates
         );
         let positionOfLinkedinTemplate = sequenceSteps.findIndex(
-            (step) => step.type === "linkedin_connect_request"
+            (step) => step.type === "linkedin_connection_request"
         );
         // add the linkedin template at the position of the linkedin template in the emailTemplates array.
         let linkedinTemplate = LinkedinTemplate;

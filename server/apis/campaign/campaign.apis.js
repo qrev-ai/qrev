@@ -124,7 +124,7 @@ export async function sequenceAsyncCallbackApi(req, res, next) {
                 );
             if (updateErr) throw updateErr;
         } else {
-            // this is the old version of the API. check above function
+            // ! this is the old version of the API. check above function
             let [updateResp, updateErr] =
                 await CampaignUtils.updateSequenceStepProspectMessages(
                     { sequenceId, sequenceStepId },

@@ -48,7 +48,7 @@ const CampaignConfigSchema = new Schema({
             }
         },
         {
-            "type": "linkedin_connect_request",
+            "type": "linkedin_connection_request",
             "time_of_dispatch": {
                 "time_value": 9,
                 "time_unit": "day"
