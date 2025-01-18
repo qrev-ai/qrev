@@ -264,6 +264,19 @@ async function _createCampaignSequenceStepsFromQAi(
             throw `seqStepTimeOfDispatch is invalid for sequenceStepId: ${sequenceStepId}`;
         }
 
+        let seqStepType = "email";
+        if (stepInfo.type === "linkedin_connection_request") {
+            seqStepType = "linkedin_connection_request";
+        }
+
+        let draftType = "ai_generated";
+        if (
+            stepInfo.type === "linkedin_connection_request" &&
+            !stepInfo.should_have_ai_generated_message
+        ) {
+            draftType = "none";
+        }
+
         let obj = {
             _id: sequenceStepId,
             sequence: campaignSequenceId,
@@ -272,21 +285,15 @@ async function _createCampaignSequenceStepsFromQAi(
             // type: "email",
             subject: "",
             body: "",
-            // draft_type: "ai_generated",
             time_of_dispatch: {
                 type: "from_prospect_added_time",
                 value: seqStepTimeOfDispatch,
             },
             active: true,
             order: i + 1,
+            type: seqStepType,
+            draft_type: draftType,
         };
-
-        if (stepInfo.type === "ai_generated_email") {
-            obj.type = "email";
-            obj.draft_type = "ai_generated";
-        } else {
-            throw `stepInfo.type is invalid for sequenceStepId: ${sequenceStepId}`;
-        }
 
         sequenceStepDocs.push(obj);
     }
