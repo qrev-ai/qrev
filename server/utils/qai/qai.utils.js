@@ -260,6 +260,7 @@ async function _converse(
     };
 
     logg.info(`aiServerApiBody: ${JSON.stringify(aiServerApiBody)}`);
+
     let [resp, aiCallErr] = await callAiServerCampaignJobsApi(
         { jsonBody: aiServerApiBody, filePath: uploadedCsvFilePath },
         { txid }
@@ -995,10 +996,13 @@ export const getReviewUpdates = functionWrapper(
     _getReviewUpdates
 );
 
-function getCampaignRequirementsAndMessageTemplates(
+export function getCampaignRequirementsAndMessageTemplates(
     { accountId, sequenceSteps },
     { txid }
 ) {
+    const funcName = "getCampaignRequirementsAndMessageTemplates";
+    const logg = logger.child({ txid, funcName });
+    // logg.info(`started`);
     const requirementRules = [
         "Do Not Use Templates Verbatim: Use existing templates as a reference but generate personalized content for each recipient. Be creative.",
         "Craft subject lines that are specific, compelling, and highlight a clear benefit or pain point relevant to the recipient. Keep them concise, ideally under 7 words.",
@@ -1089,16 +1093,17 @@ Would love to connect and explore how we could support your goals.
         isLinkedinTemplatePresent = false;
     // if there is 'type' as 'linkedin_connection_request' and 'should_have_ai_generated_message' is true, then add the linkedin template.
     for (let step of sequenceSteps) {
-        if (
-            step.type === "linkedin_connection_request" &&
-            step.should_have_ai_generated_message
-        ) {
-            shouldAddLinkedinTemplate = true;
-            break;
-        } else if (step.type === "linkedin_connection_request") {
+        if (step.type === "linkedin_connection_request") {
             isLinkedinTemplatePresent = true;
+            if (step.should_have_ai_generated_message) {
+                shouldAddLinkedinTemplate = true;
+            }
+            break;
         }
     }
+
+    logg.info(`isLinkedinTemplatePresent: ${isLinkedinTemplatePresent}`);
+    logg.info(`shouldAddLinkedinTemplate: ${shouldAddLinkedinTemplate}`);
 
     const addEmailTemplateFunc = (seqSteps, allEmailTemplates) => {
         /*
@@ -1161,7 +1166,25 @@ Would love to connect and explore how we could support your goals.
                 template5,
             ];
         } else {
-            messageTemplates = allEmailTemplates;
+            // map through seqSteps. Add first 5 templates similar to above. but for remaining, add the template again at 4th position. For last template, add it at 6th position.
+            messageTemplates = seqSteps.map((step, index) => {
+                let chosenTemplateIndex = null;
+                // if last index, then chosenTemplateIndex would be 5.
+                if (index === seqSteps.length - 1) {
+                    chosenTemplateIndex = allEmailTemplates.length - 1;
+                } else if (index <= 5) {
+                    chosenTemplateIndex = index;
+                } else {
+                    chosenTemplateIndex = allEmailTemplates.length - 2;
+                }
+                let template = allEmailTemplates[chosenTemplateIndex];
+                template.id = step.id;
+                if (index < 5) {
+                    return template;
+                } else {
+                    return template;
+                }
+            });
         }
         return messageTemplates;
     };
@@ -1178,16 +1201,16 @@ Would love to connect and explore how we could support your goals.
             (step) => step.type !== "linkedin_connection_request"
         );
         messageTemplates = addEmailTemplateFunc(
-            linkedinRemovedSteps.length,
+            linkedinRemovedSteps,
             allEmailTemplates
         );
-        numSteps = sequenceSteps.length - 1;
+        numSteps = linkedinRemovedSteps.length;
     } else {
         let linkedinRemovedSteps = sequenceSteps.filter(
             (step) => step.type !== "linkedin_connection_request"
         );
         let emailTemplates = addEmailTemplateFunc(
-            linkedinRemovedSteps.length,
+            linkedinRemovedSteps,
             allEmailTemplates
         );
         let positionOfLinkedinTemplate = sequenceSteps.findIndex(

@@ -5236,12 +5236,13 @@ async function _updateAllSequenceStepProspectMessages(
                 (x) => x.id === sequenceStepId
             );
 
-            if (
-                seqStepType === "linkedin_connection_request" &&
-                seqStepDraftType === "none" &&
-                !message
-            ) {
-                message = { subject: "", body: "" };
+            if (seqStepType === "linkedin_connection_request") {
+                if (seqStepDraftType === "none" && !message) {
+                    message = { subject: "", body: "" };
+                } else {
+                    // the linkedin connection request messages shouldn't have subject. only body is allowed.
+                    message.subject = "";
+                }
             }
 
             if (!message) {
