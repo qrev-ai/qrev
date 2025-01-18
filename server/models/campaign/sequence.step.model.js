@@ -8,10 +8,14 @@ const SequenceStepSchema = new Schema({
     account: { type: Schema.Types.ObjectId, ref: "account" },
     created_by: { type: Schema.Types.ObjectId, ref: "User" },
 
+    /*
+    type: "email" or "linkedin_connection_request"
+    */
     type: String,
     subject: String,
     body: String,
     // later we will support draft_type: "fixed" or "hybrid" or "ai_generated". For now, it is only "ai_generated"
+    // * 18Jan2025 Update: we will support another type called "none". It is only for linkedin_connection_request. This means that the request needs to be sent without any message.
     draft_type: { type: String, default: "ai_generated" },
     /*
     time_of_dispatch: {

@@ -5215,17 +5215,42 @@ async function _updateAllSequenceStepProspectMessages(
     // call updateSequenceStepProspectMessages for each sequenceStep
     for (let i = 0; i < sequenceSteps.length; i++) {
         let sequenceStep = sequenceSteps[i];
-        let { _id: sequenceStepId } = sequenceStep;
-        // docs format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”},…]
+        let {
+            _id: sequenceStepId,
+            type: seqStepType,
+            draft_type: seqStepDraftType,
+        } = sequenceStep;
+
+        // docs format: sequence_id, prospect_email, prospect_name, generated_messages:[ { subject: “…”, body: “…”, id: “…”, type: "email" or "linkedin_connection_request"},…]
         let seqStepProspectMessageDocs = docs.map((d) => {
             let { prospect_email, prospect_name, generated_messages } = d;
+            // match sequenceStepId with generated_messages[i].id
+            let message = generated_messages.find(
+                (x) => x.id === sequenceStepId
+            );
+
+            if (
+                seqStepType === "linkedin_connection_request" &&
+                seqStepDraftType === "none" &&
+                !message
+            ) {
+                message = { subject: "", body: "" };
+            }
+
+            if (!message) {
+                throw new CustomError(
+                    `message not found for sequenceStepId: ${sequenceStepId}`,
+                    fileName,
+                    funcName
+                );
+            }
             return {
                 sequence_id: sequenceId,
                 sequence_step_id: sequenceStepId,
                 prospect_email,
                 prospect_name,
-                message_subject: generated_messages[i].subject || "",
-                message_body: generated_messages[i].body || "",
+                message_subject: message.subject || "",
+                message_body: message.body || "",
             };
         });
 
