@@ -163,7 +163,11 @@ async function _converse(
     }
 
     let sequenceName = actionToBeDone.parameters.campaign_name;
-    let steps = campaignConfig.sequence_steps_template;
+    let steps = campaignConfig.sequence_steps_template.map((x) => {
+        x.id = uuidv4();
+        return x;
+    });
+
     let sequenceDetails = {
         id: sequenceId,
         name: sequenceName,
@@ -214,7 +218,7 @@ async function _converse(
         getCampaignRequirementsAndMessageTemplates(
             {
                 accountId,
-                sequenceTemplates: campaignConfig.sequence_steps_template,
+                sequenceSteps: steps,
             },
             { txid }
         );
@@ -992,7 +996,7 @@ export const getReviewUpdates = functionWrapper(
 );
 
 function getCampaignRequirementsAndMessageTemplates(
-    { accountId, sequenceTemplates },
+    { accountId, sequenceSteps },
     { txid }
 ) {
     const requirementRules = [
@@ -1076,7 +1080,7 @@ Would love to connect and explore how we could support your goals.
 
     let messageTemplates = [];
 
-    if (!sequenceTemplates || sequenceTemplates.length === 0) {
+    if (!sequenceSteps || sequenceSteps.length === 0) {
         messageTemplates = [];
         return { requirementRules, messageTemplates };
     }
@@ -1084,19 +1088,19 @@ Would love to connect and explore how we could support your goals.
     let shouldAddLinkedinTemplate = false,
         isLinkedinTemplatePresent = false;
     // if there is 'type' as 'linkedin_connect_request' and 'should_have_ai_generated_message' is true, then add the linkedin template.
-    for (let template of sequenceTemplates) {
+    for (let step of sequenceSteps) {
         if (
-            template.type === "linkedin_connect_request" &&
-            template.should_have_ai_generated_message
+            step.type === "linkedin_connect_request" &&
+            step.should_have_ai_generated_message
         ) {
             shouldAddLinkedinTemplate = true;
             break;
-        } else if (template.type === "linkedin_connect_request") {
+        } else if (step.type === "linkedin_connect_request") {
             isLinkedinTemplatePresent = true;
         }
     }
 
-    const addEmailTemplateFunc = (numSteps, allEmailTemplates) => {
+    const addEmailTemplateFunc = (seqSteps, allEmailTemplates) => {
         /*
         if numSteps is 6 or more, then return all email templates.
         if numSteps is 1, then return the first email template.
@@ -1106,33 +1110,55 @@ Would love to connect and explore how we could support your goals.
         if numSteps is 5, then return the first four and last email templates.
         if numSteps is 0, then return empty array.
         */
+        let numSteps = seqSteps.length;
         let messageTemplates = [];
         if (numSteps === 0) {
             messageTemplates = [];
         } else if (numSteps === 1) {
-            messageTemplates = [allEmailTemplates[0]];
+            let template = allEmailTemplates[0];
+            template.id = seqSteps[0].id;
+            messageTemplates = [template];
         } else if (numSteps === 2) {
-            messageTemplates = [allEmailTemplates[0], allEmailTemplates[5]];
+            let template1 = allEmailTemplates[0];
+            template1.id = seqSteps[0].id;
+            let template2 = allEmailTemplates[5];
+            template2.id = seqSteps[1].id;
+            messageTemplates = [template1, template2];
         } else if (numSteps === 3) {
-            messageTemplates = [
-                allEmailTemplates[0],
-                allEmailTemplates[1],
-                allEmailTemplates[5],
-            ];
+            let template1 = allEmailTemplates[0];
+            template1.id = seqSteps[0].id;
+            let template2 = allEmailTemplates[1];
+            template2.id = seqSteps[1].id;
+            let template3 = allEmailTemplates[5];
+            template3.id = seqSteps[2].id;
+            messageTemplates = [template1, template2, template3];
         } else if (numSteps === 4) {
-            messageTemplates = [
-                allEmailTemplates[0],
-                allEmailTemplates[1],
-                allEmailTemplates[2],
-                allEmailTemplates[5],
-            ];
+            let template1 = allEmailTemplates[0];
+            template1.id = seqSteps[0].id;
+            let template2 = allEmailTemplates[1];
+            template2.id = seqSteps[1].id;
+            let template3 = allEmailTemplates[2];
+            template3.id = seqSteps[2].id;
+            let template4 = allEmailTemplates[5];
+            template4.id = seqSteps[3].id;
+            messageTemplates = [template1, template2, template3, template4];
         } else if (numSteps === 5) {
+            let template1 = allEmailTemplates[0];
+            template1.id = seqSteps[0].id;
+            let template2 = allEmailTemplates[1];
+            template2.id = seqSteps[1].id;
+            let template3 = allEmailTemplates[2];
+            template3.id = seqSteps[2].id;
+            let template4 = allEmailTemplates[3];
+            template4.id = seqSteps[3].id;
+            let template5 = allEmailTemplates[5];
+            template5.id = seqSteps[4].id;
             messageTemplates = [
-                allEmailTemplates[0],
-                allEmailTemplates[1],
-                allEmailTemplates[2],
-                allEmailTemplates[3],
-                allEmailTemplates[5],
+                template1,
+                template2,
+                template3,
+                template4,
+                template5,
             ];
         } else {
             messageTemplates = allEmailTemplates;
@@ -1143,28 +1169,36 @@ Would love to connect and explore how we could support your goals.
     let numSteps = 0;
     if (!isLinkedinTemplatePresent) {
         messageTemplates = addEmailTemplateFunc(
-            sequenceTemplates.length,
+            sequenceSteps,
             allEmailTemplates
         );
-        numSteps = sequenceTemplates.length;
+        numSteps = sequenceSteps.length;
     } else if (!shouldAddLinkedinTemplate) {
+        let linkedinRemovedSteps = sequenceSteps.filter(
+            (step) => step.type !== "linkedin_connect_request"
+        );
         messageTemplates = addEmailTemplateFunc(
-            sequenceTemplates.length - 1,
+            linkedinRemovedSteps.length,
             allEmailTemplates
         );
-        numSteps = sequenceTemplates.length - 1;
+        numSteps = sequenceSteps.length - 1;
     } else {
+        let linkedinRemovedSteps = sequenceSteps.filter(
+            (step) => step.type !== "linkedin_connect_request"
+        );
         let emailTemplates = addEmailTemplateFunc(
-            sequenceTemplates.length - 1,
+            linkedinRemovedSteps.length,
             allEmailTemplates
         );
-        let positionOfLinkedinTemplate = sequenceTemplates.findIndex(
-            (template) => template.type === "linkedin_connect_request"
+        let positionOfLinkedinTemplate = sequenceSteps.findIndex(
+            (step) => step.type === "linkedin_connect_request"
         );
         // add the linkedin template at the position of the linkedin template in the emailTemplates array.
-        emailTemplates.splice(positionOfLinkedinTemplate, 0, LinkedinTemplate);
+        let linkedinTemplate = LinkedinTemplate;
+        linkedinTemplate.id = sequenceSteps[positionOfLinkedinTemplate].id;
+        emailTemplates.splice(positionOfLinkedinTemplate, 0, linkedinTemplate);
         messageTemplates = emailTemplates;
-        numSteps = sequenceTemplates.length;
+        numSteps = sequenceSteps.length;
     }
 
     return { requirementRules, messageTemplates, numSteps };
