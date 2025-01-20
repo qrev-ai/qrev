@@ -202,9 +202,6 @@ async function _converse(
         return [csvUploadErrResp, null];
     }
 
-    let linkedinJsessionId = process.env.LINKEDIN_JSESSION_ID;
-    let linkedinLiAt = process.env.LINKEDIN_LI_AT;
-
     let brandDoc =
         campaignConfig && campaignConfig.brand_doc
             ? campaignConfig.brand_doc
@@ -237,10 +234,7 @@ async function _converse(
             },
             {
                 type: "linkedin_enrichment",
-                value: {
-                    jsession_id: linkedinJsessionId,
-                    li_at: linkedinLiAt,
-                },
+                value: {},
             },
             {
                 type: "message_generation",
