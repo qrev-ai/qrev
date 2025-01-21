@@ -107,6 +107,28 @@ const CampaignConfigSchema = new Schema({
     brand_doc: {},
     pain_points: [],
 
+    /*
+    * Added "linkedin_connect" on 16th Jan 2025.
+    * linkedin_connect will store the linkedin connect account id,status and service_type
+    * service_type can be "unipile" or "cloudcruise". But currently we only support unipile.
+    * status can be "active" or "inactive"
+    * value will store the account_id of the connected linkedin account in unipile.
+    * Value is generic because cloudcruise may use different terminology for the same. Also, user may provide email and pwd directly or they may provide li_at cookie value. so it is generic.
+    * Structure: 
+    {
+        "status": "active",
+        "service_type": "unipile",
+        "value": {
+            account_id: "..."    
+        }
+    }
+    */
+    linkedin_connect: {
+        status: { type: String, enum: ["active", "inactive"] },
+        service_type: { type: String, enum: ["unipile", "cloudcruise"] },
+        value: {},
+    },
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });
