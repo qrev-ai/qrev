@@ -755,7 +755,12 @@ async function _getSequenceReplyAnalytics(
     let queryObj = {
         account: accountId,
         sequence: sequenceId,
-        action_type: AnalyticActionTypes.campaign_message_reply,
+        action_type: {
+            $in: [
+                AnalyticActionTypes.campaign_message_reply,
+                AnalyticActionTypes.campaign_linkedin_connect_reply,
+            ],
+        },
         "analytic_metadata.has_bounced": { $ne: true },
     };
     if (sequenceStepId) {
@@ -792,6 +797,16 @@ async function _getSequenceReplyAnalytics(
     let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
 
     for (const analytic of analytics) {
+        let actionType = analytic.action_type;
+        if (
+            actionType ===
+                AnalyticActionTypes.campaign_linkedin_connect_reply &&
+            analytic.analytic_metadata &&
+            analytic.analytic_metadata.type_of_reply === "self_reply"
+        ) {
+            // do not count as replied
+            continue;
+        }
         let sequenceProspectMessageId = analytic.sequence_prospect_message;
 
         if (repliedMessageMap[sequenceProspectMessageId]) {
