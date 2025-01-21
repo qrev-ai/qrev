@@ -2218,6 +2218,11 @@ async function _getSequenceDetails(
         .lean();
     logg.info(`sequenceSteps: ${JSON.stringify(sequenceSteps)}`);
 
+    let linkedinConnectStepId = sequenceSteps.find(
+        (x) => x.type === "linkedin_connection_request"
+    )?._id;
+    logg.info(`linkedinConnectStepId: ${linkedinConnectStepId}`);
+
     let days = 1;
     for (let i = 0; i < sequenceSteps.length; i++) {
         let sequenceStep = sequenceSteps[i];
@@ -2275,7 +2280,7 @@ async function _getSequenceDetails(
 
     let [seqAnalyticsMap, analyticErr] =
         await AnalyticUtils.getSequenceAnalytics(
-            { accountId, sequenceId },
+            { accountId, sequenceId, linkedinConnectStepId },
             { txid }
         );
     if (analyticErr) throw analyticErr;

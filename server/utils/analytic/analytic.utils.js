@@ -400,7 +400,7 @@ export const getSequenceProspectAnalytics = functionWrapper(
 );
 
 async function _getSequenceAnalytics(
-    { accountId, sequenceId },
+    { accountId, sequenceId, linkedinConnectStepId = null },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -418,24 +418,49 @@ async function _getSequenceAnalytics(
 
     let result = {};
 
+    const checkUniqueReplyFunc = (repliedMsgMap, res, spmsId, seqStepId) => {
+        if (!repliedMsgMap[spmsId]) {
+            res[seqStepId].replied++;
+            repliedMsgMap[spmsId] = true;
+        }
+    };
+
     for (const analytic of analytics) {
         let seqStepId = analytic.sequence_step;
         seqStepId =
             typeof seqStepId === "object" ? seqStepId.toString() : seqStepId;
 
         if (!result[seqStepId]) {
-            result[seqStepId] = {
-                contacted: 0,
-                delivered: 0,
-                bounced: 0,
-                opened: 0,
-                skipped: 0,
-                replied: 0,
-            };
+            if (linkedinConnectStepId && seqStepId === linkedinConnectStepId) {
+                result[seqStepId] = {
+                    contacted: 0,
+                    delivered: 0,
+                    bounced: 0,
+                    opened: 0,
+                    skipped: 0,
+                    replied: 0,
+                };
+            } else {
+                result[seqStepId] = {
+                    contacted: 0,
+                    delivered: 0,
+                    bounced: 0,
+                    // opened: 0,
+                    skipped: 0,
+                    replied: 0,
+                    accepted: 0,
+                    rejected: 0,
+                };
+            }
         }
 
         let actionType = analytic.action_type;
-        if (actionType === AnalyticActionTypes.campaign_message_send) {
+        if (
+            [
+                AnalyticActionTypes.campaign_message_send,
+                AnalyticActionTypes.campaign_linkedin_connect_send,
+            ].includes(actionType)
+        ) {
             // if (
             //     analytic.analytic_metadata &&
             //     analytic.analytic_metadata.message_status === "bounced"
@@ -453,19 +478,44 @@ async function _getSequenceAnalytics(
             }
         } else if (actionType === AnalyticActionTypes.campaign_message_open) {
             result[seqStepId].opened++;
-        } else if (actionType === AnalyticActionTypes.campaign_message_reply) {
+        } else if (
+            [
+                AnalyticActionTypes.campaign_message_reply,
+                AnalyticActionTypes.campaign_linkedin_connect_reply,
+            ].includes(actionType)
+        ) {
             if (
                 analytic.analytic_metadata &&
                 analytic.analytic_metadata.has_bounced
             ) {
                 result[seqStepId].bounced++;
+            } else if (
+                actionType ===
+                    AnalyticActionTypes.campaign_linkedin_connect_reply &&
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.type_of_reply === "self_reply"
+            ) {
+                // do not count as replied
             } else {
                 let spmsId = analytic.sequence_prospect_message;
-                if (!repliedMessageMap[spmsId]) {
-                    result[seqStepId].replied++;
-                    repliedMessageMap[spmsId] = true;
-                }
+
+                checkUniqueReplyFunc(
+                    repliedMessageMap,
+                    result,
+                    spmsId,
+                    seqStepId
+                );
             }
+        } else if (
+            actionType ===
+            AnalyticActionTypes.campaign_linkedin_connect_accepted
+        ) {
+            result[seqStepId].accepted++;
+        } else if (
+            actionType ===
+            AnalyticActionTypes.campaign_linkedin_connect_rejected
+        ) {
+            result[seqStepId].rejected++;
         }
     }
 
