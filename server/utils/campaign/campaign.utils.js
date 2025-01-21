@@ -7075,3 +7075,76 @@ const generateSenderScheduleMap = functionWrapper(
     "generateSenderScheduleMap",
     _generateSenderScheduleMap
 );
+
+/*
+ * This will return headers and data for the sequence step linkedin connect analytics
+ * headers will be like sequence_prospect_message (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), reply (Reply), replied_on (Replied On)
+ * data will be array of objects with above headers as keys
+ * input field 'type' will be either "accepted" or "rejected"
+ */
+async function _getSequenceStepLinkedinConnectAnalytics(
+    { accountId, sequenceId, sequenceStepId, type },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) {
+        throw new CustomError(`accountId is invalid`, fileName, funcName);
+    }
+    if (!sequenceId) {
+        throw new CustomError(`sequenceId is invalid`, fileName, funcName);
+    }
+    if (!sequenceStepId) {
+        throw new CustomError(`sequenceStepId is invalid`, fileName, funcName);
+    }
+
+    const headers = {
+        sequence_prospect_message: {
+            label: "Sequence Prospect Message ID",
+            type: "string",
+            hidden: true,
+            order: 0,
+        },
+        prospect_email: {
+            label: "Prospect Email",
+            type: "string",
+            order: 1,
+        },
+        prospect_name: {
+            label: "Prospect Name",
+            type: "string",
+            order: 2,
+        },
+        prospect_linkedin_url: {
+            label: "Prospect LinkedIn URL",
+            type: "linkedin_url",
+            order: 3,
+        },
+        date_of_action: {
+            label: type === "accepted" ? "Accepted On" : "Rejected On",
+            type: "datetime_millis",
+            order: 4,
+        },
+    };
+
+    let [data, dataErr] =
+        await AnalyticUtils.getSequenceStepLinkedinConnectAnalytics(
+            {
+                accountId,
+                sequenceId,
+                sequenceStepId,
+                type,
+                sortDescByTime: true,
+            },
+            { txid }
+        );
+    if (dataErr) throw dataErr;
+
+    logg.info(`ended`);
+    return [{ headers, data }, null];
+}
+
+export const getSequenceStepLinkedinConnectAnalytics = functionWrapper(
+    fileName,
+    "getSequenceStepLinkedinConnectAnalytics",
+    _getSequenceStepLinkedinConnectAnalytics
+);

@@ -121,4 +121,14 @@ router.post(
     apiWrapper(CampaignApis.sendAutoReplyDraftApi)
 );
 
+router.get(
+    "/sequence/step/accepted",
+    apiWrapper(CampaignApis.getSequenceStepLinkedinConnectAcceptAnalyticsApi)
+);
+
+router.get(
+    "/sequence/step/rejected",
+    apiWrapper(CampaignApis.getSequenceStepLinkedinConnectRejectAnalyticsApi)
+);
+
 export default router;

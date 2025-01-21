@@ -1389,3 +1389,80 @@ export const getBouncedAnalytics = functionWrapper(
     "getBouncedAnalytics",
     _getBouncedAnalytics
 );
+
+async function _getSequenceStepLinkedinConnectAnalytics(
+    { accountId, sequenceId, sequenceStepId, type, sortDescByTime = false },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) {
+        throw new CustomError(`accountId not found`, fileName, funcName);
+    }
+    if (!sequenceId) {
+        throw new CustomError(`sequenceId not found`, fileName, funcName);
+    }
+    if (!sequenceStepId) {
+        throw new CustomError(`sequenceStepId not found`, fileName, funcName);
+    }
+
+    let validTypes = ["accepted", "rejected"];
+    if (!validTypes.includes(type)) {
+        throw new CustomError(`invalid type`, fileName, funcName);
+    }
+
+    let queryObj = {
+        account: accountId,
+        sequence: sequenceId,
+        sequence_step: sequenceStepId,
+        action_type:
+            type === "accepted"
+                ? AnalyticActionTypes.campaign_linkedin_connect_accepted
+                : AnalyticActionTypes.campaign_linkedin_connect_rejected,
+    };
+
+    let analytics = await VisitorAnalytics.find(queryObj)
+        .populate("contact", "email first_name last_name linkedin_url")
+        .sort("created_on")
+        .lean();
+
+    logg.info(`analytics length: ${analytics.length}`);
+    if (!analytics || !analytics.length) {
+        logg.info(`no reply analytics found. So returning empty array`);
+        return [[], null];
+    }
+
+    let result = [];
+
+    for (const analytic of analytics) {
+        let firstName = analytic.contact.first_name;
+        let lastName = analytic.contact.last_name;
+        let prospectName = firstName || "";
+        if (lastName) prospectName = prospectName + " " + lastName;
+        prospectName = prospectName.trim();
+
+        let item = {
+            sequence_prospect_message: analytic.sequence_prospect_message,
+            prospect_email: analytic.contact.email,
+            prospect_name: prospectName,
+            prospect_linkedin_url: analytic.contact.linkedin_url,
+            date_of_action: new Date(analytic.created_on).getTime(),
+        };
+
+        result.push(item);
+    }
+
+    if (sortDescByTime && result.length) {
+        result = result.sort((a, b) => b.date_of_action - a.date_of_action);
+    }
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getSequenceStepLinkedinConnectAnalytics = functionWrapper(
+    fileName,
+    "getSequenceStepLinkedinConnectAnalytics",
+    _getSequenceStepLinkedinConnectAnalytics
+);

@@ -1069,3 +1069,85 @@ export async function sendAutoReplyDraftApi(req, res, next) {
         message: `${funcName} executed successfully`,
     });
 }
+
+export async function getSequenceStepLinkedinConnectAcceptAnalyticsApi(
+    req,
+    res,
+    next
+) {
+    const txid = req.id;
+    const funcName = "getSequenceStepLinkedinConnectAcceptAnalyticsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let {
+        account_id: accountId,
+        sequence_id: sequenceId,
+        sequence_step_id: sequenceStepId,
+    } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+    if (!sequenceStepId) throw `Missing sequence_step_id`;
+
+    let [result, err] =
+        await CampaignUtils.getSequenceStepLinkedinConnectAnalytics(
+            { accountId, sequenceId, sequenceStepId, type: "accepted" },
+            { txid }
+        );
+    if (err) throw err;
+    /*
+     * "result" will return headers and data for the sequence step linkedin connect accept analytics
+     * headers will be like sequence_prospect_message (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), reply (Reply), replied_on (Replied On)
+     * data will be array of objects with above headers as keys
+     */
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
+
+export async function getSequenceStepLinkedinConnectRejectAnalyticsApi(
+    req,
+    res,
+    next
+) {
+    const txid = req.id;
+    const funcName = "getSequenceStepLinkedinConnectRejectAnalyticsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let {
+        account_id: accountId,
+        sequence_id: sequenceId,
+        sequence_step_id: sequenceStepId,
+    } = req.query;
+
+    if (!accountId) throw `Missing account_id`;
+    if (!sequenceId) throw `Missing sequence_id`;
+    if (!sequenceStepId) throw `Missing sequence_step_id`;
+
+    let [result, err] =
+        await CampaignUtils.getSequenceStepLinkedinConnectAnalytics(
+            { accountId, sequenceId, sequenceStepId, type: "rejected" },
+            { txid }
+        );
+    if (err) throw err;
+    /*
+     * "result" will return headers and data for the sequence step linkedin connect reject analytics
+     * headers will be like sequence_prospect_message (hidden),prospect_email (Prospect Email), prospect_name (Prospect Name), reply (Reply), replied_on (Replied On)
+     * data will be array of objects with above headers as keys
+     */
+
+    logg.info(`ended successfully`);
+    return res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        result,
+    });
+}
