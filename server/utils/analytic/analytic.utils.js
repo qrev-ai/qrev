@@ -220,6 +220,14 @@ async function _getCampaignMessageAnalytics(
     let repliedMessageMap = {}; // if there were 5 replies within a thread, then we should count it as 1 reply. This map will help in that
     let openedMessageMap = {};
 
+    const checkUniqueReplyFunc = (analytic, repliedMsgMap, res, sequenceId) => {
+        let sequenceProspectId = analytic.sequence_prospect;
+        if (!repliedMsgMap[sequenceProspectId]) {
+            res[sequenceId].unique_replied++;
+            repliedMsgMap[sequenceProspectId] = true;
+        }
+    };
+
     for (const analytic of analytics) {
         let seqId = analytic.sequence;
         seqId = typeof seqId === "object" ? seqId.toString() : seqId;
@@ -236,7 +244,12 @@ async function _getCampaignMessageAnalytics(
         }
 
         let actionType = analytic.action_type;
-        if (actionType === AnalyticActionTypes.campaign_message_send) {
+        if (
+            [
+                AnalyticActionTypes.campaign_message_send,
+                AnalyticActionTypes.campaign_linkedin_connect_send,
+            ].includes(actionType)
+        ) {
             if (
                 analytic.analytic_metadata &&
                 analytic.analytic_metadata.message_status === "skipped"
@@ -253,20 +266,32 @@ async function _getCampaignMessageAnalytics(
                 result[seqId].unique_opened++;
                 openedMessageMap[sequenceProspectId] = true;
             }
-        } else if (actionType === AnalyticActionTypes.campaign_message_reply) {
+        } else if (
+            [
+                AnalyticActionTypes.campaign_message_reply,
+                AnalyticActionTypes.campaign_linkedin_connect_reply,
+            ].includes(actionType)
+        ) {
             if (
                 analytic.analytic_metadata &&
                 analytic.analytic_metadata.has_bounced
             ) {
                 // do not count as replied
+            } else if (
+                actionType ===
+                    AnalyticActionTypes.campaign_linkedin_connect_reply &&
+                analytic.analytic_metadata &&
+                analytic.analytic_metadata.type_of_reply === "self_reply"
+            ) {
+                // do not count as replied
             } else {
                 result[seqId].replied++;
-
-                let sequenceProspectId = analytic.sequence_prospect;
-                if (!repliedMessageMap[sequenceProspectId]) {
-                    result[seqId].unique_replied++;
-                    repliedMessageMap[sequenceProspectId] = true;
-                }
+                checkUniqueReplyFunc(
+                    analytic,
+                    repliedMessageMap,
+                    result,
+                    seqId
+                );
             }
         }
         // else if (actionType === AnalyticActionTypes.link_open) {
@@ -1248,10 +1273,7 @@ export const updateAutoDraftStatusToSent = functionWrapper(
     _updateAutoDraftStatusToSent
 );
 
-async function _getBouncedAnalytics(
-    { accountId },
-    { txid, logg, funcName }
-) {
+async function _getBouncedAnalytics({ accountId }, { txid, logg, funcName }) {
     logg.info(`started`);
 
     let bouncedAnalytics = await VisitorAnalytics.find({
@@ -1277,4 +1299,3 @@ export const getBouncedAnalytics = functionWrapper(
     "getBouncedAnalytics",
     _getBouncedAnalytics
 );
-
