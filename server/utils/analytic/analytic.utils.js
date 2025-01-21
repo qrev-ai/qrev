@@ -351,7 +351,12 @@ async function _getSequenceProspectAnalytics(
                 analytic.analytic_metadata.message_status;
 
             let actionStr = "";
-            if (actionType === AnalyticActionTypes.campaign_message_send) {
+            if (
+                [
+                    AnalyticActionTypes.campaign_message_send,
+                    AnalyticActionTypes.campaign_linkedin_connect_send,
+                ].includes(actionType)
+            ) {
                 if (messageStatus === "skipped") {
                     actionStr = "sent_skipped";
                 } else {
@@ -362,13 +367,23 @@ async function _getSequenceProspectAnalytics(
             ) {
                 actionStr = "opened";
             } else if (
-                actionType === AnalyticActionTypes.campaign_message_reply
+                [
+                    AnalyticActionTypes.campaign_message_reply,
+                    AnalyticActionTypes.campaign_linkedin_connect_reply,
+                ].includes(actionType)
             ) {
                 if (
                     analytic.analytic_metadata &&
                     analytic.analytic_metadata.has_bounced
                 ) {
                     actionStr = "sent_bounced";
+                } else if (
+                    actionType ===
+                        AnalyticActionTypes.campaign_linkedin_connect_reply &&
+                    analytic.analytic_metadata &&
+                    analytic.analytic_metadata.type_of_reply === "self_reply"
+                ) {
+                    // do not count as replied
                 } else {
                     let spmsId = analytic.sequence_prospect_message;
                     if (!repliedMessageMap[spmsId]) {
@@ -376,6 +391,16 @@ async function _getSequenceProspectAnalytics(
                         repliedMessageMap[spmsId] = true;
                     }
                 }
+            } else if (
+                actionType ===
+                AnalyticActionTypes.campaign_linkedin_connect_accepted
+            ) {
+                actionStr = "accepted";
+            } else if (
+                actionType ===
+                AnalyticActionTypes.campaign_linkedin_connect_rejected
+            ) {
+                actionStr = "rejected";
             }
 
             if (actionStr) {

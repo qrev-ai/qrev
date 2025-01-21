@@ -2835,6 +2835,10 @@ async function _getProspectActivityTimeline(
             str = `${messageType} opened at ${dateTimeStr}`;
         } else if (actionType === "replied") {
             str = `${messageType} replied at ${dateTimeStr}`;
+        } else if (actionType === "accepted") {
+            str = `LinkedIn connection accepted at ${dateTimeStr}`;
+        } else if (actionType === "rejected") {
+            str = `LinkedIn connection rejected at ${dateTimeStr}`;
         }
 
         result.push(str);
