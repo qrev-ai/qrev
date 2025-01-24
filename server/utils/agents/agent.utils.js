@@ -336,11 +336,6 @@ async function _executeAgent(
 
     agentId = agentId || agentDoc._id;
 
-    let listArtifactId = agentDoc.execution_result_list_id;
-    if (!listArtifactId) {
-        throw new CustomError(`List artifact not found`, fileName, funcName);
-    }
-
     let agentStatus = agentDoc.status;
     if (agentStatus === "running: prospecting") {
         throw new CustomError(`Agent is already running`, fileName, funcName);
@@ -374,7 +369,6 @@ async function _executeAgent(
         query: agentDoc.description || agentDoc.name || "",
         user_timezone: userTimezone,
         async_url: asyncUrl,
-        list_artifact_id: listArtifactId,
         user_id: userId,
         account_id: accountId,
     };
