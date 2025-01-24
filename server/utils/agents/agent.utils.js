@@ -377,7 +377,7 @@ async function _executeAgent(
     }
 
     let asyncUrl =
-        "/api/agent/execution_update_async?&secretKey=" +
+        "/api/agent/execution_update_async?secretKey=" +
         aiServerToken +
         "&agent_id=" +
         agentId;
