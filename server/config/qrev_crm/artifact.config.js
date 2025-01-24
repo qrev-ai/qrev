@@ -76,8 +76,6 @@ const LIST_PROPERTIES = {
     description: { type: "string" },
 
     // List Properties
-    type: { type: "string", enum: ["static", "dynamic"] },
-    // criteria: { type: "object" }, // For dynamic lists
     content_type: { type: "string", enum: ["contact", "company", "mixed"] },
 
     // Metadata
@@ -85,11 +83,6 @@ const LIST_PROPERTIES = {
 
     // Access Control
     owner: { type: "string" },
-    // shared_with: { type: "array" },
-
-    // Status
-    is_active: { type: "boolean", default: true },
-    visibility: { type: "string", enum: ["private", "team", "public"] },
 };
 
 export const SUPPORTED_ARTIFACT_TYPES = {

@@ -401,6 +401,8 @@ async function _executeAgent(
         user_timezone: userTimezone,
         async_url: asyncUrl,
         list_artifact_id: listArtifactId,
+        user_id: userId,
+        account_id: accountId,
     };
 
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);

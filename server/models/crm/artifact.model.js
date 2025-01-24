@@ -4,7 +4,8 @@ const Schema = mongoose.Schema;
 
 const ArtifactSchema = new Schema({
     _id: String,
-
+    account: { type: Schema.Types.ObjectId, ref: "account" },
+    owner: { type: Schema.Types.ObjectId, ref: "User" },
     type: {
         type: String,
         required: true,
