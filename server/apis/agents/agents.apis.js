@@ -59,6 +59,14 @@ export async function createAgentApi(req, res, next) {
         throw new CustomError(`Error creating agent`, fileName, funcName);
     }
 
+    let [execResp, execErr] = await AgentUtils.executeAgent(
+        { accountId, userId, agentId: agent._id, agentDoc: agent },
+        { txid }
+    );
+    if (execErr) {
+        throw execErr;
+    }
+
     res.status(200).json({
         success: true,
         message: "Agent created successfully",
@@ -377,7 +385,6 @@ export async function archiveAgentApi(req, res, next) {
     });
 }
 
-
 export async function pauseAgentApi(req, res, next) {
     const txid = req.id;
     const funcName = "pauseAgentApi";
@@ -419,7 +426,6 @@ export async function pauseAgentApi(req, res, next) {
         message: "Agent paused successfully",
     });
 }
-
 
 export async function resumeAgentApi(req, res, next) {
     const txid = req.id;

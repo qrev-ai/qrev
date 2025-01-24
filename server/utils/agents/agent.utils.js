@@ -44,7 +44,7 @@ async function _createAgent(
         name,
         description,
         type,
-        status: "running: prospecting",
+        status: "created",
     };
 
     let agentDoc = await Agent.create(agentObj);
@@ -258,10 +258,10 @@ async function _archiveAgent(
 
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
-        { 
-            is_archived: true, 
-            status: 'archived',
-            updated_on: Date.now() 
+        {
+            is_archived: true,
+            status: "archived",
+            updated_on: Date.now(),
         },
         { new: true }
     );
@@ -293,9 +293,9 @@ async function _pauseAgent(
 
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
-        { 
-            status: 'paused',
-            updated_on: Date.now() 
+        {
+            status: "paused",
+            updated_on: Date.now(),
         },
         { new: true }
     );
@@ -309,11 +309,7 @@ async function _pauseAgent(
     return [agentDoc, null];
 }
 
-export const pauseAgent = functionWrapper(
-    fileName,
-    "pauseAgent",
-    _pauseAgent
-);
+export const pauseAgent = functionWrapper(fileName, "pauseAgent", _pauseAgent);
 
 async function _resumeAgent(
     { accountId, userId, agentId },
@@ -326,9 +322,9 @@ async function _resumeAgent(
 
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
-        { 
-            status: 'running: prospecting',
-            updated_on: Date.now() 
+        {
+            status: "running: prospecting",
+            updated_on: Date.now(),
         },
         { new: true }
     );
@@ -346,4 +342,76 @@ export const resumeAgent = functionWrapper(
     fileName,
     "resumeAgent",
     _resumeAgent
+);
+
+async function _executeAgent(
+    { accountId, userId, agentId, agentDoc, userTimezone },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    if (!agentDoc && agentId) {
+        agentDoc = await Agent.findOne({ _id: agentId, account: accountId });
+    }
+
+    if (!agentDoc) {
+        throw new CustomError(`Agent not found`, fileName, funcName);
+    }
+
+    agentId = agentId || agentDoc._id;
+
+    let agentStatus = agentDoc.status;
+    if (agentStatus === "running: prospecting") {
+        throw new CustomError(`Agent is already running`, fileName, funcName);
+    }
+
+    let aiServerUrl = process.env.AI_BOT_SERVER_URL;
+    if (!aiServerUrl) {
+        throw new CustomError(`AI server URL not found`, fileName, funcName);
+    }
+
+    aiServerUrl = aiServerUrl + "/flaskapi/research";
+    let aiServerToken = process.env.AI_BOT_SERVER_TOKEN;
+    if (!aiServerToken) {
+        throw new CustomError(`AI server token not found`, fileName, funcName);
+    }
+
+    let asyncUrl =
+        "/api/agent/execution_update_async?&secretKey=" +
+        aiServerToken +
+        "&agent_id=" +
+        agentId;
+    if (process.env.ENVIRONMENT_TYPE === "dev") {
+        asyncUrl = "http://localhost:8080" + asyncUrl;
+    } else {
+        asyncUrl = process.env.SERVER_URL_PATH + asyncUrl;
+    }
+
+    let aiServerBody = {
+        secret_key: aiServerToken,
+        agent_id: agentId,
+        query: agentDoc.description,
+        user_timezone: userTimezone,
+        async_url: asyncUrl,
+    };
+
+    logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
+    let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
+    logg.info(`aiServerResp: ${JSON.stringify(aiServerResp)}`);
+
+    // update agent status to running: prospecting
+    let statusUpdateResp = await Agent.updateOne(
+        { _id: agentId, account: accountId },
+        { status: "running: prospecting", updated_on: Date.now() }
+    );
+    logg.info(`statusUpdateResp: ${JSON.stringify(statusUpdateResp)}`);
+
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const executeAgent = functionWrapper(
+    fileName,
+    "executeAgent",
+    _executeAgent
 );
