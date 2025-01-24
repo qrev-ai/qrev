@@ -10,6 +10,7 @@ import {
     getAnalyzedProspectsCollection,
     getProspectsCollection,
 } from "../../models/agents/analyzed.prospects.model.js";
+import * as ArtifactUtils from "../crm/artifact.utils.js";
 
 const fileName = "Agent Utils";
 
@@ -47,7 +48,8 @@ async function _createAgent(
         status: "created",
     };
 
-    let agentDoc = await Agent.create(agentObj);
+    let agentDocResp = await Agent.insertMany([agentObj]);
+    let agentDoc = agentDocResp[0];
     logg.info(`agentDoc created: ${JSON.stringify(agentDoc)}`);
 
     logg.info(`ended`);
@@ -360,6 +362,11 @@ async function _executeAgent(
 
     agentId = agentId || agentDoc._id;
 
+    let listArtifactId = agentDoc.execution_result_list_id;
+    if (!listArtifactId) {
+        throw new CustomError(`List artifact not found`, fileName, funcName);
+    }
+
     let agentStatus = agentDoc.status;
     if (agentStatus === "running: prospecting") {
         throw new CustomError(`Agent is already running`, fileName, funcName);
@@ -393,6 +400,7 @@ async function _executeAgent(
         query: agentDoc.description || agentDoc.name || "",
         user_timezone: userTimezone,
         async_url: asyncUrl,
+        list_artifact_id: listArtifactId,
     };
 
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
@@ -414,4 +422,38 @@ export const executeAgent = functionWrapper(
     fileName,
     "executeAgent",
     _executeAgent
+);
+
+async function _updateExecutionStatus(
+    { agentId, status, artifactListId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!agentId) throw `agentId is invalid`;
+    if (!status) throw `status is invalid`;
+
+    const updateObj = {
+        status,
+        updated_on: new Date(),
+        execution_result_review_status: "not_seen",
+        execution_result_list_id: artifactListId,
+    };
+
+    let agentDoc = await Agent.findOneAndUpdate({ _id: agentId }, updateObj, {
+        new: true,
+    });
+
+    if (!agentDoc) {
+        throw new CustomError(`Agent not found`, fileName, funcName);
+    }
+
+    logg.info(`agent status updated: ${JSON.stringify(agentDoc)}`);
+    logg.info(`ended`);
+    return [true, null];
+}
+
+export const updateExecutionStatus = functionWrapper(
+    fileName,
+    "updateExecutionStatus",
+    _updateExecutionStatus
 );

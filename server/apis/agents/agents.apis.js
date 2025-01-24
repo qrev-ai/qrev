@@ -476,6 +476,39 @@ export async function executionUpdateAsyncApi(req, res, next) {
     logg.info(`started with body:` + JSON.stringify(req.body));
     logg.info(`started with query:` + JSON.stringify(req.query));
 
+    let { agent_id: agentId, secret_key: secretKey } = req.query;
+    if (!agentId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing agent_id from query`,
+            fileName,
+            funcName
+        );
+    }
+    if (secretKey !== process.env.AI_BOT_SERVER_TOKEN) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(`Invalid secret key`, fileName, funcName);
+    }
+
+    let { status, artifact_list_id: artifactListId } = req.body;
+    if (!status) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(`Missing status from body`, fileName, funcName);
+    }
+    if (!artifactListId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing artifact_list_id from body`,
+            fileName,
+            funcName
+        );
+    }
+
+    await AgentUtils.updateExecutionStatus(
+        { agentId, status, artifactListId },
+        { txid, sendErrorMsg: true }
+    );
+
     res.status(200).json({
         success: true,
         message: "Agent execution update async fetched successfully",
