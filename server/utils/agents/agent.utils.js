@@ -390,7 +390,7 @@ async function _executeAgent(
     let aiServerBody = {
         secret_key: aiServerToken,
         agent_id: agentId,
-        query: agentDoc.description,
+        query: agentDoc.description || agentDoc.name || "",
         user_timezone: userTimezone,
         async_url: asyncUrl,
     };
