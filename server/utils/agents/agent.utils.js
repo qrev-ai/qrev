@@ -1,3 +1,4 @@
+import axios from "axios";
 import { functionWrapper } from "../../std/wrappers.js";
 import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
