@@ -167,51 +167,6 @@ async function _listAgents({ accountId, userId }, { txid, logg, funcName }) {
 
 export const listAgents = functionWrapper(fileName, "listAgents", _listAgents);
 
-async function getAnalyzedProspects() {
-    const AnalyzedProspects = getAnalyzedProspectsCollection();
-    const Prospects = getProspectsCollection();
-
-    const analyzedProspects = await AnalyzedProspects.find({
-        score: { $gte: 0.9, $lte: 0.95 },
-    })
-        .limit(40)
-        .lean();
-
-    return analyzedProspects;
-}
-
-async function getMatchingProspects(upIds) {
-    const Prospects = getProspectsCollection();
-    return await Prospects.find({ up_id: { $in: upIds } }).lean();
-}
-
-function combineTextArray(textArray, field) {
-    return textArray
-        .map((item) => {
-            let text = item[field];
-            if (!text.endsWith(".")) {
-                text += ".";
-            }
-            return text + " ";
-        })
-        .join("")
-        .trim();
-}
-
-function createProspectObject(prospect, analyzedProspect) {
-    return {
-        first_name: prospect.first_name,
-        last_name: prospect.last_name,
-        email: prospect.business_email,
-        linkedin_url: prospect.linkedin_url,
-        insights: combineTextArray(analyzedProspect.reasoning, "reason"),
-        score: analyzedProspect.score * 100,
-        job_title: prospect.job_title,
-        company_name: prospect.company_name,
-        references: combineTextArray(analyzedProspect.reasoning, "source_text"),
-    };
-}
-
 async function _dailyProspectUpdates(
     { accountId, userId },
     { txid, logg, funcName }
@@ -220,24 +175,43 @@ async function _dailyProspectUpdates(
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
 
-    const analyzedProspects = await getAnalyzedProspects();
-    logg.info(`analyzedProspects fetched: ${analyzedProspects.length}`);
-    const upIds = analyzedProspects.map((p) => p.up_id);
-    const prospects = await getMatchingProspects(upIds);
+    const [pendingArtifacts, artifactError] =
+        await ArtifactUtils.getReviewPendingArtifacts(
+            { accountId },
+            { txid, logg, funcName }
+        );
 
-    const prospectMap = new Map(prospects.map((p) => [p.up_id, p]));
+    if (artifactError) {
+        throw new CustomError(
+            `Failed to get pending artifacts: ${artifactError}`,
+            fileName,
+            funcName
+        );
+    }
 
-    const result = analyzedProspects
-        .map((ap) => {
-            const prospect = prospectMap.get(ap.up_id);
-            if (!prospect || !prospect.linkedin_url) return null;
-            return createProspectObject(prospect, ap);
-        })
-        .filter(Boolean);
+    // Group artifacts by type and create headers
+    const groupedArtifacts = pendingArtifacts.reduce((acc, artifact) => {
+        const type = artifact.type;
+        if (!acc[type]) {
+            // Get supported fields for this type from config
+            const typeProperties = SUPPORTED_ARTIFACT_TYPES[type] || {};
 
-    // Sort the data by descending order of score
-    result.sort((a, b) => b.score - a.score);
+            acc[type] = {
+                type,
+                headers: typeProperties,
+                artifacts: [],
+            };
+        }
+        acc[type].artifacts.push(artifact);
+        return acc;
+    }, {});
 
+    // Convert to array format
+    const result = Object.values(groupedArtifacts);
+
+    if (pendingArtifacts.length <= 10) {
+        logg.info(`Grouped artifacts by type: ${JSON.stringify(result)}`);
+    }
     logg.info(`ended`);
     return [result, null];
 }

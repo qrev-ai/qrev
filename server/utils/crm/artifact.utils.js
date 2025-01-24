@@ -46,3 +46,29 @@ export const createListArtifact = functionWrapper(
     "createListArtifact",
     _createListArtifact
 );
+
+async function _getReviewPendingArtifacts(
+    { accountId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) {
+        throw new CustomError(`accountId is invalid`, fileName, funcName);
+    }
+
+    const pendingArtifacts = await Artifact.find({
+        account: accountId,
+        type: { $ne: "list" },
+        "properties.review_status": "pending",
+    }).sort({ created_on: 1 });
+
+    logg.info(`found ${pendingArtifacts.length} pending artifacts`);
+    logg.info(`ended`);
+    return [pendingArtifacts, null];
+}
+
+export const getReviewPendingArtifacts = functionWrapper(
+    fileName,
+    "getReviewPendingArtifacts",
+    _getReviewPendingArtifacts
+);
