@@ -468,3 +468,16 @@ export async function resumeAgentApi(req, res, next) {
         message: "Agent resumed successfully",
     });
 }
+
+export async function executionUpdateAsyncApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "executionUpdateAsyncApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    res.status(200).json({
+        success: true,
+        message: "Agent execution update async fetched successfully",
+    });
+}

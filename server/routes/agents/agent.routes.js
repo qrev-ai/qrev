@@ -20,4 +20,9 @@ router.post("/pause", apiWrapper(AgentsApis.pauseAgentApi));
 
 router.post("/resume", apiWrapper(AgentsApis.resumeAgentApi));
 
+router.post(
+    "/execution_update_async",
+    apiWrapper(AgentsApis.executionUpdateAsyncApi)
+);
+
 export default router;
