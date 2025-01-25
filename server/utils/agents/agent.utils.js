@@ -11,7 +11,8 @@ import {
     getAnalyzedProspectsCollection,
     getProspectsCollection,
 } from "../../models/agents/analyzed.prospects.model.js";
-import * as ArtifactUtils from "../crm/artifact.utils.js";
+import * as ArtifactConfig from "../../config/qrev_crm/artifact.config.js";
+import { AgentArtifact } from "../../models/agents/agent.artifact.model.js";
 
 const fileName = "Agent Utils";
 
@@ -176,26 +177,21 @@ async function _dailyProspectUpdates(
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
 
-    const [pendingArtifacts, artifactError] =
-        await ArtifactUtils.getReviewPendingArtifacts(
-            { accountId },
-            { txid, logg, funcName }
-        );
+    let agents = await Agent.find({ account: accountId }).select("_id").lean();
+    let agentIds = agents.map((agent) => agent._id);
 
-    if (artifactError) {
-        throw new CustomError(
-            `Failed to get pending artifacts: ${artifactError}`,
-            fileName,
-            funcName
-        );
-    }
+    let pendingArtifacts = await AgentArtifact.find({
+        agent: { $in: agentIds },
+        "review_status.status": "pending",
+    }).lean();
 
     // Group artifacts by type and create headers
     const groupedArtifacts = pendingArtifacts.reduce((acc, artifact) => {
         const type = artifact.type;
         if (!acc[type]) {
             // Get supported fields for this type from config
-            const typeProperties = SUPPORTED_ARTIFACT_TYPES[type] || {};
+            const typeProperties =
+                ArtifactConfig.SUPPORTED_ARTIFACT_TYPES[type] || {};
 
             acc[type] = {
                 type,
@@ -208,11 +204,12 @@ async function _dailyProspectUpdates(
     }, {});
 
     // Convert to array format
-    const result = Object.values(groupedArtifacts);
+    let result = Object.values(groupedArtifacts);
 
     if (pendingArtifacts.length <= 10) {
         logg.info(`Grouped artifacts by type: ${JSON.stringify(result)}`);
     }
+
     logg.info(`ended`);
     return [result, null];
 }
@@ -376,7 +373,7 @@ async function _executeAgent(
 
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
     let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
-    logg.info(`aiServerResp: ${JSON.stringify(aiServerResp)}`);
+    logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
 
     // update agent status to running: prospecting
     let statusUpdateResp = await Agent.updateOne(
@@ -396,7 +393,7 @@ export const executeAgent = functionWrapper(
 );
 
 async function _updateExecutionStatus(
-    { agentId, status, artifactListId },
+    { agentId, status },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -407,7 +404,6 @@ async function _updateExecutionStatus(
         status,
         updated_on: new Date(),
         execution_result_review_status: "not_seen",
-        execution_result_list_id: artifactListId,
     };
 
     let agentDoc = await Agent.findOneAndUpdate({ _id: agentId }, updateObj, {

@@ -16,7 +16,6 @@ const AgentSchema = new Schema({
     updated_on: { type: Date, default: Date.now },
     is_archived: { type: Boolean, default: false },
 
-    execution_result_list_id: { type: String, ref: "artifact" },
     execution_result_review_status: {
         type: String,
         enum: ["seen", "not_seen"],
