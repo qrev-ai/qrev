@@ -482,7 +482,13 @@ export async function executionUpdateAsyncApi(req, res, next) {
         throw new CustomError(`Invalid secret key`, fileName, funcName);
     }
 
-    let { status, agent_id: agentId, message, progress } = req.body;
+    let {
+        status,
+        agent_id: agentId,
+        message,
+        progress,
+        artifact_type: artifactType,
+    } = req.body;
     if (!status) {
         logg.info(`ended unsuccessfully`);
         throw new CustomError(`Missing status from body`, fileName, funcName);
@@ -493,7 +499,7 @@ export async function executionUpdateAsyncApi(req, res, next) {
     }
 
     await AgentUtils.updateExecutionStatus(
-        { agentId, status, message, progress },
+        { agentId, status, message, progress, artifactType },
         { txid, sendErrorMsg: true }
     );
 

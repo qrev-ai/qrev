@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { SUPPORTED_ARTIFACT_TYPES_ARRAY } from "../../config/qrev_crm/artifact.config";
 
 const Schema = mongoose.Schema;
 
@@ -36,6 +37,7 @@ const AgentSchema = new Schema({
             added_on: { type: Date, default: Date.now },
         },
     ],
+    artifact_type: { type: String, enum: SUPPORTED_ARTIFACT_TYPES_ARRAY },
 });
 
 export const Agent = mongoose.model("agent", AgentSchema, "agent");

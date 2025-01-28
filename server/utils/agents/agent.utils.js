@@ -534,6 +534,7 @@ async function _executeAgent(
     };
 
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
+
     let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
     logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
 
@@ -564,7 +565,7 @@ export const executeAgent = functionWrapper(
 );
 
 async function _updateExecutionStatus(
-    { agentId, status, message, progress },
+    { agentId, status, message, progress, artifactType },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -581,6 +582,10 @@ async function _updateExecutionStatus(
     }
     if (progress) {
         statusUpdate.progress = progress;
+    }
+
+    if (artifactType) {
+        statusUpdate.artifact_type = artifactType;
     }
 
     let agentDoc = await Agent.findOneAndUpdate(
