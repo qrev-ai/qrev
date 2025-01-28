@@ -249,7 +249,7 @@ export async function listAgentsApi(req, res, next) {
     }
 
     let [agents, agentsErr] = await AgentUtils.listAgents(
-        { accountId, userId },
+        { accountId, userId, getStatusInfo: true },
         { txid }
     );
     if (agentsErr) {
@@ -482,7 +482,7 @@ export async function executionUpdateAsyncApi(req, res, next) {
         throw new CustomError(`Invalid secret key`, fileName, funcName);
     }
 
-    let { status, agent_id: agentId } = req.body;
+    let { status, agent_id: agentId, message, progress } = req.body;
     if (!status) {
         logg.info(`ended unsuccessfully`);
         throw new CustomError(`Missing status from body`, fileName, funcName);
@@ -493,7 +493,7 @@ export async function executionUpdateAsyncApi(req, res, next) {
     }
 
     await AgentUtils.updateExecutionStatus(
-        { agentId, status },
+        { agentId, status, message, progress },
         { txid, sendErrorMsg: true }
     );
 

@@ -22,6 +22,12 @@ const AgentSchema = new Schema({
     },
 
     status: { type: String, required: true },
+    message: { type: String },
+    /*
+     * this is the progress of the agent in percentage
+     * ranges from 0 to 100
+     */
+    progress: { type: Number },
 });
 
 export const Agent = mongoose.model("agent", AgentSchema, "agent");

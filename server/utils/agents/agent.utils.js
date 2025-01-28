@@ -74,7 +74,10 @@ async function _getAgent(
     if (!userId) throw `userId is invalid`;
     if (!agentId) throw `agentId is invalid`;
 
-    let agentDoc = await Agent.findOne({ _id: agentId, account: accountId });
+    let agentDoc = await Agent.findOne({
+        _id: agentId,
+        account: accountId,
+    }).lean();
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
@@ -155,13 +158,36 @@ export const deleteAgent = functionWrapper(
 );
 
 // List all agents for an account
-async function _listAgents({ accountId, userId }, { txid, logg, funcName }) {
+async function _listAgents(
+    { accountId, userId, getStatusInfo = false },
+    { txid, logg, funcName }
+) {
     logg.info(`started`);
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
 
-    let agents = await Agent.find({ account: accountId });
+    let agents = await Agent.find({ account: accountId }).lean();
     logg.info(`agents fetched: ${agents.length}`);
+
+    if (getStatusInfo) {
+        logg.info(`getStatusInfo is true. so getting complete status`);
+        agents = agents.map((agent) => {
+            let status = agent.status;
+            let message = agent.message;
+            let progress = agent.progress;
+            if (message && status !== "completed") {
+                status = status + ": " + message;
+            }
+            if (progress && status !== "completed") {
+                status = status + " (" + progress + "%)";
+            }
+            return { ...agent, status };
+        });
+    }
+
+    if (agents.length <= 10) {
+        logg.info(`agents: ${JSON.stringify(agents)}`);
+    }
 
     logg.info(`ended`);
     return [agents, null];
@@ -209,6 +235,118 @@ async function _dailyProspectUpdates(
     if (pendingArtifacts.length <= 10) {
         logg.info(`Grouped artifacts by type: ${JSON.stringify(result)}`);
     }
+
+    // result = [
+    //     {
+    //         type: "company",
+    //         headers: ArtifactConfig.SUPPORTED_ARTIFACT_TYPES["company"],
+    //         artifacts: [
+    //             {
+    //                 _id: "74bea328-15d2-4142-bffc-086775544c72",
+    //                 type: "company",
+    //                 parent_artifact_id: "835bf755-567f-49b9-b589-b5ddb1e8b9ad",
+    //                 analysis_result: {
+    //                     confidence_score: 10,
+    //                     analysis_reasons: [
+    //                         "No relevant information about west coast pharma companies working on large molecules",
+    //                         "Encountered a captcha/bot verification page",
+    //                         "Source is a startup networking platform with no direct pharmaceutical company details",
+    //                     ],
+    //                 },
+    //                 properties: {
+    //                     name: "F6S Network Limited",
+    //                     homepage_url: "https://www.f6s.com",
+    //                     primary_industry:
+    //                         "Technology Platform / Startup Network",
+    //                     employee_count: 10,
+    //                     review_status: "pending",
+    //                     review_status_updated_on: "2025-01-25T12:32:25.878Z",
+    //                 },
+    //                 created_on: "2025-01-25T12:32:25.878Z",
+    //                 updated_on: "2025-01-25T12:32:25.878Z",
+    //                 owner: "65269526e7e5e7f1d991e9f0",
+    //                 account: "652a31a0a7e0abdf1796b9bf",
+    //             },
+    //             {
+    //                 _id: "5f4e9aca-fa18-4615-92ba-56061d6a5ffc",
+    //                 type: "company",
+    //                 parent_artifact_id: "835bf755-567f-49b9-b589-b5ddb1e8b9ad",
+    //                 analysis_result: {
+    //                     confidence_score: 90,
+    //                     analysis_reasons: [
+    //                         "Amgen is a west coast pharma company specifically located in Thousand Oaks, California",
+    //                         "Confirmed as a large molecule biotechnology/pharmaceutical company",
+    //                         "Currently hiring over 25 roles across California, including scientific positions like principal scientist in biotransformation",
+    //                         "Headquarters focused on research and scientific roles",
+    //                         "Meets all key criteria for west coast large molecule pharma company",
+    //                     ],
+    //                 },
+    //                 properties: {
+    //                     name: "Amgen",
+    //                     homepage_url: "https://www.amgen.com/",
+    //                     primary_industry: "Biotechnology/Pharmaceuticals",
+    //                     review_status: "pending",
+    //                     review_status_updated_on: "2025-01-25T12:32:43.440Z",
+    //                 },
+    //                 created_on: "2025-01-25T12:32:43.440Z",
+    //                 updated_on: "2025-01-25T12:32:43.440Z",
+    //                 owner: "65269526e7e5e7f1d991e9f0",
+    //                 account: "652a31a0a7e0abdf1796b9bf",
+    //             },
+    //         ],
+    //     },
+    //     {
+    //         type: "contact",
+    //         headers: ArtifactConfig.SUPPORTED_ARTIFACT_TYPES["contact"],
+    //         artifacts: [
+    //             {
+    //                 _id: "5f4e9aca-fa18-4615-92ba-56061d6a5ffc",
+    //                 type: "contact",
+    //                 parent_artifact_id: "835bf755-567f-49b9-b589-b5ddb1e8b9ad",
+    //                 analysis_result: {
+    //                     confidence_score: 35,
+    //                     analysis_reasons: [
+    //                         "User has a valid email address",
+    //                         "User has a valid phone number",
+    //                         "User has a valid LinkedIn profile",
+    //                         "User has a valid Twitter profile",
+    //                     ],
+    //                 },
+    //                 properties: {
+    //                     // Basic Info
+    //                     first_name: "Test 1",
+    //                     last_name: "User 1",
+    //                     email: "test1@test.com",
+    //                     phone: "1234567890",
+
+    //                     // Professional Info
+    //                     job_title: "Software Engineer",
+    //                     department: "Engineering",
+
+    //                     // Social Media
+    //                     linkedin_url: "https://www.linkedin.com/in/test1",
+    //                     twitter_url: "https://www.twitter.com/test1",
+
+    //                     // Address
+    //                     street_address: "1234 Main St",
+    //                     city: "San Francisco",
+    //                     state: "CA",
+    //                     postal_code: "94101",
+    //                     country: "USA",
+
+    //                     // Other
+    //                     lead_source: "LinkedIn",
+    //                     lead_status: "new",
+    //                     lifecycle_stage: "subscriber",
+    //                 },
+    //                 created_on: "2025-01-25T12:32:43.440Z",
+    //                 updated_on: "2025-01-25T12:32:43.440Z",
+    //                 owner: "65269526e7e5e7f1d991e9f0",
+    //                 account: "652a31a0a7e0abdf1796b9bf",
+    //             },
+    //         ],
+    //     },
+    // ];
 
     logg.info(`ended`);
     return [result, null];
@@ -297,7 +435,7 @@ async function _resumeAgent(
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
         {
-            status: "running: prospecting",
+            status: "running",
             updated_on: Date.now(),
         },
         { new: true }
@@ -335,7 +473,7 @@ async function _executeAgent(
     agentId = agentId || agentDoc._id;
 
     let agentStatus = agentDoc.status;
-    if (agentStatus === "running: prospecting") {
+    if (agentStatus === "running") {
         throw new CustomError(`Agent is already running`, fileName, funcName);
     }
 
@@ -375,10 +513,10 @@ async function _executeAgent(
     let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
     logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
 
-    // update agent status to running: prospecting
+    // update agent status to
     let statusUpdateResp = await Agent.updateOne(
         { _id: agentId, account: accountId },
-        { status: "running: prospecting", updated_on: Date.now() }
+        { status: "running", updated_on: Date.now() }
     );
     logg.info(`statusUpdateResp: ${JSON.stringify(statusUpdateResp)}`);
 
@@ -393,18 +531,28 @@ export const executeAgent = functionWrapper(
 );
 
 async function _updateExecutionStatus(
-    { agentId, status },
+    { agentId, status, message, progress },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
     if (!agentId) throw `agentId is invalid`;
     if (!status) throw `status is invalid`;
 
-    const updateObj = {
+    let updateObj = {
         status,
         updated_on: new Date(),
         execution_result_review_status: "not_seen",
     };
+    if (message) {
+        updateObj.message = message;
+    }
+    if (progress) {
+        updateObj.progress = progress;
+    }
+
+    if (status === "completed") {
+        updateObj.message = "";
+    }
 
     let agentDoc = await Agent.findOneAndUpdate({ _id: agentId }, updateObj, {
         new: true,
