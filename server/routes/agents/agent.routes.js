@@ -25,4 +25,6 @@ router.post(
     apiWrapper(AgentsApis.executionUpdateAsyncApi)
 );
 
+router.get("/status_updates", apiWrapper(AgentsApis.getAgentStatusUpdatesApi));
+
 export default router;

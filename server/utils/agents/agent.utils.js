@@ -597,3 +597,34 @@ export const updateExecutionStatus = functionWrapper(
     "updateExecutionStatus",
     _updateExecutionStatus
 );
+
+async function _getAgentStatusUpdates(
+    { accountId, agentId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!agentId) throw `agentId is invalid`;
+
+    let agentDoc = await Agent.findOne({
+        _id: agentId,
+        account: accountId,
+    })
+        .select("status_updates")
+        .lean();
+
+    if (!agentDoc) {
+        throw new CustomError(`Agent not found`, fileName, funcName);
+    }
+
+    let result = agentDoc.status_updates || [];
+    logg.info(`status updates fetched: ${JSON.stringify(result)}`);
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getAgentStatusUpdates = functionWrapper(
+    fileName,
+    "getAgentStatusUpdates",
+    _getAgentStatusUpdates
+);

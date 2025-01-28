@@ -502,3 +502,59 @@ export async function executionUpdateAsyncApi(req, res, next) {
         message: "Agent execution update async fetched successfully",
     });
 }
+
+export async function getAgentStatusUpdatesApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getAgentStatusUpdatesApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId, agent_id: agentId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+    if (!agentId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing agent_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [statusUpdates, statusUpdatesErr] =
+        await AgentUtils.getAgentStatusUpdates(
+            { accountId, userId, agentId },
+            { txid }
+        );
+    if (statusUpdatesErr) {
+        logg.info(`statusUpdatesErr:` + statusUpdatesErr);
+        throw new CustomError(
+            `Error getting agent status updates`,
+            fileName,
+            funcName
+        );
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent status updates fetched successfully",
+        result: statusUpdates,
+    });
+}
