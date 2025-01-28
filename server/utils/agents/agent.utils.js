@@ -541,12 +541,12 @@ async function _executeAgent(
     let updatedAgentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
         {
-            status_updates: [
-                {
+            $push: {
+                status_updates: {
                     status: "running",
                     added_on: new Date(),
                 },
-            ],
+            },
             updated_on: Date.now(),
         },
         { new: true }
