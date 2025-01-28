@@ -538,14 +538,15 @@ async function _executeAgent(
     logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
 
     // update agent status to
-    let statusUpdateResp = await Agent.updateOne(
+    let updatedAgentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
-        { status: "running", updated_on: Date.now() }
+        { status: "running", updated_on: Date.now() },
+        { new: true }
     );
-    logg.info(`statusUpdateResp: ${JSON.stringify(statusUpdateResp)}`);
+    logg.info(`updatedAgentDoc: ${JSON.stringify(updatedAgentDoc)}`);
 
     logg.info(`ended`);
-    return [true, null];
+    return [updatedAgentDoc, null];
 }
 
 export const executeAgent = functionWrapper(

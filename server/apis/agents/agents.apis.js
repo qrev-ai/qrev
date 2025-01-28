@@ -59,7 +59,7 @@ export async function createAgentApi(req, res, next) {
         throw new CustomError(`Error creating agent`, fileName, funcName);
     }
 
-    let [execResp, execErr] = await AgentUtils.executeAgent(
+    let [updatedAgentDoc, execErr] = await AgentUtils.executeAgent(
         { accountId, userId, agentId: agent._id, agentDoc: agent },
         { txid }
     );
@@ -70,7 +70,7 @@ export async function createAgentApi(req, res, next) {
     res.status(200).json({
         success: true,
         message: "Agent created successfully",
-        result: agent,
+        result: updatedAgentDoc,
     });
 }
 
