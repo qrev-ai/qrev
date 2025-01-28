@@ -599,7 +599,7 @@ async function _updateExecutionStatus(
 
     // Broadcast status update via WebSocket
     AgentStatusHandler.broadcastAgentStatus(
-        { agentId, statusUpdate },
+        { agentId, statusUpdates: agentDoc.status_updates },
         { txid }
     );
 

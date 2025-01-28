@@ -1,4 +1,5 @@
 import { logger } from "../../logger.js";
+import { Agent } from "../../models/agents/agent.model.js";
 
 const fileName = "Agent Status Handler";
 
@@ -23,6 +24,25 @@ export function handleAgentStatusConnection(ws, req) {
 
     logger.info(`${fileName}: Client connected for agent ${agentId}`);
 
+    // Send initial status updates
+    Agent.findOne({ _id: agentId })
+        .select("status_updates")
+        .lean()
+        .then((agentDoc) => {
+            if (agentDoc && agentDoc.status_updates) {
+                const message = JSON.stringify({
+                    type: "status-update",
+                    data: agentDoc.status_updates,
+                });
+                ws.send(message);
+            }
+        })
+        .catch((error) => {
+            logger.error(
+                `${fileName}: Error fetching initial status for agent ${agentId}: ${error}`
+            );
+        });
+
     // Handle client disconnect
     ws.on("close", () => {
         agentConnections.get(agentId)?.delete(ws);
@@ -41,7 +61,7 @@ export function handleAgentStatusConnection(ws, req) {
 }
 
 // Broadcast status update to all connected clients for a specific agent
-export function broadcastAgentStatus({ agentId, statusUpdate }, { txid }) {
+export function broadcastAgentStatus({ agentId, statusUpdates }, { txid }) {
     const funcName = "broadcastAgentStatus";
     const logg = logger.child({ txid, funcName });
     logg.info(`started`);
@@ -51,11 +71,12 @@ export function broadcastAgentStatus({ agentId, statusUpdate }, { txid }) {
 
         const message = JSON.stringify({
             type: "status-update",
-            data: statusUpdate,
+            data: statusUpdates,
         });
 
         connections.forEach((client) => {
             if (client.readyState === client.OPEN) {
+                logg.info(`sending message to client with id: ${client.id}`);
                 client.send(message);
             }
         });
