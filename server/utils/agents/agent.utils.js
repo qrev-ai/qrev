@@ -47,7 +47,12 @@ async function _createAgent(
         name,
         description,
         type,
-        status: "created",
+        status_updates: [
+            {
+                status: "created",
+                added_on: new Date(),
+            },
+        ],
     };
 
     let agentDocResp = await Agent.insertMany([agentObj]);
@@ -172,9 +177,12 @@ async function _listAgents(
     if (getStatusInfo) {
         logg.info(`getStatusInfo is true. so getting complete status`);
         agents = agents.map((agent) => {
-            let status = agent.status;
-            let message = agent.message;
-            let progress = agent.progress;
+            const latestStatus =
+                agent.status_updates[agent.status_updates.length - 1] || {};
+            let status = latestStatus.status;
+            let message = latestStatus.message;
+            let progress = latestStatus.progress;
+
             if (message && status !== "completed") {
                 status = status + ": " + message;
             }
@@ -372,7 +380,12 @@ async function _archiveAgent(
         { _id: agentId, account: accountId },
         {
             is_archived: true,
-            status: "archived",
+            $push: {
+                status_updates: {
+                    status: "archived",
+                    added_on: new Date(),
+                },
+            },
             updated_on: Date.now(),
         },
         { new: true }
@@ -406,7 +419,12 @@ async function _pauseAgent(
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
         {
-            status: "paused",
+            $push: {
+                status_updates: {
+                    status: "paused",
+                    added_on: new Date(),
+                },
+            },
             updated_on: Date.now(),
         },
         { new: true }
@@ -435,7 +453,12 @@ async function _resumeAgent(
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
         {
-            status: "running",
+            $push: {
+                status_updates: {
+                    status: "running",
+                    added_on: new Date(),
+                },
+            },
             updated_on: Date.now(),
         },
         { new: true }
@@ -538,25 +561,27 @@ async function _updateExecutionStatus(
     if (!agentId) throw `agentId is invalid`;
     if (!status) throw `status is invalid`;
 
-    let updateObj = {
+    const statusUpdate = {
         status,
-        updated_on: new Date(),
-        execution_result_review_status: "not_seen",
+        added_on: new Date(),
     };
-    if (message) {
-        updateObj.message = message;
+
+    if (message && status !== "completed") {
+        statusUpdate.message = message;
     }
     if (progress) {
-        updateObj.progress = progress;
+        statusUpdate.progress = progress;
     }
 
-    if (status === "completed") {
-        updateObj.message = "";
-    }
-
-    let agentDoc = await Agent.findOneAndUpdate({ _id: agentId }, updateObj, {
-        new: true,
-    });
+    let agentDoc = await Agent.findOneAndUpdate(
+        { _id: agentId },
+        {
+            $push: { status_updates: statusUpdate },
+            updated_on: new Date(),
+            execution_result_review_status: "not_seen",
+        },
+        { new: true }
+    );
 
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);

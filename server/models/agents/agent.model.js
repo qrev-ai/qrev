@@ -21,13 +21,21 @@ const AgentSchema = new Schema({
         enum: ["seen", "not_seen"],
     },
 
-    status: { type: String, required: true },
-    message: { type: String },
     /*
-     * this is the progress of the agent in percentage
-     * ranges from 0 to 100
+     * Added on 28th Jan 2025
+     * this is the status updates of the agent
+     * it is an array of objects
+     * each object contains the status, message, progress, and added_on
+     * message and progress are optional
      */
-    progress: { type: Number },
+    status_updates: [
+        {
+            status: { type: String, required: true },
+            message: { type: String },
+            progress: { type: Number },
+            added_on: { type: Date, default: Date.now },
+        },
+    ],
 });
 
 export const Agent = mongoose.model("agent", AgentSchema, "agent");
