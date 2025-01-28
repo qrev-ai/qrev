@@ -221,22 +221,7 @@ async function _dailyProspectUpdates(
     }).lean();
 
     // Group artifacts by type and create headers
-    const groupedArtifacts = pendingArtifacts.reduce((acc, artifact) => {
-        const type = artifact.type;
-        if (!acc[type]) {
-            // Get supported fields for this type from config
-            const typeProperties =
-                ArtifactConfig.SUPPORTED_ARTIFACT_TYPES[type] || {};
-
-            acc[type] = {
-                type,
-                headers: typeProperties,
-                artifacts: [],
-            };
-        }
-        acc[type].artifacts.push(artifact);
-        return acc;
-    }, {});
+    const groupedArtifacts = groupArtifactsByType(pendingArtifacts);
 
     // Convert to array format
     let result = Object.values(groupedArtifacts);
@@ -638,8 +623,23 @@ async function _getAgentStatusUpdates(
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
 
-    let result = agentDoc.status_updates || [];
-    logg.info(`status updates fetched: ${JSON.stringify(result)}`);
+    let statusUpdates = agentDoc.status_updates || [];
+    logg.info(`status updates fetched: ${JSON.stringify(statusUpdates)}`);
+
+    let artifacts = await AgentArtifact.find({
+        agent: agentId,
+        account: accountId,
+    }).lean();
+
+    let groupedArtifacts = groupArtifactsByType(artifacts);
+    let artifactsInfo = groupedArtifacts[agentDoc.artifact_type];
+
+    let result = {
+        status_updates: statusUpdates,
+        artifacts_info: artifactsInfo,
+        artifact_type: agentDoc.artifact_type,
+    };
+
     logg.info(`ended`);
     return [result, null];
 }
@@ -649,3 +649,24 @@ export const getAgentStatusUpdates = functionWrapper(
     "getAgentStatusUpdates",
     _getAgentStatusUpdates
 );
+
+function groupArtifactsByType(artifacts) {
+    let result = artifacts.reduce((acc, artifact) => {
+        const type = artifact.type;
+        if (!acc[type]) {
+            // Get supported fields for this type from config
+            const typeProperties =
+                ArtifactConfig.SUPPORTED_ARTIFACT_TYPES[type] || {};
+
+            acc[type] = {
+                type,
+                headers: typeProperties,
+                artifacts: [],
+            };
+        }
+        acc[type].artifacts.push(artifact);
+        return acc;
+    }, {});
+
+    return result;
+}
