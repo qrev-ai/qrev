@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { SUPPORTED_ARTIFACT_TYPES_ARRAY } from "../../config/qrev_crm/artifact.config";
+import { SUPPORTED_ARTIFACT_TYPES_ARRAY } from "../../config/qrev_crm/artifact.config.js";
 
 const Schema = mongoose.Schema;
 
