@@ -13,6 +13,7 @@ import {
 } from "../../models/agents/analyzed.prospects.model.js";
 import * as ArtifactConfig from "../../config/qrev_crm/artifact.config.js";
 import { AgentArtifact } from "../../models/agents/agent.artifact.model.js";
+import * as AgentStatusHandler from "../../websocket/handlers/agent.status.handler.js";
 
 const fileName = "Agent Utils";
 
@@ -586,6 +587,12 @@ async function _updateExecutionStatus(
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
+
+    // Broadcast status update via WebSocket
+    AgentStatusHandler.broadcastAgentStatus(
+        { agentId, statusUpdate },
+        { txid }
+    );
 
     logg.info(`agent status updated: ${JSON.stringify(agentDoc)}`);
     logg.info(`ended`);

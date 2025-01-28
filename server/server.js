@@ -15,6 +15,8 @@ import { cronSetup } from "./cron.setup.js";
 import { awsSdkSetup } from "./aws.setup.js";
 import { setRoutes } from "./routes.js";
 import { setupOpenAi } from "./setup.openai.js";
+import { createServer } from "http";
+import { initializeWebSocket } from "./websocket/websocket.setup.js";
 
 dbConnect();
 export const QRevAnalyticsMongoDbClient = connectToQRevAnalyticsMongoDb();
@@ -46,7 +48,10 @@ app.all("*", invalidRouteHandler);
 app.use(errorHandler);
 
 const port = process.env.EXPRESS_HTTP_SERVER_PORT || 8080;
-app.listen(port, async (error) => {
+const server = createServer(app);
+initializeWebSocket(server);
+
+server.listen(port, async (error) => {
     if (!error) {
         logger.info(`App is running at port: ${port}`);
     }
