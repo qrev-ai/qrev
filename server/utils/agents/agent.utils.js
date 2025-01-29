@@ -520,8 +520,9 @@ async function _executeAgent(
 
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
 
-    let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
-    logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
+    // ! temporarily disabled
+    // let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
+    // logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
 
     // update agent status to
     let updatedAgentDoc = await Agent.findOneAndUpdate(
@@ -632,7 +633,9 @@ async function _getAgentStatusUpdates(
     }).lean();
 
     let groupedArtifacts = groupArtifactsByType(artifacts);
-    let artifactsInfo = groupedArtifacts[agentDoc.artifact_type];
+    logg.info(`groupedArtifacts: ${JSON.stringify(groupedArtifacts)}`);
+    logg.info(`agentDoc.artifact_type: ${agentDoc.artifact_type}`);
+    let artifactsInfo = groupedArtifacts[Object.keys(groupedArtifacts)[0]];
 
     let result = {
         status_updates: statusUpdates,
