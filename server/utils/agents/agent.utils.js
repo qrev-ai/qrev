@@ -569,19 +569,19 @@ async function _updateExecutionStatus(
         statusUpdate.progress = progress;
     }
 
+    let updateObj = {
+        $push: { status_updates: statusUpdate },
+        updated_on: new Date(),
+        execution_result_review_status: "not_seen",
+    };
+
     if (artifactType) {
-        statusUpdate.artifact_type = artifactType;
+        updateObj.artifact_type = artifactType;
     }
 
-    let agentDoc = await Agent.findOneAndUpdate(
-        { _id: agentId },
-        {
-            $push: { status_updates: statusUpdate },
-            updated_on: new Date(),
-            execution_result_review_status: "not_seen",
-        },
-        { new: true }
-    );
+    let agentDoc = await Agent.findOneAndUpdate({ _id: agentId }, updateObj, {
+        new: true,
+    });
 
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
