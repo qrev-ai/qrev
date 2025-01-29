@@ -520,9 +520,8 @@ async function _executeAgent(
 
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
 
-    // ! temporarily disabled
-    // let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
-    // logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
+    let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
+    logg.info(`aiServerResp: ${JSON.stringify(aiServerResp.data)}`);
 
     // update agent status to
     let updatedAgentDoc = await Agent.findOneAndUpdate(
