@@ -144,6 +144,13 @@ async function _deleteAgent(
     if (!userId) throw `userId is invalid`;
     if (!agentId) throw `agentId is invalid`;
 
+    // First delete any associated artifacts
+    const deletedArtifacts = await AgentArtifact.deleteMany({
+        agent: agentId,
+        account: accountId,
+    });
+    logg.info(`Deleted ${deletedArtifacts.deletedCount} associated artifacts`);
+
     let agentDoc = await Agent.findOneAndDelete({
         _id: agentId,
         account: accountId,
