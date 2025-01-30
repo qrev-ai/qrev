@@ -22,21 +22,6 @@ const AgentSchema = new Schema({
         enum: ["seen", "not_seen"],
     },
 
-    /*
-     * Added on 28th Jan 2025
-     * this is the status updates of the agent
-     * it is an array of objects
-     * each object contains the status, message, progress, and added_on
-     * message and progress are optional
-     */
-    status_updates: [
-        {
-            status: { type: String, required: true },
-            message: { type: String },
-            progress: { type: Number },
-            added_on: { type: Date, default: Date.now },
-        },
-    ],
     artifact_type: { type: String, enum: SUPPORTED_ARTIFACT_TYPES_ARRAY },
 });
 

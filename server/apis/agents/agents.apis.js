@@ -483,15 +483,37 @@ export async function executionUpdateAsyncApi(req, res, next) {
     }
 
     let {
-        status,
         agent_id: agentId,
+        status_id: statusId,
+        status_name: statusName,
+        status_state: statusState,
         message,
-        progress,
+        progress_percentage: progressPercentage,
         artifact_type: artifactType,
     } = req.body;
-    if (!status) {
+    if (!statusId) {
         logg.info(`ended unsuccessfully`);
-        throw new CustomError(`Missing status from body`, fileName, funcName);
+        throw new CustomError(
+            `Missing status_id from body`,
+            fileName,
+            funcName
+        );
+    }
+    if (!statusName) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing status_name from body`,
+            fileName,
+            funcName
+        );
+    }
+    if (!statusState) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing status_state from body`,
+            fileName,
+            funcName
+        );
     }
     if (!agentId) {
         logg.info(`ended unsuccessfully`);
@@ -499,7 +521,15 @@ export async function executionUpdateAsyncApi(req, res, next) {
     }
 
     await AgentUtils.updateExecutionStatus(
-        { agentId, status, message, progress, artifactType },
+        {
+            agentId,
+            statusId,
+            statusName,
+            statusState,
+            message,
+            progressPercentage,
+            artifactType,
+        },
         { txid, sendErrorMsg: true }
     );
 

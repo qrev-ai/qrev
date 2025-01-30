@@ -14,6 +14,7 @@ import {
 import * as ArtifactConfig from "../../config/qrev_crm/artifact.config.js";
 import { AgentArtifact } from "../../models/agents/agent.artifact.model.js";
 import * as AgentStatusHandler from "../../websocket/handlers/agent.status.handler.js";
+import { AgentStatus } from "../../models/agents/agent.status.model.js";
 
 const fileName = "Agent Utils";
 
@@ -48,16 +49,26 @@ async function _createAgent(
         name,
         description,
         type,
-        status_updates: [
-            {
-                status: "created",
-                added_on: new Date(),
-            },
-        ],
     };
 
     let agentDocResp = await Agent.insertMany([agentObj]);
     let agentDoc = agentDocResp[0];
+
+    // Create initial status
+    const statusId = uuidv4();
+    let statusDocResp = await AgentStatus.insertMany([
+        {
+            _id: statusId,
+            account: accountId,
+            agent: agentId,
+            name: "created",
+            state: "not_applicable",
+        },
+    ]);
+    let statusDoc = statusDocResp[0];
+    logg.info(`statusDoc created: ${JSON.stringify(statusDoc)}`);
+    agentDoc.status = statusDoc.name;
+
     logg.info(`agentDoc created: ${JSON.stringify(agentDoc)}`);
 
     logg.info(`ended`);
@@ -184,17 +195,32 @@ async function _listAgents(
 
     if (getStatusInfo) {
         logg.info(`getStatusInfo is true. so getting complete status`);
-        agents = agents.map((agent) => {
-            const latestStatus =
-                agent.status_updates[agent.status_updates.length - 1] || {};
-            let status = latestStatus.status;
-            let message = latestStatus.message;
-            let progress = latestStatus.progress;
+        const agentIds = agents.map((agent) => agent._id);
+        const statuses = await AgentStatus.find({
+            agent: { $in: agentIds },
+            account: accountId,
+            state: { $in: ["finished", "not_applicable"] },
+        })
+            .sort({ created_on: -1 })
+            .lean();
 
-            if (message && status !== "completed") {
+        const latestStatusByAgent = statuses.reduce((acc, status) => {
+            if (!acc[status.agent]) {
+                acc[status.agent] = status;
+            }
+            return acc;
+        }, {});
+
+        agents = agents.map((agent) => {
+            const latestStatus = latestStatusByAgent[agent._id];
+            let status = latestStatus?.name || "";
+            let message = latestStatus?.message || "";
+            let progress = latestStatus?.progress_percentage;
+
+            if (message) {
                 status = status + ": " + message;
             }
-            if (progress && status !== "completed") {
+            if (progress) {
                 status = status + " (" + progress + "%)";
             }
             return { ...agent, status };
@@ -373,12 +399,6 @@ async function _archiveAgent(
         { _id: agentId, account: accountId },
         {
             is_archived: true,
-            $push: {
-                status_updates: {
-                    status: "archived",
-                    added_on: new Date(),
-                },
-            },
             updated_on: Date.now(),
         },
         { new: true }
@@ -387,6 +407,20 @@ async function _archiveAgent(
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
+
+    // Create archived status
+    const statusId = uuidv4();
+    let statusDocResp = await AgentStatus.insertMany([
+        {
+            _id: statusId,
+            account: accountId,
+            agent: agentId,
+            name: "archived",
+            state: "not_applicable",
+        },
+    ]);
+    let statusDoc = statusDocResp[0];
+    logg.info(`archived statusDoc created: ${JSON.stringify(statusDoc)}`);
 
     logg.info(`agentDoc archived: ${JSON.stringify(agentDoc)}`);
     logg.info(`ended`);
@@ -412,12 +446,6 @@ async function _pauseAgent(
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
         {
-            $push: {
-                status_updates: {
-                    status: "paused",
-                    added_on: new Date(),
-                },
-            },
             updated_on: Date.now(),
         },
         { new: true }
@@ -427,7 +455,20 @@ async function _pauseAgent(
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
 
-    logg.info(`agentDoc paused: ${JSON.stringify(agentDoc)}`);
+    // Create paused status
+    const statusId = uuidv4();
+    let statusDocResp = await AgentStatus.insertMany([
+        {
+            _id: statusId,
+            account: accountId,
+            agent: agentId,
+            name: "paused",
+            state: "not_applicable",
+        },
+    ]);
+    let statusDoc = statusDocResp[0];
+    logg.info(`paused statusDoc created: ${JSON.stringify(statusDoc)}`);
+
     logg.info(`ended`);
     return [agentDoc, null];
 }
@@ -446,12 +487,6 @@ async function _resumeAgent(
     let agentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
         {
-            $push: {
-                status_updates: {
-                    status: "running",
-                    added_on: new Date(),
-                },
-            },
             updated_on: Date.now(),
         },
         { new: true }
@@ -461,7 +496,20 @@ async function _resumeAgent(
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
 
-    logg.info(`agentDoc resumed: ${JSON.stringify(agentDoc)}`);
+    // Create running status
+    const statusId = uuidv4();
+    let statusDocResp = await AgentStatus.insertMany([
+        {
+            _id: statusId,
+            account: accountId,
+            agent: agentId,
+            name: "running",
+            state: "not_applicable",
+        },
+    ]);
+    let statusDoc = statusDocResp[0];
+    logg.info(`running statusDoc created: ${JSON.stringify(statusDoc)}`);
+
     logg.info(`ended`);
     return [agentDoc, null];
 }
@@ -487,11 +535,6 @@ async function _executeAgent(
     }
 
     agentId = agentId || agentDoc._id;
-
-    let agentStatus = agentDoc.status;
-    if (agentStatus === "running") {
-        throw new CustomError(`Agent is already running`, fileName, funcName);
-    }
 
     let aiServerUrl = process.env.AI_BOT_SERVER_URL;
     if (!aiServerUrl) {
@@ -534,17 +577,27 @@ async function _executeAgent(
     let updatedAgentDoc = await Agent.findOneAndUpdate(
         { _id: agentId, account: accountId },
         {
-            $push: {
-                status_updates: {
-                    status: "running",
-                    added_on: new Date(),
-                },
-            },
             updated_on: Date.now(),
         },
         { new: true }
     );
     logg.info(`updatedAgentDoc: ${JSON.stringify(updatedAgentDoc)}`);
+
+    // Create running status
+    const statusId = uuidv4();
+    let statusDocResp = await AgentStatus.insertMany([
+        {
+            _id: statusId,
+            account: accountId,
+            agent: agentId,
+            name: "running",
+            state: "not_applicable",
+        },
+    ]);
+    let statusDoc = statusDocResp[0];
+    logg.info(`running statusDoc created: ${JSON.stringify(statusDoc)}`);
+
+    updatedAgentDoc.status = statusDoc.name;
 
     logg.info(`ended`);
     return [updatedAgentDoc, null];
@@ -557,50 +610,114 @@ export const executeAgent = functionWrapper(
 );
 
 async function _updateExecutionStatus(
-    { agentId, status, message, progress, artifactType },
+    {
+        agentId,
+        statusId,
+        statusName,
+        statusState,
+        message,
+        progressPercentage,
+        artifactType,
+    },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
-    if (!agentId) throw `agentId is invalid`;
-    if (!status) throw `status is invalid`;
-
-    const statusUpdate = {
-        status,
-        added_on: new Date(),
-    };
-
-    if (message && status !== "completed") {
-        statusUpdate.message = message;
+    if (!agentId) {
+        throw new CustomError(`agentId is invalid`, fileName, funcName);
     }
-    if (progress) {
-        statusUpdate.progress = progress;
+    if (!statusId) {
+        throw new CustomError(`statusId is invalid`, fileName, funcName);
+    }
+    if (!statusName) {
+        throw new CustomError(`statusName is invalid`, fileName, funcName);
+    }
+    if (!statusState) {
+        throw new CustomError(`statusState is invalid`, fileName, funcName);
     }
 
-    let updateObj = {
-        $push: { status_updates: statusUpdate },
+    let statusDoc;
+    if (statusState === "started") {
+        // Create new status document
+        let createObj = {
+            _id: statusId,
+            account: accountId,
+            agent: agentId,
+            name: statusName,
+            state: statusState,
+        };
+        if (message) {
+            createObj.message = message;
+        }
+        if (progressPercentage) {
+            createObj.progress_percentage = progressPercentage;
+        }
+        let insertResp = await AgentStatus.insertMany([createObj]);
+        statusDoc = insertResp[0];
+    } else {
+        // Update existing status document
+        let updateObj = {
+            state: statusState,
+            updated_on: new Date(),
+        };
+
+        if (message) {
+            updateObj.message = message;
+        }
+        if (progressPercentage) {
+            updateObj.progress_percentage = progressPercentage;
+        }
+
+        statusDoc = await AgentStatus.findOneAndUpdate(
+            { _id: statusId, account: accountId },
+            updateObj,
+            { new: true }
+        );
+
+        if (!statusDoc) {
+            throw new CustomError(
+                `Status document not found`,
+                fileName,
+                funcName
+            );
+        }
+    }
+
+    logg.info(`agent status updated: ${JSON.stringify(statusDoc)}`);
+
+    // Update agent document
+    let agentUpdateObj = {
         updated_on: new Date(),
         execution_result_review_status: "not_seen",
     };
 
     if (artifactType) {
-        updateObj.artifact_type = artifactType;
+        agentUpdateObj.artifact_type = artifactType;
     }
 
-    let agentDoc = await Agent.findOneAndUpdate({ _id: agentId }, updateObj, {
-        new: true,
-    });
+    let agentDoc = await Agent.findOneAndUpdate(
+        { _id: agentId },
+        agentUpdateObj,
+        { new: true }
+    );
 
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
 
+    let statusUpdates = await AgentStatus.find({
+        agent: agentId,
+        account: accountId,
+    })
+        .sort({ created_on: 1 })
+        .lean();
+    logg.info(`will broadcast ${statusUpdates.length} status updates`);
+
     // Broadcast status update via WebSocket
     AgentStatusHandler.broadcastAgentStatus(
-        { agentId, statusUpdates: agentDoc.status_updates },
+        { agentId, statusUpdates },
         { txid }
     );
 
-    logg.info(`agent status updated: ${JSON.stringify(agentDoc)}`);
     logg.info(`ended`);
     return [true, null];
 }
@@ -623,15 +740,12 @@ async function _getAgentStatusUpdates(
         _id: agentId,
         account: accountId,
     })
-        .select("status_updates")
+        .select("_id artifact_type")
         .lean();
 
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
-
-    let statusUpdates = agentDoc.status_updates || [];
-    logg.info(`status updates fetched: ${JSON.stringify(statusUpdates)}`);
 
     let artifacts = await AgentArtifact.find({
         agent: agentId,
@@ -644,7 +758,6 @@ async function _getAgentStatusUpdates(
     let artifactsInfo = groupedArtifacts[Object.keys(groupedArtifacts)[0]];
 
     let result = {
-        status_updates: statusUpdates,
         artifacts_info: artifactsInfo,
         artifact_type: agentDoc.artifact_type,
     };
