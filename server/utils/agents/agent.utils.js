@@ -635,6 +635,13 @@ async function _updateExecutionStatus(
         throw new CustomError(`statusState is invalid`, fileName, funcName);
     }
 
+    let agentDoc = await Agent.findOne({ _id: agentId });
+    if (!agentDoc) {
+        throw new CustomError(`Agent not found`, fileName, funcName);
+    }
+
+    let accountId = agentDoc.account;
+
     let statusDoc;
     if (statusState === "started") {
         // Create new status document
@@ -651,6 +658,7 @@ async function _updateExecutionStatus(
         if (progressPercentage) {
             createObj.progress_percentage = progressPercentage;
         }
+
         let insertResp = await AgentStatus.insertMany([createObj]);
         statusDoc = insertResp[0];
     } else {
@@ -666,11 +674,22 @@ async function _updateExecutionStatus(
         if (progressPercentage) {
             updateObj.progress_percentage = progressPercentage;
         }
+        if (statusState === "finished" || statusState === "failed") {
+            updateObj.finished_on = Date.now();
+        }
+
+        let metaParams = { new: true };
+
+        if (statusState === "not_applicable") {
+            metaParams.upsert = true;
+            updateObj.name = statusName;
+            updateObj.agent = agentId;
+        }
 
         statusDoc = await AgentStatus.findOneAndUpdate(
             { _id: statusId, account: accountId },
             updateObj,
-            { new: true }
+            metaParams
         );
 
         if (!statusDoc) {
@@ -694,13 +713,13 @@ async function _updateExecutionStatus(
         agentUpdateObj.artifact_type = artifactType;
     }
 
-    let agentDoc = await Agent.findOneAndUpdate(
+    let updatedAgentDoc = await Agent.findOneAndUpdate(
         { _id: agentId },
         agentUpdateObj,
         { new: true }
     );
 
-    if (!agentDoc) {
+    if (!updatedAgentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
 

@@ -12,6 +12,7 @@ const AgentStatusSchema = new Schema({
         enum: ["started", "finished", "failed", "not_applicable"],
         required: true,
     },
+    finished_on: { type: Date },
     message: { type: String },
     progress_percentage: {
         type: Number,

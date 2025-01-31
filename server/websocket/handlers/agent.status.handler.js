@@ -1,5 +1,6 @@
 import { logger } from "../../logger.js";
 import { Agent } from "../../models/agents/agent.model.js";
+import { AgentStatus } from "../../models/agents/agent.status.model.js";
 
 const fileName = "Agent Status Handler";
 
@@ -25,14 +26,14 @@ export function handleAgentStatusConnection(ws, req) {
     logger.info(`${fileName}: Client connected for agent ${agentId}`);
 
     // Send initial status updates
-    Agent.findOne({ _id: agentId })
-        .select("status_updates")
+    AgentStatus.find({ agent: agentId })
+        .sort({ created_on: 1 })
         .lean()
-        .then((agentDoc) => {
-            if (agentDoc && agentDoc.status_updates) {
+        .then((agentStatusDocs) => {
+            if (agentStatusDocs && agentStatusDocs.length > 0) {
                 const message = JSON.stringify({
                     type: "status-update",
-                    data: agentDoc.status_updates,
+                    data: agentStatusDocs,
                 });
                 ws.send(message);
             }
