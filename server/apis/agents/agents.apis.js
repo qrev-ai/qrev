@@ -487,9 +487,6 @@ export async function executionUpdateAsyncApi(req, res, next) {
         status_id: statusId,
         status_name: statusName,
         status_state: statusState,
-        message,
-        progress_percentage: progressPercentage,
-        artifact_type: artifactType,
     } = req.body;
     if (!statusId) {
         logg.info(`ended unsuccessfully`);
@@ -521,15 +518,7 @@ export async function executionUpdateAsyncApi(req, res, next) {
     }
 
     await AgentUtils.updateExecutionStatus(
-        {
-            agentId,
-            statusId,
-            statusName,
-            statusState,
-            message,
-            progressPercentage,
-            artifactType,
-        },
+        { agentId, statusId, statusName, statusState },
         { txid, sendErrorMsg: true }
     );
 

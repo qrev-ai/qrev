@@ -610,15 +610,7 @@ export const executeAgent = functionWrapper(
 );
 
 async function _updateExecutionStatus(
-    {
-        agentId,
-        statusId,
-        statusName,
-        statusState,
-        message,
-        progressPercentage,
-        artifactType,
-    },
+    { agentId, statusId, statusName, statusState },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -634,74 +626,6 @@ async function _updateExecutionStatus(
     if (!statusState) {
         throw new CustomError(`statusState is invalid`, fileName, funcName);
     }
-
-    let agentDoc = await Agent.findOne({ _id: agentId });
-    if (!agentDoc) {
-        throw new CustomError(`Agent not found`, fileName, funcName);
-    }
-
-    let accountId = agentDoc.account;
-
-    let statusDoc;
-    if (statusState === "started") {
-        // Create new status document
-        let createObj = {
-            _id: statusId,
-            account: accountId,
-            agent: agentId,
-            name: statusName,
-            state: statusState,
-        };
-        if (message) {
-            createObj.message = message;
-        }
-        if (progressPercentage) {
-            createObj.progress_percentage = progressPercentage;
-        }
-
-        let insertResp = await AgentStatus.insertMany([createObj]);
-        statusDoc = insertResp[0];
-    } else {
-        // Update existing status document
-        let updateObj = {
-            state: statusState,
-            updated_on: new Date(),
-        };
-
-        if (message) {
-            updateObj.message = message;
-        }
-        if (progressPercentage) {
-            updateObj.progress_percentage = progressPercentage;
-        }
-        if (statusState === "finished" || statusState === "failed") {
-            updateObj.finished_on = Date.now();
-        }
-
-        let metaParams = { new: true };
-
-        if (statusState === "not_applicable") {
-            metaParams.upsert = true;
-            updateObj.name = statusName;
-            updateObj.agent = agentId;
-        }
-
-        statusDoc = await AgentStatus.findOneAndUpdate(
-            { _id: statusId, account: accountId },
-            updateObj,
-            metaParams
-        );
-
-        if (!statusDoc) {
-            throw new CustomError(
-                `Status document not found`,
-                fileName,
-                funcName
-            );
-        }
-    }
-
-    logg.info(`agent status updated: ${JSON.stringify(statusDoc)}`);
 
     // Update agent document
     let agentUpdateObj = {
