@@ -19,6 +19,7 @@ const AgentStatusSchema = new Schema({
         min: 0,
         max: 100,
     },
+    result_data: { type: Schema.Types.Mixed },
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });

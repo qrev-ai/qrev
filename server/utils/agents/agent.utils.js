@@ -701,13 +701,29 @@ async function _getAgentStatusUpdates(
     }).lean();
 
     let groupedArtifacts = groupArtifactsByType(artifacts);
-    logg.info(`groupedArtifacts: ${JSON.stringify(groupedArtifacts)}`);
-    logg.info(`agentDoc.artifact_type: ${agentDoc.artifact_type}`);
     let artifactsInfo = groupedArtifacts[Object.keys(groupedArtifacts)[0]];
+
+    let statusUpdates = await AgentStatus.find({
+        agent: agentId,
+        account: accountId,
+        name: { $in: ["search_online", "find_profiles"] },
+        state: "finished",
+    })
+        .select("_id name result_data")
+        .lean();
+    logg.info(`statusUpdates: ${JSON.stringify(statusUpdates)}`);
+
+    let crawledWebsites = statusUpdates.find(
+        (status) => status.name === "search_online"
+    )?.result_data;
+    let foundProfiles = statusUpdates.find(
+        (status) => status.name === "find_profiles"
+    )?.result_data;
 
     let result = {
         artifacts_info: artifactsInfo,
-        artifact_type: agentDoc.artifact_type,
+        crawled_websites: crawledWebsites || [],
+        found_profiles: foundProfiles || [],
     };
 
     logg.info(`ended`);
