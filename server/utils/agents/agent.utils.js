@@ -639,10 +639,6 @@ async function _updateExecutionStatus(
         execution_result_review_status: "not_seen",
     };
 
-    if (artifactType) {
-        agentUpdateObj.artifact_type = artifactType;
-    }
-
     let updatedAgentDoc = await Agent.findOneAndUpdate(
         { _id: agentId },
         agentUpdateObj,
