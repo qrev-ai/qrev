@@ -484,6 +484,7 @@ export async function executionUpdateAsyncApi(req, res, next) {
 
     let {
         agent_id: agentId,
+        account_id: accountId,
         status_id: statusId,
         status_name: statusName,
         status_state: statusState,
@@ -518,7 +519,7 @@ export async function executionUpdateAsyncApi(req, res, next) {
     }
 
     await AgentUtils.updateExecutionStatus(
-        { agentId, statusId, statusName, statusState },
+        { agentId, accountId, statusId, statusName, statusState },
         { txid, sendErrorMsg: true }
     );
 

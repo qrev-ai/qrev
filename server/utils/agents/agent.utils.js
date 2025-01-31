@@ -616,7 +616,7 @@ export const executeAgent = functionWrapper(
 );
 
 async function _updateExecutionStatus(
-    { agentId, statusId, statusName, statusState },
+    { agentId, accountId, statusId, statusName, statusState },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -632,6 +632,9 @@ async function _updateExecutionStatus(
     if (!statusState) {
         throw new CustomError(`statusState is invalid`, fileName, funcName);
     }
+    if (!accountId) {
+        throw new CustomError(`accountId is invalid`, fileName, funcName);
+    }
 
     // Update agent document
     let agentUpdateObj = {
@@ -640,7 +643,7 @@ async function _updateExecutionStatus(
     };
 
     let updatedAgentDoc = await Agent.findOneAndUpdate(
-        { _id: agentId },
+        { _id: agentId, account: accountId },
         agentUpdateObj,
         { new: true }
     );
