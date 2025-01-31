@@ -162,6 +162,12 @@ async function _deleteAgent(
     });
     logg.info(`Deleted ${deletedArtifacts.deletedCount} associated artifacts`);
 
+    const deletedStatuses = await AgentStatus.deleteMany({
+        agent: agentId,
+        account: accountId,
+    });
+    logg.info(`Deleted ${deletedStatuses.deletedCount} associated statuses`);
+
     let agentDoc = await Agent.findOneAndDelete({
         _id: agentId,
         account: accountId,
