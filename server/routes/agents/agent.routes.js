@@ -1,5 +1,6 @@
 import { Router } from "express";
 import * as AgentsApis from "../../apis/agents/agents.apis.js";
+import * as AgentReportsApis from "../../apis/agents/agent.reports.apis.js";
 import { apiWrapper } from "../../std/wrappers.js";
 const router = Router();
 
@@ -26,5 +27,16 @@ router.post(
 );
 
 router.get("/status_updates", apiWrapper(AgentsApis.getAgentStatusUpdatesApi));
+
+// New routes for agent reports
+router.get(
+    "/reports/all",
+    apiWrapper(AgentReportsApis.getAllCompanyReportsApi)
+);
+router.post(
+    "/reports/create_custom",
+    apiWrapper(AgentReportsApis.createCustomReportApi)
+);
+router.get("/reports/get", apiWrapper(AgentReportsApis.getCompanyReportApi));
 
 export default router;
