@@ -15,6 +15,7 @@ import * as ArtifactConfig from "../../config/qrev_crm/artifact.config.js";
 import { AgentArtifact } from "../../models/agents/agent.artifact.model.js";
 import * as AgentStatusHandler from "../../websocket/handlers/agent.status.handler.js";
 import { AgentStatus } from "../../models/agents/agent.status.model.js";
+import { AgentReports } from "../../models/agents/agent.reports.model.js";
 
 const fileName = "Agent Utils";
 
@@ -167,6 +168,12 @@ async function _deleteAgent(
         account: accountId,
     });
     logg.info(`Deleted ${deletedStatuses.deletedCount} associated statuses`);
+
+    const deletedReports = await AgentReports.deleteMany({
+        agent: agentId,
+        account: accountId,
+    });
+    logg.info(`Deleted ${deletedReports.deletedCount} associated reports`);
 
     let agentDoc = await Agent.findOneAndDelete({
         _id: agentId,
