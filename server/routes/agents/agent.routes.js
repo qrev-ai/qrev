@@ -38,5 +38,9 @@ router.post(
     apiWrapper(AgentReportsApis.createCustomReportApi)
 );
 router.get("/reports/get", apiWrapper(AgentReportsApis.getCompanyReportApi));
+router.get(
+    "/reports/by_company",
+    apiWrapper(AgentReportsApis.getAgentReportsByCompanyApi)
+);
 
 export default router;

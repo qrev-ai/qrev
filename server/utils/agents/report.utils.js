@@ -3,6 +3,7 @@ import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { v4 as uuidv4 } from "uuid";
 import { CompanyReport } from "../../models/agents/company_report.model.js";
+import { AgentReports } from "../../models/agents/agent.reports.model.js";
 import {
     DefaultCompanyReports,
     SupportedCompanyReportTypes,
@@ -123,4 +124,34 @@ export const getCompanyReport = functionWrapper(
     fileName,
     "getCompanyReport",
     _getCompanyReport
+);
+
+// Get agent reports by company artifact ID and agent ID
+async function _getAgentReportsByCompany(
+    { accountId, userId, companyArtifactId, agentId },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+    if (!companyArtifactId) throw `companyArtifactId is invalid`;
+    if (!agentId) throw `agentId is invalid`;
+
+    const reports = await AgentReports.find({
+        account: accountId,
+        company_id: companyArtifactId,
+        agent: agentId,
+    }).lean();
+
+    logg.info(
+        `Found ${reports.length} reports for company artifact ${companyArtifactId} and agent ${agentId}`
+    );
+    logg.info(`ended`);
+    return [reports, null];
+}
+
+export const getAgentReportsByCompany = functionWrapper(
+    fileName,
+    "getAgentReportsByCompany",
+    _getAgentReportsByCompany
 );
