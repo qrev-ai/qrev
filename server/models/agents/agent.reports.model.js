@@ -8,7 +8,7 @@ const AgentReportsSchema = new Schema({
     owner: { type: Schema.Types.ObjectId, ref: "User" },
     agent: { type: String, ref: "agent" },
 
-    company_id: { type: String },
+    company_id: { type: String, ref: "agent.artifact" },
     company_name: { type: String },
 
     topic_title: { type: String },
