@@ -122,61 +122,67 @@ const COMPANY_PROPERTIES = {
         order: 3,
     },
 
+    description: {
+        label: "Description",
+        type: "text",
+        order: 4,
+    },
+
     // Contact Info
     phone: {
         label: "Phone",
         type: "string",
-        order: 4,
+        order: 5,
     },
     email: {
         label: "Email",
         type: "string",
         format: "email",
-        order: 5,
+        order: 6,
     },
 
     // Business Details
     annual_revenue: {
         label: "Annual Revenue",
         type: "number",
-        order: 6,
+        order: 7,
     },
     employee_count: {
         label: "Employee Count",
         type: "number",
-        order: 7,
+        order: 8,
     },
     founded_year: {
         label: "Founded Year",
         type: "number",
-        order: 8,
+        order: 9,
     },
 
     // Address
     street_address: {
         label: "Street Address",
         type: "string",
-        order: 9,
+        order: 10,
     },
     city: {
         label: "City",
         type: "string",
-        order: 10,
+        order: 11,
     },
     state: {
         label: "State",
         type: "string",
-        order: 11,
+        order: 12,
     },
     postal_code: {
         label: "Postal Code",
         type: "string",
-        order: 12,
+        order: 13,
     },
     country: {
         label: "Country",
         type: "string",
-        order: 13,
+        order: 14,
     },
 
     // Social Media
@@ -184,13 +190,13 @@ const COMPANY_PROPERTIES = {
         label: "LinkedIn URL",
         type: "string",
         format: "url",
-        order: 14,
+        order: 15,
     },
     twitter_url: {
         label: "Twitter URL",
         type: "string",
         format: "url",
-        order: 15,
+        order: 16,
     },
 
     // Classification
@@ -198,13 +204,34 @@ const COMPANY_PROPERTIES = {
         label: "Company Type",
         type: "chip",
         values: ["prospect", "customer", "partner", "vendor"],
-        order: 16,
+        order: 17,
     },
     tier: {
         label: "Tier",
         type: "chip",
         values: ["enterprise", "mid-market", "small-business"],
-        order: 17,
+        order: 18,
+    },
+
+    webpages: {
+        label: "Web Pages",
+        type: "array",
+        items: {
+            type: "object",
+            properties: {
+                type: {
+                    type: "string",
+                },
+                url: {
+                    type: "string",
+                    format: "url",
+                },
+                name: {
+                    type: "string",
+                },
+            },
+        },
+        order: 19,
     },
 };
 
