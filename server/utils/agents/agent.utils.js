@@ -16,6 +16,8 @@ import { AgentArtifact } from "../../models/agents/agent.artifact.model.js";
 import * as AgentStatusHandler from "../../websocket/handlers/agent.status.handler.js";
 import { AgentStatus } from "../../models/agents/agent.status.model.js";
 import { AgentReports } from "../../models/agents/agent.reports.model.js";
+import * as S3Utils from "../aws/aws.s3.utils.js";
+import * as FileUtils from "../std/file.utils.js";
 
 const fileName = "Agent Utils";
 
@@ -534,7 +536,7 @@ export const resumeAgent = functionWrapper(
 );
 
 async function _executeAgent(
-    { accountId, userId, agentId, agentDoc, userTimezone },
+    { accountId, userId, agentId, agentDoc, userTimezone, uploadedCsvFilePath },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -548,6 +550,15 @@ async function _executeAgent(
     }
 
     agentId = agentId || agentDoc._id;
+    let uploadedFileS3Link = null;
+    if (uploadedCsvFilePath) {
+        let [s3Link, s3Error] = await uploadAgentFileToS3(
+            { accountId, agentId, uploadedCsvFilePath },
+            { txid }
+        );
+        if (s3Error) throw s3Error;
+        uploadedFileS3Link = s3Link;
+    }
 
     let aiServerUrl = process.env.AI_BOT_SERVER_URL;
     if (!aiServerUrl) {
@@ -580,6 +591,9 @@ async function _executeAgent(
         user_id: userId,
         account_id: accountId,
     };
+    if (uploadedFileS3Link) {
+        aiServerBody.uploaded_file_s3_link = uploadedFileS3Link;
+    }
 
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
 
@@ -620,6 +634,47 @@ export const executeAgent = functionWrapper(
     fileName,
     "executeAgent",
     _executeAgent
+);
+
+async function _uploadAgentFileToS3(
+    { accountId, agentId, uploadedCsvFilePath },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+
+    const [fileObj, fileErr] = await FileUtils.readFile(
+        { filePath: uploadedCsvFilePath },
+        { txid }
+    );
+    if (fileErr) throw fileErr;
+
+    const agentResourceConfigPrefixPath =
+        process.env.AGENT_RESOURCE_CONFIG_PREFIX_PATH;
+    // replace '-' in agentId with '_'
+    let fAgentId = agentId.replace(/-/g, "_");
+    const s3FilePath = `${agentResourceConfigPrefixPath}/${fAgentId}_${Date.now()}.csv`;
+    let [uploadedFileS3Link, s3Error] = await S3Utils.uploadFile(
+        { file: fileObj, fileName: s3FilePath, ContentType: "text/csv" },
+        { txid }
+    );
+    if (s3Error) throw s3Error;
+
+    logg.info(`uploadedFileS3Link: ${uploadedFileS3Link}`);
+    let s3UpdateResp = await Agent.updateOne(
+        { _id: agentId, account: accountId },
+        { $set: { uploaded_file_s3_link: uploadedFileS3Link } },
+        { new: true }
+    );
+    logg.info(`s3UpdateResp: ${JSON.stringify(s3UpdateResp)}`);
+
+    logg.info(`ended`);
+    return [uploadedFileS3Link, null];
+}
+
+export const uploadAgentFileToS3 = functionWrapper(
+    fileName,
+    "uploadAgentFileToS3",
+    _uploadAgentFileToS3
 );
 
 async function _updateExecutionStatus(

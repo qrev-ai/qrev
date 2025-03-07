@@ -23,6 +23,11 @@ const AgentSchema = new Schema({
     },
 
     artifact_type: { type: String, enum: SUPPORTED_ARTIFACT_TYPES_ARRAY },
+
+    /*
+     * Added 'uploaded_file_s3_link' to store the S3 link of the uploaded file
+     */
+    uploaded_file_s3_link: { type: String },
 });
 
 export const Agent = mongoose.model("agent", AgentSchema, "agent");

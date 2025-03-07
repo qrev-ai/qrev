@@ -2,9 +2,34 @@ import { Router } from "express";
 import * as AgentsApis from "../../apis/agents/agents.apis.js";
 import * as AgentReportsApis from "../../apis/agents/agent.reports.apis.js";
 import { apiWrapper } from "../../std/wrappers.js";
+
+import multer from "multer";
+import path from "path";
+
+const storage = multer.diskStorage({
+    destination: "uploads/",
+    filename: function (req, file, cb) {
+        // Get the file extension
+        const ext = path.extname(file.originalname);
+        // Generate unique filename with original extension
+        cb(
+            null,
+            `agent_${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`
+        );
+    },
+});
+
+const upload = multer({ storage: storage });
+
 const router = Router();
 
-router.post("/create", apiWrapper(AgentsApis.createAgentApi));
+router
+    .route("/create")
+    .post(
+        upload.single("uploaded_file"),
+        apiWrapper(AgentsApis.createAgentApi)
+    );
+
 router.post("/delete", apiWrapper(AgentsApis.deleteAgentApi));
 router.get("/list", apiWrapper(AgentsApis.listAgentsApi));
 router.post("/update", apiWrapper(AgentsApis.updateAgentApi));

@@ -50,6 +50,10 @@ export async function createAgentApi(req, res, next) {
         throw new CustomError(`Missing type from body`, fileName, funcName);
     }
 
+    let uploadedCsvFile = req.file;
+    let uploadedCsvFilePath =
+        uploadedCsvFile && uploadedCsvFile.path ? uploadedCsvFile.path : null;
+
     let [agent, agentErr] = await AgentUtils.createAgent(
         { accountId, userId, name, description, type },
         { txid }
@@ -60,7 +64,13 @@ export async function createAgentApi(req, res, next) {
     }
 
     let [updatedAgentDoc, execErr] = await AgentUtils.executeAgent(
-        { accountId, userId, agentId: agent._id, agentDoc: agent },
+        {
+            accountId,
+            userId,
+            agentId: agent._id,
+            agentDoc: agent,
+            uploadedCsvFilePath,
+        },
         { txid }
     );
     if (execErr) {
