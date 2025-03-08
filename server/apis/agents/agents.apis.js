@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { logger } from "../../logger.js";
 import CustomError from "../../std/custom.error.js";
 import * as AgentUtils from "../../utils/agents/agent.utils.js";
+import * as FileUtils from "../../utils/std/file.utils.js";
 
 const fileName = "Agents APIs";
 
@@ -54,34 +55,57 @@ export async function createAgentApi(req, res, next) {
     let uploadedCsvFilePath =
         uploadedCsvFile && uploadedCsvFile.path ? uploadedCsvFile.path : null;
 
-    let [agent, agentErr] = await AgentUtils.createAgent(
-        { accountId, userId, name, description, type },
-        { txid }
-    );
-    if (agentErr) {
-        logg.info(`agentErr:` + agentErr);
-        throw new CustomError(`Error creating agent`, fileName, funcName);
+    if (uploadedCsvFile) {
+        logg.info(`uploadedCsvFile: ${JSON.stringify(uploadedCsvFile)}`);
+    } else {
+        logg.info(`no csv file uploaded`);
     }
 
-    let [updatedAgentDoc, execErr] = await AgentUtils.executeAgent(
-        {
-            accountId,
-            userId,
-            agentId: agent._id,
-            agentDoc: agent,
-            uploadedCsvFilePath,
-        },
-        { txid }
-    );
-    if (execErr) {
-        throw execErr;
-    }
+    try {
+        let [agent, agentErr] = await AgentUtils.createAgent(
+            { accountId, userId, name, description, type },
+            { txid }
+        );
+        if (agentErr) {
+            logg.info(`agentErr:` + agentErr);
+            throw new CustomError(`Error creating agent`, fileName, funcName);
+        }
 
-    res.status(200).json({
-        success: true,
-        message: "Agent created successfully",
-        result: updatedAgentDoc,
-    });
+        let [updatedAgentDoc, execErr] = await AgentUtils.executeAgent(
+            {
+                accountId,
+                userId,
+                agentId: agent._id,
+                agentDoc: agent,
+                uploadedCsvFilePath,
+            },
+            { txid }
+        );
+        if (execErr) {
+            throw execErr;
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Agent created successfully",
+            result: updatedAgentDoc,
+        });
+    } catch (err) {
+        if (uploadedCsvFilePath) {
+            let [deleteResp, deleteErr] = await FileUtils.deleteFile(
+                { filePath: uploadedCsvFilePath },
+                { txid }
+            );
+            if (deleteErr) {
+                logg.error(
+                    `Error deleting uploaded csv file: ${deleteErr}. but continuing...`
+                );
+            }
+        }
+        logg.info(`error in code: ${err}`);
+        logg.info(`error happened`);
+        throw err;
+    }
 }
 
 export async function getAgentApi(req, res, next) {
