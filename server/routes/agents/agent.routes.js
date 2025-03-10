@@ -58,6 +58,14 @@ router.post(
     apiWrapper(AgentsApis.updateSharingStatusApi)
 );
 
+// Routes for agent sharing
+router.get("/public", apiWrapper(AgentsApis.getPublicAgentApi));
+router.get("/public/status", apiWrapper(AgentsApis.getPublicAgentStatusApi));
+router.get(
+    "/public/reports/by_company",
+    apiWrapper(AgentReportsApis.getPublicAgentReportsByCompanyApi)
+);
+
 // New routes for agent reports
 router.get(
     "/reports/all",

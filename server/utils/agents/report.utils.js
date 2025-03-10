@@ -8,6 +8,7 @@ import {
     DefaultCompanyReports,
     SupportedCompanyReportTypes,
 } from "../../config/agents/report.config.js";
+import { Agent } from "../../models/agents/agent.model.js";
 
 const fileName = "Report Utils";
 
@@ -128,14 +129,22 @@ export const getCompanyReport = functionWrapper(
 
 // Get agent reports by company artifact ID and agent ID
 async function _getAgentReportsByCompany(
-    { accountId, userId, companyArtifactId, agentId },
+    { accountId, userId, companyArtifactId, agentId, isPublic = false },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
-    if (!accountId) throw `accountId is invalid`;
-    if (!userId) throw `userId is invalid`;
     if (!companyArtifactId) throw `companyArtifactId is invalid`;
     if (!agentId) throw `agentId is invalid`;
+
+    if (isPublic) {
+        let agentDoc = await Agent.findOne({
+            _id: agentId,
+        }).lean();
+        if (!agentDoc) throw `agent not found`;
+        if (!agentDoc.is_sharing_enabled) throw `agent is not sharing`;
+        accountId = agentDoc.account;
+        userId = agentDoc.user;
+    }
 
     const reports = await AgentReports.find({
         account: accountId,

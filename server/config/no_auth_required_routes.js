@@ -15,6 +15,7 @@ export const FreeRoutes = [
     "/api/campaign/confirm_unsubscribe",
     "/api/test/test",
     "/api/agent/execution_update_async",
+    "/api/agent/public",
 ];
 
 export const isFreeRoute = (path) => {

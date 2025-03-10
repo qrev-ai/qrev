@@ -151,6 +151,47 @@ export async function getAgentApi(req, res, next) {
     });
 }
 
+export async function getPublicAgentApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getPublicAgentApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let { agent_id: agentId } = req.query;
+
+    let [agent, agentErr] = await AgentUtils.getPublicAgent(
+        { agentId },
+        { txid }
+    );
+    if (agentErr) {
+        logg.info(`agentErr:` + agentErr);
+        throw new CustomError(`Error getting agent`, fileName, funcName);
+    }
+
+    if (!agent.is_found) {
+        // throw 404 error
+        throw new CustomError(`Agent not found`, fileName, funcName, 404);
+    }
+
+    if (!agent.is_public) {
+        // throw 403 error
+        throw new CustomError(
+            `Agent not sharing enabled`,
+            fileName,
+            funcName,
+            403
+        );
+    }
+
+    agent = agent.agent_doc;
+    res.status(200).json({
+        success: true,
+        message: "Agent fetched successfully",
+        result: agent,
+    });
+}
+
 export async function updateAgentApi(req, res, next) {
     const txid = req.id;
     const funcName = "updateAgentApi";
@@ -616,6 +657,43 @@ export async function getAgentStatusUpdatesApi(req, res, next) {
         success: true,
         message: "Agent status updates fetched successfully",
         result: statusUpdates,
+    });
+}
+
+export async function getPublicAgentStatusApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getPublicAgentStatusApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let { agent_id: agentId } = req.query;
+    if (!agentId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing agent_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [result, statusUpdatesErr] = await AgentUtils.getAgentStatusUpdates(
+        { agentId },
+        { txid }
+    );
+    if (statusUpdatesErr) {
+        logg.info(`statusUpdatesErr:` + statusUpdatesErr);
+        throw new CustomError(
+            `Error getting agent status updates`,
+            fileName,
+            funcName
+        );
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent status updates fetched successfully",
+        result: result,
     });
 }
 

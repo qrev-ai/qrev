@@ -228,3 +228,48 @@ export async function getAgentReportsByCompanyApi(req, res, next) {
         result: reports,
     });
 }
+
+export async function getPublicAgentReportsByCompanyApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getPublicAgentReportsByCompanyApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`Started with query: ${JSON.stringify(req.query)}`);
+
+    let { company_artifact_id: companyArtifactId, agent_id: agentId } =
+        req.query;
+    if (!companyArtifactId) {
+        logg.info("Missing company_artifact_id from query");
+        throw new CustomError(
+            "Missing company_artifact_id from query",
+            fileName,
+            funcName
+        );
+    }
+    if (!agentId) {
+        logg.info("Missing agent_id from query");
+        throw new CustomError(
+            "Missing agent_id from query",
+            fileName,
+            funcName
+        );
+    }
+
+    let [reports, reportsErr] = await ReportUtils.getAgentReportsByCompany(
+        { companyArtifactId, agentId, isPublic: true },
+        { txid }
+    );
+    if (reportsErr) {
+        logg.info("reportsErr: " + reportsErr);
+        throw new CustomError(
+            "Error fetching agent reports for company",
+            fileName,
+            funcName
+        );
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent reports for company fetched successfully",
+        result: reports,
+    });
+}

@@ -108,6 +108,30 @@ async function _getAgent(
 
 export const getAgent = functionWrapper(fileName, "getAgent", _getAgent);
 
+async function _getPublicAgent({ agentId }, { txid, logg, funcName }) {
+    logg.info(`started`);
+    if (!agentId) throw `agentId is invalid`;
+
+    let agentDoc = await Agent.findOne({
+        _id: agentId,
+    }).lean();
+
+    let result = {
+        is_found: agentDoc ? true : false,
+        is_public: agentDoc?.is_sharing_enabled,
+        agent_doc: agentDoc?.is_sharing_enabled ? agentDoc : null,
+    };
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getPublicAgent = functionWrapper(
+    fileName,
+    "getPublicAgent",
+    _getPublicAgent
+);
+
 // Update an existing agent
 async function _updateAgent(
     { accountId, userId, agentId, name, description, type },
@@ -739,23 +763,24 @@ export const updateExecutionStatus = functionWrapper(
 );
 
 async function _getAgentStatusUpdates(
-    { accountId, agentId },
+    { accountId = null, agentId },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
-    if (!accountId) throw `accountId is invalid`;
     if (!agentId) throw `agentId is invalid`;
 
-    let agentDoc = await Agent.findOne({
-        _id: agentId,
-        account: accountId,
-    })
-        .select("_id artifact_type")
-        .lean();
+    let aQueryObj = { _id: agentId };
+    if (accountId) {
+        aQueryObj.account = accountId;
+    }
+    let agentDoc = await Agent.findOne(aQueryObj).lean();
+    logg.info(`agentDoc: ${JSON.stringify(agentDoc)}`);
 
     if (!agentDoc) {
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
+
+    accountId = accountId || agentDoc.account;
 
     let artifacts = await AgentArtifact.find({
         agent: agentId,
@@ -773,7 +798,7 @@ async function _getAgentStatusUpdates(
     })
         .select("_id name result_data")
         .lean();
-    logg.info(`statusUpdates: ${JSON.stringify(statusUpdates)}`);
+    // logg.info(`statusUpdates: ${JSON.stringify(statusUpdates)}`);
 
     let crawledWebsites = statusUpdates.find(
         (status) => status.name === "search_online"
@@ -787,6 +812,8 @@ async function _getAgentStatusUpdates(
         crawled_websites: crawledWebsites || [],
         found_profiles: foundProfiles || [],
     };
+
+    // logg.info(`result: ${JSON.stringify(result)}`);
 
     logg.info(`ended`);
     return [result, null];
