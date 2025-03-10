@@ -24,6 +24,8 @@ const AgentSchema = new Schema({
 
     artifact_type: { type: String, enum: SUPPORTED_ARTIFACT_TYPES_ARRAY },
 
+    is_sharing_enabled: { type: Boolean, default: false },
+
     /*
      * Added 'uploaded_file_s3_link' to store the S3 link of the uploaded file
      */

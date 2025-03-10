@@ -818,3 +818,35 @@ function groupArtifactsByType(artifacts) {
 
     return result;
 }
+
+async function _updateAgentSharingStatus(
+    { accountId, userId, agentId, isSharingEnabled },
+    { txid, logg, funcName }
+) {
+    logg.info(`started`);
+    if (!accountId) throw `accountId is invalid`;
+    if (!userId) throw `userId is invalid`;
+    if (!agentId) throw `agentId is invalid`;
+    if (isSharingEnabled === undefined || isSharingEnabled === null)
+        throw `isSharingEnabled is invalid`;
+
+    let agentDoc = await Agent.findOneAndUpdate(
+        { _id: agentId, account: accountId },
+        { is_sharing_enabled: isSharingEnabled, updated_on: Date.now() },
+        { new: true }
+    );
+
+    if (!agentDoc) {
+        throw new CustomError(`Agent not found`, fileName, funcName);
+    }
+
+    logg.info(`agentDoc sharing status updated: ${JSON.stringify(agentDoc)}`);
+    logg.info(`ended`);
+    return [agentDoc, null];
+}
+
+export const updateAgentSharingStatus = functionWrapper(
+    fileName,
+    "updateAgentSharingStatus",
+    _updateAgentSharingStatus
+);

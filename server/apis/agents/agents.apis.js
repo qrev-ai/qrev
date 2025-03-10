@@ -618,3 +618,68 @@ export async function getAgentStatusUpdatesApi(req, res, next) {
         result: statusUpdates,
     });
 }
+
+export async function updateSharingStatusApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "updateSharingStatusApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:` + JSON.stringify(req.body));
+    logg.info(`started with query:` + JSON.stringify(req.query));
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { account_id: accountId, agent_id: agentId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id from query`,
+            fileName,
+            funcName
+        );
+    }
+    if (!agentId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing agent_id from query`,
+            fileName,
+            funcName
+        );
+    }
+
+    let { is_sharing_enabled } = req.body;
+    if (is_sharing_enabled === undefined || is_sharing_enabled === null) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing is_sharing_enabled from body`,
+            fileName,
+            funcName
+        );
+    }
+
+    let [agent, agentErr] = await AgentUtils.updateAgentSharingStatus(
+        { accountId, userId, agentId, isSharingEnabled: is_sharing_enabled },
+        { txid }
+    );
+
+    if (agentErr) {
+        logg.info(`agentErr:` + agentErr);
+        throw new CustomError(
+            `Error updating agent sharing status`,
+            fileName,
+            funcName
+        );
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Agent sharing status updated successfully",
+    });
+}

@@ -53,6 +53,11 @@ router.post(
 
 router.get("/status_updates", apiWrapper(AgentsApis.getAgentStatusUpdatesApi));
 
+router.post(
+    "/update_sharing_status",
+    apiWrapper(AgentsApis.updateSharingStatusApi)
+);
+
 // New routes for agent reports
 router.get(
     "/reports/all",
