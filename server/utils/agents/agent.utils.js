@@ -793,7 +793,7 @@ async function _getAgentStatusUpdates(
     let statusUpdates = await AgentStatus.find({
         agent: agentId,
         account: accountId,
-        name: { $in: ["search_online", "find_profiles"] },
+        name: { $in: ["search_online", "find_profiles", "map_search_online"] },
         state: "finished",
     })
         .select("_id name result_data")
@@ -807,10 +807,15 @@ async function _getAgentStatusUpdates(
         (status) => status.name === "find_profiles"
     )?.result_data;
 
+    let mapResults = statusUpdates.find(
+        (status) => status.name === "map_search_online"
+    )?.result_data;
+
     let result = {
         artifacts_info: artifactsInfo,
         crawled_websites: crawledWebsites || [],
         found_profiles: foundProfiles || [],
+        map_results: mapResults || [],
     };
 
     // logg.info(`result: ${JSON.stringify(result)}`);
