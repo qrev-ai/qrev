@@ -815,7 +815,7 @@ async function _getAgentStatusUpdates(
         artifacts_info: artifactsInfo,
         crawled_websites: crawledWebsites || [],
         found_profiles: foundProfiles || [],
-        map_results: mapResults || [],
+        map_search_results: mapResults || [],
     };
 
     // logg.info(`result: ${JSON.stringify(result)}`);
