@@ -30,6 +30,8 @@ const AgentSchema = new Schema({
      * Added 'uploaded_file_s3_link' to store the S3 link of the uploaded file
      */
     uploaded_file_s3_link: { type: String },
+
+    research_metadata: {},
 });
 
 export const Agent = mongoose.model("agent", AgentSchema, "agent");

@@ -122,12 +122,6 @@ const COMPANY_PROPERTIES = {
         order: 3,
     },
 
-    description: {
-        label: "Description",
-        type: "text",
-        order: 4,
-    },
-
     // Contact Info
     phone: {
         label: "Phone",
@@ -203,7 +197,6 @@ const COMPANY_PROPERTIES = {
     company_type: {
         label: "Company Type",
         type: "chip",
-        values: ["prospect", "customer", "partner", "vendor"],
         order: 17,
     },
     tier: {
@@ -213,9 +206,113 @@ const COMPANY_PROPERTIES = {
         order: 18,
     },
 
+    coordinates: {
+        label: "Coordinates",
+        type: "object",
+        properties: {
+            latitude: {
+                type: "number",
+            },
+            longitude: {
+                type: "number",
+            },
+        },
+        order: 19,
+    },
+
+    google_info: {
+        label: "Google Ratings",
+        type: "object",
+        properties: {
+            rating: {
+                type: "number",
+            },
+            rating_count: {
+                type: "number",
+            },
+            cid: {
+                type: "string",
+                hidden: true,
+            },
+            fid: {
+                type: "string",
+                hidden: true,
+            },
+            placeId: {
+                type: "string",
+                hidden: true,
+            },
+        },
+        order: 20,
+    },
+
+    description: {
+        label: "Description",
+        type: "text",
+        order: 21,
+    },
+
+    thumbnailUrl: {
+        label: "Thumbnail URL",
+        type: "string",
+        format: "url",
+        hidden: true,
+        order: 22,
+    },
+
+    bookingLinks: {
+        label: "Booking Links",
+        type: "array",
+        items: {
+            type: "string",
+            format: "url",
+        },
+        order: 23,
+    },
+
+    openingHours: {
+        label: "Opening Hours",
+        type: "object",
+        hidden: true,
+        properties: {
+            Monday: {
+                type: "string",
+            },
+            Tuesday: {
+                type: "string",
+            },
+            Wednesday: {
+                type: "string",
+            },
+            Thursday: {
+                type: "string",
+            },
+            Friday: {
+                type: "string",
+            },
+            Saturday: {
+                type: "string",
+            },
+            Sunday: {
+                type: "string",
+            },
+        },
+        order: 24,
+    },
+
+    types: {
+        label: "Types",
+        type: "array_chip",
+        items: {
+            type: "string",
+        },
+        order: 25,
+    },
+
     webpages: {
         label: "Web Pages",
         type: "array",
+        hidden: true,
         items: {
             type: "object",
             properties: {
@@ -231,7 +328,7 @@ const COMPANY_PROPERTIES = {
                 },
             },
         },
-        order: 19,
+        order: 26,
     },
 };
 

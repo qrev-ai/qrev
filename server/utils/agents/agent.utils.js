@@ -229,7 +229,9 @@ async function _listAgents(
     if (!accountId) throw `accountId is invalid`;
     if (!userId) throw `userId is invalid`;
 
-    let agents = await Agent.find({ account: accountId }).lean();
+    let agents = await Agent.find({ account: accountId })
+        .select("-research_metadata")
+        .lean();
     logg.info(`agents fetched: ${agents.length}`);
 
     if (getStatusInfo) {
