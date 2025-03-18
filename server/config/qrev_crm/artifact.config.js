@@ -207,7 +207,7 @@ const COMPANY_PROPERTIES = {
     },
 
     coordinates: {
-        label: "Coordinates",
+        label: "Map",
         type: "object",
         properties: {
             latitude: {
