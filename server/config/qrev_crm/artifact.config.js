@@ -146,80 +146,6 @@ const COMPANY_PROPERTIES = {
         type: "number",
         order: 8,
     },
-    founded_year: {
-        label: "Founded Year",
-        type: "number",
-        order: 9,
-    },
-
-    // Address
-    street_address: {
-        label: "Street Address",
-        type: "string",
-        order: 10,
-    },
-    city: {
-        label: "City",
-        type: "string",
-        order: 11,
-    },
-    state: {
-        label: "State",
-        type: "string",
-        order: 12,
-    },
-    postal_code: {
-        label: "Postal Code",
-        type: "string",
-        order: 13,
-    },
-    country: {
-        label: "Country",
-        type: "string",
-        order: 14,
-    },
-
-    // Social Media
-    linkedin_url: {
-        label: "LinkedIn URL",
-        type: "string",
-        format: "url",
-        order: 15,
-    },
-    twitter_url: {
-        label: "Twitter URL",
-        type: "string",
-        format: "url",
-        order: 16,
-    },
-
-    // Classification
-    company_type: {
-        label: "Company Type",
-        type: "chip",
-        order: 17,
-    },
-    tier: {
-        label: "Tier",
-        type: "chip",
-        values: ["enterprise", "mid-market", "small-business"],
-        order: 18,
-    },
-
-    coordinates: {
-        label: "Map",
-        type: "object",
-        properties: {
-            latitude: {
-                type: "number",
-            },
-            longitude: {
-                type: "number",
-            },
-        },
-        order: 19,
-    },
-
     google_info: {
         label: "Google Ratings",
         type: "object",
@@ -241,6 +167,79 @@ const COMPANY_PROPERTIES = {
             placeId: {
                 type: "string",
                 hidden: true,
+            },
+        },
+        order: 9,
+    },
+    founded_year: {
+        label: "Founded Year",
+        type: "number",
+        order: 10,
+    },
+
+    // Address
+    street_address: {
+        label: "Street Address",
+        type: "string",
+        order: 11,
+    },
+    city: {
+        label: "City",
+        type: "string",
+        order: 12,
+    },
+    state: {
+        label: "State",
+        type: "string",
+        order: 13,
+    },
+    postal_code: {
+        label: "Postal Code",
+        type: "string",
+        order: 14,
+    },
+    country: {
+        label: "Country",
+        type: "string",
+        order: 15,
+    },
+
+    // Social Media
+    linkedin_url: {
+        label: "LinkedIn URL",
+        type: "string",
+        format: "url",
+        order: 16,
+    },
+    twitter_url: {
+        label: "Twitter URL",
+        type: "string",
+        format: "url",
+        order: 17,
+    },
+
+    // Classification
+    company_type: {
+        label: "Company Type",
+        type: "chip",
+        order: 18,
+    },
+    tier: {
+        label: "Tier",
+        type: "chip",
+        values: ["enterprise", "mid-market", "small-business"],
+        order: 19,
+    },
+
+    coordinates: {
+        label: "Map",
+        type: "object",
+        properties: {
+            latitude: {
+                type: "number",
+            },
+            longitude: {
+                type: "number",
             },
         },
         order: 20,
