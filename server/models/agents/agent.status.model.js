@@ -20,6 +20,8 @@ const AgentStatusSchema = new Schema({
         max: 100,
     },
     result_data: { type: Schema.Types.Mixed },
+    error_message: { type: String },
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });
