@@ -621,6 +621,15 @@ async function _executeAgent(
         aiServerBody.uploaded_file_s3_link = uploadedFileS3Link;
     }
 
+    let testUserIds = process.env.AGENT_TEST_USER_IDS;
+    if (testUserIds) {
+        testUserIds = testUserIds.split(",");
+        if (testUserIds.includes(userId)) {
+            logg.info(`userId is in testUserIds, so limiting ai output`);
+            aiServerBody.limit_output = true;
+        }
+    }
+
     logg.info(`aiServerBody: ${JSON.stringify(aiServerBody)}`);
 
     let aiServerResp = await axios.post(aiServerUrl, aiServerBody);
