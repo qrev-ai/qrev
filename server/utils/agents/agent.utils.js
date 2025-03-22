@@ -623,7 +623,7 @@ async function _executeAgent(
 
     let testUserIds = process.env.AGENT_TEST_USER_IDS;
     if (testUserIds) {
-        testUserIds = testUserIds.split(",");
+        testUserIds = testUserIds.split(",").map((id) => id.trim());
         if (testUserIds.includes(userId)) {
             logg.info(`userId is in testUserIds, so limiting ai output`);
             aiServerBody.limit_output = true;
