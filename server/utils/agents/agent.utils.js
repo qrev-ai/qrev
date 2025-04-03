@@ -209,6 +209,17 @@ async function _deleteAgent(
         throw new CustomError(`Agent not found`, fileName, funcName);
     }
 
+    let uploadedFileS3Link = agentDoc.uploaded_file_s3_link || null;
+    if (uploadedFileS3Link) {
+        let [deleteS3Resp, deleteS3Err] = await S3Utils.deleteFile(
+            { fileName: uploadedFileS3Link },
+            { txid }
+        );
+        if (deleteS3Err) {
+            logg.error(`Error deleting uploaded file from S3: ${deleteS3Err}`);
+        }
+    }
+
     logg.info(`agentDoc deleted: ${JSON.stringify(agentDoc)}`);
     logg.info(`ended`);
     return [agentDoc, null];
