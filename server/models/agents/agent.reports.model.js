@@ -16,6 +16,12 @@ const AgentReportsSchema = new Schema({
 
     summary: [],
     sources: [],
+    /*
+     * Added "queries" on 3rd Apr 2025.
+     * this will store the search queries used to generate the report.
+     * This is not used or shown anywhere. It is just for internal reference.
+     */
+    queries: [],
 
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
