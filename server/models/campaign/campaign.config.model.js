@@ -106,6 +106,7 @@ const CampaignConfigSchema = new Schema({
      */
     brand_doc: {},
     pain_points: [],
+    services_offered: [],
 
     /*
     * Added "linkedin_connect" on 16th Jan 2025.
