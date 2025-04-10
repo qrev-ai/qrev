@@ -27,6 +27,15 @@ const AgentArtifactSchema = new Schema({
     */
     review_status: {},
 
+    /*
+     * Added on 10 Apr 2025
+     * This field will store the most suitable service name for the artifact
+     * Agent reports will generate a report called "Most Suitable Service"
+     * This will also generate a name.
+     * We will store that name here.
+     */
+    most_suitable_service_name: String,
+
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });
