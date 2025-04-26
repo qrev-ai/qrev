@@ -1,7 +1,7 @@
 import { functionWrapper } from "../../std/wrappers.js";
 import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
-import { Contact } from "../../models/crm/contact.model.js";
+import { Contact } from "../../models/crm/old.contact.model.js";
 
 const fileName = "CRM Contact Utils";
 
