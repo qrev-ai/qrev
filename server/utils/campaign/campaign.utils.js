@@ -10,7 +10,7 @@ import { SequenceModel } from "../../models/campaign/sequence.model.js";
 import { SequenceStep } from "../../models/campaign/sequence.step.model.js";
 import { IntermediateProspectData } from "../../models/campaign/intermediate.prospect.data.model.js";
 import { SequenceProspect } from "../../models/campaign/sequence.prospect.model.js";
-import * as CrmContactUtils from "../crm/contact.utils.js";
+import * as CrmContactUtils from "../crm/old.contact.utils.js";
 import * as SlotGen_utils from "../slot/open_link_free_slots.js";
 import { SequenceProspectMessageSchedule } from "../../models/campaign/sequence.prospect.message_schedule.model.js";
 import { CampaignConfig } from "../../models/campaign/campaign.config.model.js";
