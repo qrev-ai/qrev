@@ -9,6 +9,10 @@ import ZoomRouter from "./routes/integration/zoom.routes.js";
 import QaiBotRouter from "./routes/qai/qai.routes.js";
 import CampaignRouter from "./routes/campaign/campaign.routes.js";
 import AgentRouter from "./routes/agents/agent.routes.js";
+import CompanyRouter from "./routes/crm/company.routes.js";
+import ContactRouter from "./routes/crm/contact.routes.js";
+import OpportunityRouter from "./routes/crm/opportunity.routes.js";
+import ResellerRouter from "./routes/crm/reseller.routes.js";
 
 export function setRoutes(app) {
     app.get("/ping", (req, res) => {
@@ -25,4 +29,8 @@ export function setRoutes(app) {
     app.use("/api/qai", QaiBotRouter);
     app.use("/api/campaign", CampaignRouter);
     app.use("/api/agent", AgentRouter);
+    app.use("/api/crm/company", CompanyRouter);
+    app.use("/api/crm/contact", ContactRouter);
+    app.use("/api/crm/opportunity", OpportunityRouter);
+    app.use("/api/crm/reseller", ResellerRouter);
 }
