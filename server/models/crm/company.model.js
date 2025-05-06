@@ -11,6 +11,7 @@ const CompanySchema = new Schema({
     phone_number: { type: String },
     employees_count: { type: Number },
     annual_revenue: { type: Number },
+    annual_revenue_currency: { type: String },
     status: {
         type: String,
         enum: ["active", "inactive", "lead"],

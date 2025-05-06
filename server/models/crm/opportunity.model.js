@@ -7,6 +7,7 @@ const OpportunitySchema = new Schema({
 
     name: { type: String, required: true },
     amount: { type: Number, default: 0 },
+    amount_currency: { type: String },
     stage: {
         type: String,
         enum: [
@@ -21,9 +22,9 @@ const OpportunitySchema = new Schema({
     },
     close_date: { type: Date },
     probability: { type: Number, min: 0, max: 100, default: 0 },
-    contact: { type: Schema.Types.ObjectId, ref: "contact" },
-    company: { type: Schema.Types.ObjectId, ref: "company" },
-    reseller: { type: Schema.Types.ObjectId, ref: "reseller" },
+    contact: { type: Schema.Types.ObjectId, ref: "crm.contact" },
+    company: { type: Schema.Types.ObjectId, ref: "crm.company" },
+    reseller: { type: Schema.Types.ObjectId, ref: "crm.reseller" },
     description: { type: String },
     source: { type: String },
     priority: {
