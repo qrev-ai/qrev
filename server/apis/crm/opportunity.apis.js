@@ -10,17 +10,17 @@ export async function createOpportunityApi(req, res, next) {
     const logg = logger.child({ txid, funcName });
     logg.info(`started with body:`, req.body);
 
-    let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) {
-        logg.info(`ended unsuccessfully`);
-        throw new CustomError(
-            `Missing userId from decoded access token`,
-            fileName,
-            funcName,
-            400,
-            true
-        );
-    }
+    // let userId = req.user && req.user.userId ? req.user.userId : null;
+    // if (!userId) {
+    //     logg.info(`ended unsuccessfully`);
+    //     throw new CustomError(
+    //         `Missing userId from decoded access token`,
+    //         fileName,
+    //         funcName,
+    //         400,
+    //         true
+    //     );
+    // }
 
     // api has account_id in query
     let { account_id: accountId } = req.query;
@@ -68,17 +68,17 @@ export async function getOpportunitiesApi(req, res, next) {
     const logg = logger.child({ txid, funcName });
     logg.info(`started with query:`, req.query);
 
-    let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) {
-        logg.info(`ended unsuccessfully`);
-        throw new CustomError(
-            `Missing userId from decoded access token`,
-            fileName,
-            funcName,
-            400,
-            true
-        );
-    }
+    // let userId = req.user && req.user.userId ? req.user.userId : null;
+    // if (!userId) {
+    //     logg.info(`ended unsuccessfully`);
+    //     throw new CustomError(
+    //         `Missing userId from decoded access token`,
+    //         fileName,
+    //         funcName,
+    //         400,
+    //         true
+    //     );
+    // }
 
     // api has account_id in query, optional filters and pagination
     let {
@@ -155,17 +155,17 @@ export async function deleteOpportunityApi(req, res, next) {
     const logg = logger.child({ txid, funcName });
     logg.info(`started with query:`, req.query);
 
-    let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) {
-        logg.info(`ended unsuccessfully`);
-        throw new CustomError(
-            `Missing userId from decoded access token`,
-            fileName,
-            funcName,
-            400,
-            true
-        );
-    }
+    // let userId = req.user && req.user.userId ? req.user.userId : null;
+    // if (!userId) {
+    //     logg.info(`ended unsuccessfully`);
+    //     throw new CustomError(
+    //         `Missing userId from decoded access token`,
+    //         fileName,
+    //         funcName,
+    //         400,
+    //         true
+    //     );
+    // }
 
     // api has account_id and opportunity_id in query
     let { account_id: accountId, opportunity_id: opportunityId } = req.query;
@@ -218,17 +218,17 @@ export async function getOpportunityByIdApi(req, res, next) {
     const logg = logger.child({ txid, funcName });
     logg.info(`started with query:`, req.query);
 
-    let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) {
-        logg.info(`ended unsuccessfully`);
-        throw new CustomError(
-            `Missing userId from decoded access token`,
-            fileName,
-            funcName,
-            400,
-            true
-        );
-    }
+    // let userId = req.user && req.user.userId ? req.user.userId : null;
+    // if (!userId) {
+    //     logg.info(`ended unsuccessfully`);
+    //     throw new CustomError(
+    //         `Missing userId from decoded access token`,
+    //         fileName,
+    //         funcName,
+    //         400,
+    //         true
+    //     );
+    // }
 
     // api has account_id and opportunity_id in query
     let { account_id: accountId, opportunity_id: opportunityId } = req.query;
@@ -280,17 +280,17 @@ export async function getOpportunityAiAnalysisApi(req, res, next) {
     const logg = logger.child({ txid, funcName });
     logg.info(`started with query:`, req.query);
 
-    let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) {
-        logg.info(`ended unsuccessfully`);
-        throw new CustomError(
-            `Missing userId from decoded access token`,
-            fileName,
-            funcName,
-            400,
-            true
-        );
-    }
+    // let userId = req.user && req.user.userId ? req.user.userId : null;
+    // if (!userId) {
+    //     logg.info(`ended unsuccessfully`);
+    //     throw new CustomError(
+    //         `Missing userId from decoded access token`,
+    //         fileName,
+    //         funcName,
+    //         400,
+    //         true
+    //     );
+    // }
 
     // api has account_id in query
     let { account_id: accountId } = req.query;
@@ -331,17 +331,17 @@ export async function getOpportunityPipelineTimelineApi(req, res, next) {
     const logg = logger.child({ txid, funcName });
     logg.info(`started with query:`, req.query);
 
-    let userId = req.user && req.user.userId ? req.user.userId : null;
-    if (!userId) {
-        logg.info(`ended unsuccessfully`);
-        throw new CustomError(
-            `Missing userId from decoded access token`,
-            fileName,
-            funcName,
-            400,
-            true
-        );
-    }
+    // let userId = req.user && req.user.userId ? req.user.userId : null;
+    // if (!userId) {
+    //     logg.info(`ended unsuccessfully`);
+    //     throw new CustomError(
+    //         `Missing userId from decoded access token`,
+    //         fileName,
+    //         funcName,
+    //         400,
+    //         true
+    //     );
+    // }
 
     // api has account_id in query
     let { account_id: accountId } = req.query;
