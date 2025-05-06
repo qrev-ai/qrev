@@ -30,4 +30,8 @@ const ResellerSchema = new Schema({
     updated_on: { type: Date, default: Date.now },
 });
 
-export const Reseller = mongoose.model("reseller", ResellerSchema);
+export const Reseller = mongoose.model(
+    "crm.reseller",
+    ResellerSchema,
+    "crm.reseller"
+);

@@ -27,4 +27,8 @@ const CompanySchema = new Schema({
     updated_on: { type: Date, default: Date.now },
 });
 
-export const Company = mongoose.model("company", CompanySchema);
+export const Company = mongoose.model(
+    "crm.company",
+    CompanySchema,
+    "crm.company"
+);

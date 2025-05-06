@@ -44,4 +44,8 @@ const OpportunitySchema = new Schema({
     updated_on: { type: Date, default: Date.now },
 });
 
-export const Opportunity = mongoose.model("opportunity", OpportunitySchema);
+export const Opportunity = mongoose.model(
+    "crm.opportunity",
+    OpportunitySchema,
+    "crm.opportunity"
+);

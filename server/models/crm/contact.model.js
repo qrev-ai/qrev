@@ -29,4 +29,8 @@ const ContactSchema = new Schema({
     updated_on: { type: Date, default: Date.now },
 });
 
-export const Contact = mongoose.model("contact", ContactSchema);
+export const Contact = mongoose.model(
+    "crm.contact",
+    ContactSchema,
+    "crm.contact"
+);
