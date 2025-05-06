@@ -9,7 +9,6 @@ const ContactSchema = new Schema({
     last_name: { type: String, required: true },
     email: { type: String, required: true },
     phone_number: { type: String },
-    mobile_number: { type: String },
     job_title: { type: String },
     department: { type: String },
     status: {
