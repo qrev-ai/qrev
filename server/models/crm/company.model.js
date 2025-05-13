@@ -6,6 +6,12 @@ const CompanySchema = new Schema({
     account: { type: Schema.Types.ObjectId, ref: "account" },
 
     name: { type: String, required: true },
+    domain: { type: String },
+    region: { type: String },
+    certifications: { type: [String] },
+    contact_person_name: { type: String },
+    contact_person_email: { type: String },
+    service_zip_codes: { type: [String] },
     industry: { type: String },
     website: { type: String },
     phone_number: { type: String },
@@ -14,7 +20,7 @@ const CompanySchema = new Schema({
     annual_revenue_currency: { type: String },
     status: {
         type: String,
-        enum: ["active", "inactive", "lead"],
+        enum: ["active", "inactive"],
         default: "active",
     },
     address: { type: String },
