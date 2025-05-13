@@ -44,8 +44,8 @@ async function _getContacts(
         };
     }
 
-    if (filters.status) {
-        query.status = filters.status;
+    if (filters.statuses && filters.statuses.length > 0) {
+        query.status = { $in: filters.statuses };
     }
 
     if (filters.company) {
@@ -53,22 +53,34 @@ async function _getContacts(
     }
 
     if (filters.reseller) {
-        query.reseller = filters.reseller;
+        // the value can be "assigned" or "unassigned" or "all"
+        if (filters.reseller === "assigned") {
+            query.reseller = { $ne: null, $exists: true };
+        } else if (filters.reseller === "unassigned") {
+            // value is either null or undefined
+            query.reseller = { $exists: false };
+        } else if (filters.reseller === "all") {
+            // do nothing
+        } else {
+            logg.info(`Invalid value for reseller: ${filters.reseller}`);
+            throw `Invalid value for reseller: ${filters.reseller}`;
+        }
     }
 
-    if (filters.search) {
-        query.$or = [
-            { first_name: { $regex: filters.search, $options: "i" } },
-            { last_name: { $regex: filters.search, $options: "i" } },
-            { email: { $regex: filters.search, $options: "i" } },
-        ];
-    }
+    // if (filters.search) {
+    //     query.$or = [
+    //         { first_name: { $regex: filters.search, $options: "i" } },
+    //         { last_name: { $regex: filters.search, $options: "i" } },
+    //         { email: { $regex: filters.search, $options: "i" } },
+    //     ];
+    // }
 
     // Set up pagination
     const page = parseInt(pagination.page) || 1;
     const limit = parseInt(pagination.limit) || 10;
     const skip = (page - 1) * limit;
 
+    logg.info(`Query: ${JSON.stringify(query)}`);
     // Execute query
     const totalCount = await Contact.countDocuments(query);
     const contacts = await Contact.find(query)
@@ -78,6 +90,17 @@ async function _getContacts(
         .skip(skip)
         .limit(limit)
         .lean();
+
+    logg.info(`Total Contacts Count: ${totalCount}`);
+    if (contacts.length < 5) {
+        logg.info(`Contacts: ${JSON.stringify(contacts)}`);
+    }
+    // if reseller is not found, then set it to null
+    contacts.forEach((contact) => {
+        if (!contact.reseller) {
+            contact.reseller = null;
+        }
+    });
 
     const result = {
         contacts,

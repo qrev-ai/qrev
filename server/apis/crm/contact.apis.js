@@ -8,7 +8,7 @@ export async function createContactApi(req, res, next) {
     const txid = req.id;
     const funcName = "createContactApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with body:`, req.body);
+    logg.info(`started with body: ${JSON.stringify(req.body)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -87,7 +87,7 @@ export async function getContactsApi(req, res, next) {
     const txid = req.id;
     const funcName = "getContactsApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -106,7 +106,7 @@ export async function getContactsApi(req, res, next) {
         account_id: accountId,
         start_date: startDate,
         end_date: endDate,
-        status,
+        statuses,
         company,
         reseller,
         search,
@@ -131,7 +131,7 @@ export async function getContactsApi(req, res, next) {
         filters.endDate = endDate;
     }
 
-    if (status) filters.status = status;
+    if (statuses) filters.statuses = statuses.split(",");
     if (company) filters.company = company;
     if (reseller) filters.reseller = reseller;
     if (search) filters.search = search;
@@ -139,6 +139,8 @@ export async function getContactsApi(req, res, next) {
     const pagination = {};
     if (page) pagination.page = page;
     if (limit) pagination.limit = limit;
+
+    logg.info(`Filters: ${JSON.stringify(filters)}`);
 
     let [result, getErr] = await ContactUtils.getContacts(
         { accountId, filters, pagination },
@@ -163,7 +165,7 @@ export async function deleteContactApi(req, res, next) {
     const txid = req.id;
     const funcName = "deleteContactApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -225,7 +227,7 @@ export async function getContactByIdApi(req, res, next) {
     const txid = req.id;
     const funcName = "getContactByIdApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
