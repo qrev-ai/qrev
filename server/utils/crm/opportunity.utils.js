@@ -110,7 +110,7 @@ async function _getOpportunities(
     // Execute query
     const totalCount = await Opportunity.countDocuments(query);
     const opportunities = await Opportunity.find(query)
-        .populate("company", "name")
+        .populate("company", "name website")
         .populate("contact", "first_name last_name email")
         .populate("reseller", "first_name last_name")
         .sort({ created_on: -1 })
