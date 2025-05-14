@@ -54,8 +54,12 @@ async function _getOpportunities(
         };
     }
 
-    if (filters.stage) {
-        query.stage = filters.stage;
+    if (filters.stages && filters.stages.length > 0) {
+        if (filters.stages.includes("all")) {
+            // do nothing
+        } else {
+            query.stage = { $in: filters.stages };
+        }
     }
 
     if (filters.company) {
@@ -102,6 +106,7 @@ async function _getOpportunities(
     const limit = parseInt(pagination.limit) || 10;
     const skip = (page - 1) * limit;
 
+    logg.info(`query: ${JSON.stringify(query)}`);
     // Execute query
     const totalCount = await Opportunity.countDocuments(query);
     const opportunities = await Opportunity.find(query)
@@ -112,6 +117,11 @@ async function _getOpportunities(
         .skip(skip)
         .limit(limit)
         .lean();
+
+    logg.info(`Opportunity count: ${totalCount}`);
+    if (totalCount < 5) {
+        logg.info(`opportunities: ${JSON.stringify(opportunities)}`);
+    }
 
     const result = {
         opportunities,

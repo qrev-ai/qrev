@@ -8,7 +8,7 @@ export async function createOpportunityApi(req, res, next) {
     const txid = req.id;
     const funcName = "createOpportunityApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with body:`, req.body);
+    logg.info(`started with body: ${JSON.stringify(req.body)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -66,7 +66,7 @@ export async function getOpportunitiesApi(req, res, next) {
     const txid = req.id;
     const funcName = "getOpportunitiesApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -85,7 +85,7 @@ export async function getOpportunitiesApi(req, res, next) {
         account_id: accountId,
         start_date: startDate,
         end_date: endDate,
-        stage,
+        stages,
         company,
         contact,
         reseller,
@@ -115,7 +115,7 @@ export async function getOpportunitiesApi(req, res, next) {
         filters.endDate = endDate;
     }
 
-    if (stage) filters.stage = stage;
+    if (stages) filters.stages = stages.split(",");
     if (company) filters.company = company;
     if (contact) filters.contact = contact;
     if (reseller) filters.reseller = reseller;
@@ -153,7 +153,7 @@ export async function deleteOpportunityApi(req, res, next) {
     const txid = req.id;
     const funcName = "deleteOpportunityApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -216,7 +216,7 @@ export async function getOpportunityByIdApi(req, res, next) {
     const txid = req.id;
     const funcName = "getOpportunityByIdApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -278,7 +278,7 @@ export async function getOpportunityAiAnalysisApi(req, res, next) {
     const txid = req.id;
     const funcName = "getOpportunityAiAnalysisApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -329,7 +329,7 @@ export async function getOpportunityPipelineTimelineApi(req, res, next) {
     const txid = req.id;
     const funcName = "getOpportunityPipelineTimelineApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
