@@ -8,7 +8,7 @@ export async function createResellerApi(req, res, next) {
     const txid = req.id;
     const funcName = "createResellerApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with body:`, req.body);
+    logg.info(`started with body: ${JSON.stringify(req.body)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -87,7 +87,7 @@ export async function getResellersApi(req, res, next) {
     const txid = req.id;
     const funcName = "getResellersApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -165,7 +165,7 @@ export async function deleteResellerApi(req, res, next) {
     const txid = req.id;
     const funcName = "deleteResellerApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -227,7 +227,7 @@ export async function getResellerByIdApi(req, res, next) {
     const txid = req.id;
     const funcName = "getResellerByIdApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
@@ -289,7 +289,7 @@ export async function getResellerLeaderboardApi(req, res, next) {
     const txid = req.id;
     const funcName = "getResellerLeaderboardApi";
     const logg = logger.child({ txid, funcName });
-    logg.info(`started with query:`, req.query);
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
 
     // let userId = req.user && req.user.userId ? req.user.userId : null;
     // if (!userId) {
