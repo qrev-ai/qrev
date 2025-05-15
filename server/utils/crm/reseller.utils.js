@@ -34,7 +34,7 @@ async function _getResellers(
 ) {
     logg.info(`started`);
 
-    const query = { account: accountId };
+    const query = { account: accountId, is_deleted: { $ne: true } };
 
     // Apply filters
     if (filters.startDate && filters.endDate) {
@@ -111,16 +111,18 @@ async function _deleteReseller(
     const reseller = await Reseller.findOne({
         _id: resellerId,
         account: accountId,
+        is_deleted: { $ne: true },
     }).lean();
 
     if (!reseller) {
         throw `Reseller not found with id: ${resellerId}`;
     }
 
-    const deletedReseller = await Reseller.findOneAndDelete({
-        _id: resellerId,
-        account: accountId,
-    }).lean();
+    const deletedReseller = await Reseller.findOneAndUpdate(
+        { _id: resellerId, account: accountId },
+        { is_deleted: true },
+        { new: true }
+    ).lean();
 
     logg.info(`ended`);
     return [deletedReseller, null];

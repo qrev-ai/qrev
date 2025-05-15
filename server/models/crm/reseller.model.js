@@ -27,6 +27,7 @@ const ResellerSchema = new Schema({
     postal_code: { type: String },
     country: { type: String },
 
+    is_deleted: { type: Boolean, default: false },
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });

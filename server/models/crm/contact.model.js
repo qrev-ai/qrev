@@ -34,6 +34,7 @@ const ContactSchema = new Schema({
     country: { type: String },
     notes: { type: String },
 
+    is_deleted: { type: Boolean, default: false },
     created_on: { type: Date, default: Date.now },
     updated_on: { type: Date, default: Date.now },
 });

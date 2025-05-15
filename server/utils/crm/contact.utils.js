@@ -34,7 +34,7 @@ async function _getContacts(
 ) {
     logg.info(`started`);
 
-    const query = { account: accountId };
+    const query = { account: accountId, is_deleted: { $ne: true } };
 
     // Apply filters
     if (filters.startDate && filters.endDate) {
@@ -137,10 +137,11 @@ async function _deleteContact(
         throw `Contact not found with id: ${contactId}`;
     }
 
-    const deletedContact = await Contact.findOneAndDelete({
-        _id: contactId,
-        account: accountId,
-    }).lean();
+    const deletedContact = await Contact.findOneAndUpdate(
+        { _id: contactId, account: accountId },
+        { is_deleted: true },
+        { new: true }
+    ).lean();
 
     logg.info(`ended`);
     return [deletedContact, null];

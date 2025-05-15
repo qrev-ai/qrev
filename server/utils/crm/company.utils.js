@@ -34,7 +34,7 @@ async function _getCompanies(
 ) {
     logg.info(`started`);
 
-    const query = { account: accountId };
+    const query = { account: accountId, is_deleted: { $ne: true } };
 
     // Apply filters
     if (filters.startDate && filters.endDate) {
@@ -108,10 +108,11 @@ async function _deleteCompany(
         throw `Company not found with id: ${companyId}`;
     }
 
-    const deletedCompany = await Company.findOneAndDelete({
-        _id: companyId,
-        account: accountId,
-    }).lean();
+    const deletedCompany = await Company.findOneAndUpdate(
+        { _id: companyId, account: accountId },
+        { is_deleted: true },
+        { new: true }
+    ).lean();
 
     logg.info(`ended`);
     return [deletedCompany, null];

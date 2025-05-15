@@ -44,7 +44,7 @@ async function _getOpportunities(
 ) {
     logg.info(`started`);
 
-    const query = { account: accountId };
+    const query = { account: accountId, is_deleted: { $ne: true } };
 
     // Apply filters
     if (filters.startDate && filters.endDate) {
@@ -152,16 +152,22 @@ async function _deleteOpportunity(
     const opportunity = await Opportunity.findOne({
         _id: opportunityId,
         account: accountId,
+        is_deleted: { $ne: true },
     }).lean();
 
     if (!opportunity) {
         throw `Opportunity not found with id: ${opportunityId}`;
     }
 
-    const deletedOpportunity = await Opportunity.findOneAndDelete({
-        _id: opportunityId,
-        account: accountId,
-    }).lean();
+    const deletedOpportunity = await Opportunity.findOneAndUpdate(
+        {
+            _id: opportunityId,
+            account: accountId,
+            is_deleted: { $ne: true },
+        },
+        { is_deleted: true },
+        { new: true }
+    ).lean();
 
     logg.info(`ended`);
     return [deletedOpportunity, null];
