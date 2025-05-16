@@ -14,11 +14,11 @@ export async function signAccessToken(req, res, next) {
             return;
         }
 
-        // if (process.env.LOCAL_COMPUTER === "yes") {
-        //     _addTestUserToReq({ req, logg });
-        //     next();
-        //     return;
-        // }
+        if (process.env.LOCAL_COMPUTER === "yes") {
+            _addTestUserToReq({ req, logg });
+            next();
+            return;
+        }
 
         const authHeader = req.headers["authorization"];
         const accessToken = authHeader && authHeader.split(" ")[1];

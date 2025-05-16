@@ -1,7 +1,7 @@
 import { functionWrapper } from "../../std/wrappers.js";
 import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
-import { Opportunity } from "../../models/crm/opportunity.model.js";
+import { Opportunity } from "../../models/crm/opportunity/opportunity.model.js";
 
 const fileName = "Opportunity Utils";
 
@@ -112,7 +112,6 @@ async function _getOpportunities(
     const opportunities = await Opportunity.find(query)
         .populate("company", "name website")
         .populate("contact", "first_name last_name email")
-        .populate("reseller", "first_name last_name")
         .sort({ created_on: -1 })
         .skip(skip)
         .limit(limit)
