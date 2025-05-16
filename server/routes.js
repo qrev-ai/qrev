@@ -13,6 +13,7 @@ import CompanyRouter from "./routes/crm/company.routes.js";
 import ContactRouter from "./routes/crm/contact.routes.js";
 import OpportunityRouter from "./routes/crm/opportunity.routes.js";
 import ResellerRouter from "./routes/crm/reseller.routes.js";
+import CrmRouter from "./routes/crm/crm.routes.js";
 
 export function setRoutes(app) {
     app.get("/ping", (req, res) => {
@@ -33,4 +34,5 @@ export function setRoutes(app) {
     app.use("/api/crm/contact", ContactRouter);
     app.use("/api/crm/opportunity", OpportunityRouter);
     app.use("/api/crm/reseller", ResellerRouter);
+    app.use("/api/crm/crm", CrmRouter);
 }

@@ -16,7 +16,6 @@ export const FreeRoutes = [
     "/api/test/test",
     "/api/agent/execution_update_async",
     "/api/agent/public",
-    "/api/crm",
 ];
 
 export const isFreeRoute = (path) => {
