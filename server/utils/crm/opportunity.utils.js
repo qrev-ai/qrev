@@ -2,6 +2,12 @@ import { functionWrapper } from "../../std/wrappers.js";
 import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { Opportunity } from "../../models/crm/opportunity/opportunity.model.js";
+import { Pipeline } from "../../models/crm/opportunity/pipeline.model.js";
+import { PipelineStage } from "../../models/crm/opportunity/pipeline.stage.model.js";
+import {
+    DEFAULT_PIPELINE_NAME,
+    DEFAULT_PIPELINE_STAGES,
+} from "../../config/qrev_crm/opportunity.config.js";
 
 const fileName = "Opportunity Utils";
 
@@ -39,66 +45,29 @@ export const createOpportunity = functionWrapper(
 );
 
 async function _getOpportunities(
-    { accountId, filters = {}, pagination = {} },
+    { accountId, filters = {}, pagination = {}, pipelineId },
     { logg, txid, funcName }
 ) {
     logg.info(`started`);
-
-    const query = { account: accountId, is_deleted: { $ne: true } };
-
-    // Apply filters
-    if (filters.startDate && filters.endDate) {
-        query.created_on = {
-            $gte: new Date(filters.startDate),
-            $lte: new Date(filters.endDate),
-        };
+    if (!pipelineId) {
+        throw `Missing pipeline_id`;
     }
+    if (!accountId) {
+        throw `Missing account_id`;
+    }
+
+    const query = {
+        account: accountId,
+        is_deleted: { $ne: true },
+        pipeline: pipelineId,
+    };
 
     if (filters.stages && filters.stages.length > 0) {
         if (filters.stages.includes("all")) {
             // do nothing
         } else {
-            query.stage = { $in: filters.stages };
+            query.pipeline_stage = { $in: filters.stages };
         }
-    }
-
-    if (filters.company) {
-        query.company = filters.company;
-    }
-
-    if (filters.contact) {
-        query.contact = filters.contact;
-    }
-
-    if (filters.reseller) {
-        query.reseller = filters.reseller;
-    }
-
-    if (filters.minAmount !== undefined) {
-        query.amount = { ...(query.amount || {}), $gte: filters.minAmount };
-    }
-
-    if (filters.maxAmount !== undefined) {
-        query.amount = { ...(query.amount || {}), $lte: filters.maxAmount };
-    }
-
-    if (filters.minProbability !== undefined) {
-        query.probability = {
-            ...(query.probability || {}),
-            $gte: filters.minProbability,
-        };
-    }
-
-    if (filters.priority) {
-        query.priority = filters.priority;
-    }
-
-    if (filters.search) {
-        query.$or = [
-            { name: { $regex: filters.search, $options: "i" } },
-            { description: { $regex: filters.search, $options: "i" } },
-            { source: { $regex: filters.search, $options: "i" } },
-        ];
     }
 
     // Set up pagination
@@ -112,6 +81,9 @@ async function _getOpportunities(
     const opportunities = await Opportunity.find(query)
         .populate("company", "name website")
         .populate("contact", "first_name last_name email")
+        .populate("owner", "profile_first_name profile_last_name email")
+        .populate("pipeline_stage", "name probability")
+        .populate("created_by", "profile_first_name profile_last_name email")
         .sort({ created_on: -1 })
         .skip(skip)
         .limit(limit)
@@ -347,4 +319,72 @@ export const getOpportunityAiAnalysis = functionWrapper(
     fileName,
     "getOpportunityAiAnalysis",
     _getOpportunityAiAnalysis
+);
+
+async function _getOrSetupPipeline(
+    { accountId, userId },
+    { logg, txid, funcName }
+) {
+    logg.info(`started`);
+
+    let pipelineQuery = { account: accountId, is_deleted: { $ne: true } };
+    let pipelines = await Pipeline.find(pipelineQuery).lean();
+    let defaultPipeline = pipelines.find(
+        (pipeline) => pipeline.is_default_pipeline
+    );
+
+    if (!defaultPipeline) {
+        let pipelineDoc = {
+            name: DEFAULT_PIPELINE_NAME,
+            account: accountId,
+            display_order: 0,
+            is_default_pipeline: true,
+            created_by: userId,
+        };
+        let insertResps = await Pipeline.insertMany([pipelineDoc]);
+        defaultPipeline = insertResps[0];
+    }
+
+    let defPipelineId = defaultPipeline._id;
+
+    let defPipelineStages = await PipelineStage.find({
+        ...pipelineQuery,
+        pipeline: defPipelineId,
+    }).lean();
+
+    if (defPipelineStages.length === 0) {
+        let defPipelineStageDocs = DEFAULT_PIPELINE_STAGES.map((stage) => {
+            return {
+                ...stage,
+                account: accountId,
+                pipeline: defPipelineId,
+            };
+        });
+        let insertResps = await PipelineStage.insertMany(defPipelineStageDocs);
+        defPipelineStages = insertResps;
+    }
+
+    let result = {
+        pipeline: {
+            name: defaultPipeline.name,
+            _id: defaultPipeline._id,
+        },
+        pipeline_stages: defPipelineStages.map((stage) => {
+            return {
+                _id: stage._id,
+                name: stage.name,
+                display_order: stage.display_order,
+                probability: stage.probability,
+            };
+        }),
+    };
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getOrSetupPipeline = functionWrapper(
+    fileName,
+    "getOrSetupPipeline",
+    _getOrSetupPipeline
 );

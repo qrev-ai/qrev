@@ -16,5 +16,9 @@ router.get(
     "/pipeline-timeline",
     apiWrapper(OpportunityApis.getOpportunityPipelineTimelineApi)
 );
+router.get(
+    "/get-or-setup-pipeline",
+    apiWrapper(OpportunityApis.getOrSetupPipelineApi)
+);
 
 export default router;
