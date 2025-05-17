@@ -414,3 +414,139 @@ export async function getOrSetupPipelineApi(req, res, next) {
         pipeline_info: pipelineInfo,
     });
 }
+
+export async function getPipelineSettingInfoApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getPipelineSettingInfoApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let { account_id: accountId, pipeline_id: pipelineId } = req.query;
+
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    if (!pipelineId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing pipeline_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let [pipelineSettingInfo, getErr] =
+        await OpportunityUtils.getPipelineSettingInfo(
+            { accountId, pipelineId },
+            { txid }
+        );
+
+    if (getErr) {
+        logg.info(`ended unsuccessfully`);
+        throw getErr;
+    }
+
+    logg.info(`ended`);
+    res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        txid,
+        pipeline_setting_info: pipelineSettingInfo,
+    });
+}
+
+export async function updatePipelineSettingInfoApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "updatePipelineSettingInfoApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
+    logg.info(`started with body: ${JSON.stringify(req.body)}`);
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let { account_id: accountId, pipeline_id: pipelineId } = req.query;
+
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+    if (!pipelineId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing pipeline_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    // Extract the new request body format
+    let {
+        stages_to_be_deleted: stagesToBeDeleted = [],
+        stages_to_be_added: stagesToBeAdded = [],
+        stages_to_be_updated: stagesToBeUpdated = [],
+    } = req.body;
+
+    let [updatedPipelineSettingInfo, updateErr] =
+        await OpportunityUtils.updatePipelineSettingInfo(
+            {
+                accountId,
+                pipelineId,
+                stagesToBeDeleted,
+                stagesToBeAdded,
+                stagesToBeUpdated,
+            },
+            { txid }
+        );
+
+    if (updateErr) {
+        logg.info(`ended unsuccessfully`);
+        throw updateErr;
+    }
+
+    logg.info(`ended`);
+    res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        txid,
+    });
+}

@@ -343,6 +343,8 @@ async function _getOrSetupPipeline(
         };
         let insertResps = await Pipeline.insertMany([pipelineDoc]);
         defaultPipeline = insertResps[0];
+    } else {
+        logg.info(`default pipeline: ${JSON.stringify(defaultPipeline)}`);
     }
 
     let defPipelineId = defaultPipeline._id;
@@ -387,4 +389,216 @@ export const getOrSetupPipeline = functionWrapper(
     fileName,
     "getOrSetupPipeline",
     _getOrSetupPipeline
+);
+
+async function _getPipelineSettingInfo(
+    { accountId, pipelineId },
+    { logg, txid, funcName }
+) {
+    logg.info(`started`);
+
+    let pipelineDoc = await Pipeline.findOne({
+        _id: pipelineId,
+        account: accountId,
+        is_deleted: { $ne: true },
+    }).lean();
+
+    if (!pipelineDoc) {
+        throw `Pipeline not found with id: ${pipelineId}`;
+    }
+
+    let pipelineStages = await PipelineStage.find({
+        pipeline: pipelineId,
+        is_deleted: { $ne: true },
+    })
+        .sort({ display_order: 1 })
+        .lean();
+
+    // get count of opportunities in each stage
+    let opportunities = await Opportunity.find({
+        pipeline: pipelineId,
+        is_deleted: { $ne: true },
+    })
+        .select("pipeline_stage")
+        .lean();
+
+    // result: [{stage_id, stage_name, used_in_count, probability, display_order }]
+    let result = pipelineStages.map((stage) => {
+        return {
+            stage_id: stage._id.toString(),
+            stage_name: stage.name,
+            used_in_count: opportunities.filter(
+                (opp) => opp.pipeline_stage.toString() === stage._id.toString()
+            ).length,
+            probability: stage.probability || 0,
+            display_order: stage.display_order,
+        };
+    });
+
+    logg.info(`result: ${JSON.stringify(result)}`);
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const getPipelineSettingInfo = functionWrapper(
+    fileName,
+    "getPipelineSettingInfo",
+    _getPipelineSettingInfo
+);
+
+async function _updatePipelineSettingInfo(
+    {
+        accountId,
+        pipelineId,
+        stagesToBeDeleted = [],
+        stagesToBeAdded = [],
+        stagesToBeUpdated = [],
+    },
+    { logg, txid, funcName }
+) {
+    logg.info(`started`);
+
+    // Validate input
+    if (
+        !Array.isArray(stagesToBeDeleted) ||
+        !Array.isArray(stagesToBeAdded) ||
+        !Array.isArray(stagesToBeUpdated)
+    ) {
+        throw new CustomError(
+            "Invalid pipeline setting info format",
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    // Get current pipeline stages
+    const existingStages = await PipelineStage.find({
+        pipeline: pipelineId,
+        account: accountId,
+        is_deleted: { $ne: true },
+    }).lean();
+
+    // Get count of opportunities in each stage
+    const opportunities = await Opportunity.find({
+        pipeline: pipelineId,
+        is_deleted: { $ne: true },
+    })
+        .select("pipeline_stage")
+        .lean();
+
+    // Count opportunities per stage
+    const opportunitiesPerStage = {};
+    opportunities.forEach((opp) => {
+        const stageId = opp.pipeline_stage.toString();
+        opportunitiesPerStage[stageId] =
+            (opportunitiesPerStage[stageId] || 0) + 1;
+    });
+
+    // Process stages to be added
+    const stagesToAdd = stagesToBeAdded.map((stage) => ({
+        name: stage.stage_name,
+        display_order: stage.display_order,
+        probability: stage.probability || 0,
+        account: accountId,
+        pipeline: pipelineId,
+    }));
+
+    // Process stages to be updated
+    const stagesToUpdate = stagesToBeUpdated.map((stage) => ({
+        _id: stage.stage_id,
+        name: stage.stage_name,
+        display_order: stage.display_order,
+        probability: stage.probability || 0,
+    }));
+
+    // Process stages to be deleted
+    const stageIdsToDelete = [];
+    for (const stage of stagesToBeDeleted) {
+        const stageId = stage.stage_id;
+        const usedInCount = opportunitiesPerStage[stageId] || 0;
+
+        // Find stage name for error message
+        const existingStage = existingStages.find(
+            (s) => s._id.toString() === stageId
+        );
+        const stageName = existingStage ? existingStage.name : "Unknown";
+
+        if (usedInCount > 0) {
+            throw new CustomError(
+                `Cannot delete stage "${stageName}" as it is used by ${usedInCount} opportunities`,
+                fileName,
+                funcName,
+                400,
+                true
+            );
+        }
+
+        stageIdsToDelete.push(stageId);
+    }
+
+    // Perform database operations
+
+    // Add new stages
+    if (stagesToAdd.length > 0) {
+        await PipelineStage.insertMany(stagesToAdd);
+    }
+
+    // Update existing stages
+    for (const stage of stagesToUpdate) {
+        await PipelineStage.updateOne(
+            { _id: stage._id, account: accountId, pipeline: pipelineId },
+            {
+                $set: {
+                    name: stage.name,
+                    display_order: stage.display_order,
+                    probability: stage.probability,
+                    updated_on: new Date(),
+                },
+            }
+        );
+    }
+
+    // Delete stages
+    if (stageIdsToDelete.length > 0) {
+        await PipelineStage.updateMany(
+            {
+                _id: { $in: stageIdsToDelete },
+                account: accountId,
+                pipeline: pipelineId,
+            },
+            { $set: { is_deleted: true, updated_on: new Date() } }
+        );
+    }
+
+    // Get updated pipeline stages
+    const updatedStages = await PipelineStage.find({
+        pipeline: pipelineId,
+        account: accountId,
+        is_deleted: { $ne: true },
+    }).lean();
+
+    // Format result to match getPipelineSettingInfo format
+    const result = updatedStages.map((stage) => {
+        return {
+            stage_id: stage._id.toString(),
+            stage_name: stage.name,
+            used_in_count: opportunitiesPerStage[stage._id.toString()] || 0,
+            probability: stage.probability || 0,
+            display_order: stage.display_order,
+        };
+    });
+
+    // Sort result by display_order
+    result.sort((a, b) => a.display_order - b.display_order);
+
+    logg.info(`ended`);
+    return [result, null];
+}
+
+export const updatePipelineSettingInfo = functionWrapper(
+    fileName,
+    "updatePipelineSettingInfo",
+    _updatePipelineSettingInfo
 );

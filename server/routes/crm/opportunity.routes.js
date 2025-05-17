@@ -20,5 +20,13 @@ router.get(
     "/get-or-setup-pipeline",
     apiWrapper(OpportunityApis.getOrSetupPipelineApi)
 );
+router.get(
+    "/pipeline-setting-info",
+    apiWrapper(OpportunityApis.getPipelineSettingInfoApi)
+);
+router.post(
+    "/update-pipeline-setting-info",
+    apiWrapper(OpportunityApis.updatePipelineSettingInfoApi)
+);
 
 export default router;
