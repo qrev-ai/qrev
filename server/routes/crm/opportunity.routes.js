@@ -28,5 +28,9 @@ router.post(
     "/update-pipeline-setting-info",
     apiWrapper(OpportunityApis.updatePipelineSettingInfoApi)
 );
+router.post(
+    "/update-stage",
+    apiWrapper(OpportunityApis.updateOpportunityPipelineStageApi)
+);
 
 export default router;

@@ -17,19 +17,9 @@ async function _createOpportunity(
 ) {
     logg.info(`started`);
 
-    // Add initial stage to stage history
-    const initialStage = opportunityData.stage || "lead";
-    const stageHistory = [
-        {
-            stage: initialStage,
-            changed_on: new Date(),
-        },
-    ];
-
     const opportunity = new Opportunity({
         ...opportunityData,
         account: accountId,
-        stage_history: stageHistory,
     });
 
     const savedOpportunity = await opportunity.save();
@@ -187,7 +177,7 @@ async function _getOpportunityPipelineTimeline(
 
     // Get all opportunities for the account
     const opportunities = await Opportunity.find({ account: accountId })
-        .select("name stage stage_history created_on amount probability")
+        .select("name created_on amount probability")
         .sort({ created_on: -1 })
         .lean();
 
@@ -211,54 +201,7 @@ async function _getOpportunityPipelineTimeline(
         };
     });
 
-    opportunities.forEach((opp) => {
-        // Process stage history
-        const history = opp.stage_history || [];
-
-        for (let i = 0; i < history.length - 1; i++) {
-            const currentStage = history[i];
-            const nextStage = history[i + 1];
-            const stageName = currentStage.stage;
-
-            if (stages.includes(stageName)) {
-                const startDate = new Date(currentStage.changed_on);
-                const endDate = new Date(nextStage.changed_on);
-                const daysInStage =
-                    (endDate - startDate) / (1000 * 60 * 60 * 24);
-
-                stageTimelines[stageName].count++;
-                stageTimelines[stageName].totalTimeInDays += daysInStage;
-                stageTimelines[stageName].opportunities.push({
-                    opportunity_id: opp._id,
-                    name: opp.name,
-                    daysInStage: daysInStage.toFixed(1),
-                    amount: opp.amount,
-                });
-            }
-        }
-
-        // Handle current stage
-        if (history.length > 0) {
-            const lastStage = history[history.length - 1];
-            const stageName = lastStage.stage;
-
-            if (stages.includes(stageName) && stageName === opp.stage) {
-                const startDate = new Date(lastStage.changed_on);
-                const endDate = new Date();
-                const daysInStage =
-                    (endDate - startDate) / (1000 * 60 * 60 * 24);
-
-                stageTimelines[stageName].count++;
-                stageTimelines[stageName].totalTimeInDays += daysInStage;
-                stageTimelines[stageName].opportunities.push({
-                    opportunity_id: opp._id,
-                    name: opp.name,
-                    daysInStage: daysInStage.toFixed(1),
-                    amount: opp.amount,
-                });
-            }
-        }
-    });
+    opportunities.forEach((opp) => {});
 
     // Calculate averages
     Object.keys(stageTimelines).forEach((stage) => {
@@ -601,4 +544,72 @@ export const updatePipelineSettingInfo = functionWrapper(
     fileName,
     "updatePipelineSettingInfo",
     _updatePipelineSettingInfo
+);
+
+async function _updateOpportunityPipelineStage(
+    { opportunityId, accountId, pipelineId, newStageId },
+    { logg, txid, funcName }
+) {
+    logg.info(`started`);
+
+    // Verify the opportunity exists
+    const opportunity = await Opportunity.findOne({
+        _id: opportunityId,
+        account: accountId,
+        pipeline: pipelineId,
+        is_deleted: { $ne: true },
+    });
+
+    if (!opportunity) {
+        throw new CustomError(
+            `Opportunity not found with id: ${opportunityId}`,
+            fileName,
+            funcName,
+            404,
+            true
+        );
+    }
+
+    // Verify the new stage exists
+    const newStage = await PipelineStage.findOne({
+        _id: newStageId,
+        pipeline: pipelineId,
+        account: accountId,
+        is_deleted: { $ne: true },
+    });
+
+    if (!newStage) {
+        throw new CustomError(
+            `Pipeline stage not found with id: ${newStageId}`,
+            fileName,
+            funcName,
+            404,
+            true
+        );
+    }
+
+    // Update the opportunity
+    const updatedOpportunity = await Opportunity.findOneAndUpdate(
+        {
+            _id: opportunityId,
+            account: accountId,
+            pipeline: pipelineId,
+        },
+        {
+            $set: {
+                pipeline_stage: newStageId,
+                updated_on: new Date(),
+            },
+        },
+        { new: true }
+    ).lean();
+
+    logg.info(`ended`);
+    return [updatedOpportunity, null];
+}
+
+export const updateOpportunityPipelineStage = functionWrapper(
+    fileName,
+    "updateOpportunityPipelineStage",
+    _updateOpportunityPipelineStage
 );

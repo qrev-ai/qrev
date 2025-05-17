@@ -550,3 +550,94 @@ export async function updatePipelineSettingInfoApi(req, res, next) {
         txid,
     });
 }
+
+export async function updateOpportunityPipelineStageApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "updateOpportunityPipelineStageApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body: ${JSON.stringify(req.body)}`);
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    // Get account_id from query params and opportunity details from body
+    let { account_id: accountId } = req.query;
+    let {
+        pipeline_id: pipelineId,
+        opportunity_id: opportunityId,
+        new_stage_id: newStageId,
+    } = req.body;
+
+    // Validate required parameters
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    if (!pipelineId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing pipeline_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    if (!opportunityId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing opportunity_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    if (!newStageId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing new_stage_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let [updatedOpportunity, updateErr] =
+        await OpportunityUtils.updateOpportunityPipelineStage(
+            { opportunityId, accountId, pipelineId, newStageId },
+            { txid }
+        );
+
+    if (updateErr) {
+        logg.info(`ended unsuccessfully`);
+        throw updateErr;
+    }
+
+    logg.info(`ended`);
+    res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        txid,
+        opportunity_id: updatedOpportunity._id,
+    });
+}
