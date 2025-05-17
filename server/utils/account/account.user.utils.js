@@ -3,6 +3,7 @@ import CustomError from "../../std/custom.error.js";
 import { logger } from "../../logger.js";
 import { AccountModel } from "../../models/account/account.model.js";
 import { AccountUser } from "../../models/account/account.users.model.js";
+import { User } from "../../models/user/user.model.js";
 
 const fileName = "Account User Utils";
 
@@ -240,4 +241,25 @@ export const doAllUsersBelongToAccount = functionWrapper(
     fileName,
     "doAllUsersBelongToAccount",
     _doAllUsersBelongToAccount
+);
+
+async function _getUserList({ accountId }, { logg, txid, funcName }) {
+    logg.info(`started`);
+    let accUsers = await AccountUser.find({ account: accountId }).lean();
+
+    let userInfo = await User.find({
+        _id: { $in: accUsers.map((au) => au.user) },
+    })
+        .select("profile_first_name profile_last_name email _id")
+        .lean();
+
+    logg.info(`userInfo: ${JSON.stringify(userInfo)}`);
+    logg.info(`ended`);
+    return [userInfo, null];
+}
+
+export const getUserList = functionWrapper(
+    fileName,
+    "getUserList",
+    _getUserList
 );

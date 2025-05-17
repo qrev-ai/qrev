@@ -15,4 +15,6 @@ router.get("/user/config", apiWrapper(AccountUserApis.getUserConfigApi));
 
 router.get("/config/status", apiWrapper(AccountApis.getAccountConfigStatusApi));
 
+router.get("/users_info", apiWrapper(AccountUserApis.getUserListApi));
+
 export default router;

@@ -128,3 +128,44 @@ export async function getUserConfigApi(req, res, next) {
         config: configData,
     });
 }
+
+export async function getUserListApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getUserListApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body:`, req.body);
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing accountId`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let [userList, userListDbErr] = await AccountUserUtils.getUserList(
+        { accountId },
+        { txid }
+    );
+    if (userListDbErr) {
+        logg.error(`ended unsuccessfully`);
+        throw new CustomError(
+            `Error in getting user list`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+    logg.info(`ended`);
+    res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        txid,
+        users: userList,
+    });
+}
