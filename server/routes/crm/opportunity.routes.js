@@ -33,4 +33,7 @@ router.post(
     apiWrapper(OpportunityApis.updateOpportunityPipelineStageApi)
 );
 
+router.get("/product/list", apiWrapper(OpportunityApis.getAllProductsApi));
+router.post("/product/create", apiWrapper(OpportunityApis.createNewProductApi));
+
 export default router;

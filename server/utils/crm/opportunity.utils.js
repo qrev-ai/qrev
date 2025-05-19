@@ -8,6 +8,7 @@ import {
     DEFAULT_PIPELINE_NAME,
     DEFAULT_PIPELINE_STAGES,
 } from "../../config/qrev_crm/opportunity.config.js";
+import { Product } from "../../models/crm/product.model.js";
 
 const fileName = "Opportunity Utils";
 
@@ -16,6 +17,42 @@ async function _createOpportunity(
     { logg, txid, funcName }
 ) {
     logg.info(`started`);
+
+    // Process products if they exist
+    if (opportunityData.products && opportunityData.products.length > 0) {
+        const processedProducts = [];
+
+        // Handle each product in the array
+        for (const productItem of opportunityData.products) {
+            if (productItem.is_new) {
+                // This is a new product that needs to be created
+                const userId = opportunityData.created_by;
+                const [newProduct, createProductErr] = await createNewProduct(
+                    { accountId, userId, name: productItem.name },
+                    { txid }
+                );
+
+                if (createProductErr) {
+                    throw createProductErr;
+                }
+
+                // Add the newly created product to the processed list
+                processedProducts.push({
+                    product: newProduct._id,
+                    quantity: productItem.quantity || 1,
+                });
+            } else {
+                // This is an existing product
+                processedProducts.push({
+                    product: productItem._id,
+                    quantity: productItem.quantity || 1,
+                });
+            }
+        }
+
+        // Replace the original products array with the processed one
+        opportunityData.products = processedProducts;
+    }
 
     const opportunity = new Opportunity({
         ...opportunityData,
@@ -74,6 +111,7 @@ async function _getOpportunities(
         .populate("owner", "profile_first_name profile_last_name email")
         .populate("pipeline_stage", "name probability")
         .populate("created_by", "profile_first_name profile_last_name email")
+        .populate("products.product", "_id name")
         .sort({ created_on: -1 })
         .skip(skip)
         .limit(limit)
@@ -612,4 +650,47 @@ export const updateOpportunityPipelineStage = functionWrapper(
     fileName,
     "updateOpportunityPipelineStage",
     _updateOpportunityPipelineStage
+);
+
+async function _getAllProducts({ accountId }, { logg, txid, funcName }) {
+    logg.info(`started`);
+
+    let products = await Product.find({ account: accountId })
+        .select("_id name")
+        .lean();
+
+    logg.info(`products length: ${products.length}`);
+    if (products.length < 10) {
+        logg.info(`products: ${JSON.stringify(products)}`);
+    }
+    logg.info(`ended`);
+    return [products, null];
+}
+
+export const getAllProducts = functionWrapper(
+    fileName,
+    "getAllProducts",
+    _getAllProducts
+);
+
+async function _createNewProduct(
+    { accountId, userId, name },
+    { logg, txid, funcName }
+) {
+    logg.info(`started`);
+
+    let productDoc = { name, account: accountId, created_by: userId };
+
+    let insertResp = await Product.insertMany([productDoc]);
+    let newProduct = insertResp[0];
+
+    logg.info(`new product: ${JSON.stringify(newProduct)}`);
+    logg.info(`ended`);
+    return [newProduct, null];
+}
+
+export const createNewProduct = functionWrapper(
+    fileName,
+    "createNewProduct",
+    _createNewProduct
 );

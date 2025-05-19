@@ -42,6 +42,64 @@ export async function createOpportunityApi(req, res, next) {
         throw new CustomError(`Missing name`, fileName, funcName, 400, true);
     }
 
+    // Validate products if provided
+    if (opportunityData.products) {
+        if (!Array.isArray(opportunityData.products)) {
+            logg.info(`ended unsuccessfully`);
+            throw new CustomError(
+                `Products must be an array`,
+                fileName,
+                funcName,
+                400,
+                true
+            );
+        }
+
+        // Validate each product in the array
+        opportunityData.products.forEach((product, index) => {
+            if (product.is_new) {
+                // New product validation
+                if (!product.name) {
+                    logg.info(`ended unsuccessfully`);
+                    throw new CustomError(
+                        `Missing name for new product at index ${index}`,
+                        fileName,
+                        funcName,
+                        400,
+                        true
+                    );
+                }
+            } else {
+                // Existing product validation
+                if (!product._id) {
+                    logg.info(`ended unsuccessfully`);
+                    throw new CustomError(
+                        `Missing _id for existing product at index ${index}`,
+                        fileName,
+                        funcName,
+                        400,
+                        true
+                    );
+                }
+            }
+
+            // Ensure quantity is a positive number
+            if (
+                product.quantity &&
+                (isNaN(product.quantity) || product.quantity <= 0)
+            ) {
+                logg.info(`ended unsuccessfully`);
+                throw new CustomError(
+                    `Invalid quantity for product at index ${index}`,
+                    fileName,
+                    funcName,
+                    400,
+                    true
+                );
+            }
+        });
+    }
+
     let [savedOpportunity, createErr] =
         await OpportunityUtils.createOpportunity(
             { opportunityData, accountId },
@@ -639,5 +697,109 @@ export async function updateOpportunityPipelineStageApi(req, res, next) {
         message: `${funcName} executed successfully`,
         txid,
         opportunity_id: updatedOpportunity._id,
+    });
+}
+
+export async function getAllProductsApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "getAllProductsApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with query: ${JSON.stringify(req.query)}`);
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let [products, getErr] = await OpportunityUtils.getAllProducts(
+        { accountId },
+        { txid }
+    );
+
+    if (getErr) {
+        logg.info(`ended unsuccessfully`);
+        throw getErr;
+    }
+
+    logg.info(`ended`);
+    res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        txid,
+        result: products,
+    });
+}
+
+export async function createNewProductApi(req, res, next) {
+    const txid = req.id;
+    const funcName = "createNewProductApi";
+    const logg = logger.child({ txid, funcName });
+    logg.info(`started with body: ${JSON.stringify(req.body)}`);
+
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let { account_id: accountId } = req.query;
+    if (!accountId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing account_id`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
+
+    let { name } = req.body;
+    if (!name) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(`Missing name`, fileName, funcName, 400, true);
+    }
+
+    let [newProduct, createErr] = await OpportunityUtils.createNewProduct(
+        { accountId, userId, name },
+        { txid }
+    );
+
+    if (createErr) {
+        logg.info(`ended unsuccessfully`);
+        throw createErr;
+    }
+
+    logg.info(`ended`);
+    res.json({
+        success: true,
+        message: `${funcName} executed successfully`,
+        txid,
+        product_id: newProduct._id,
     });
 }
