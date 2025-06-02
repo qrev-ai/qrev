@@ -9,17 +9,17 @@ export async function isUserAllowedToUseResellerApi(req, res, next) {
     const logg = logger.child({ txid, funcName });
     logg.info(`started with body: ${JSON.stringify(req.body)}`);
 
-    // let userId = req.user && req.user.userId ? req.user.userId : null;
-    // if (!userId) {
-    //     logg.info(`ended unsuccessfully`);
-    //     throw new CustomError(
-    //         `Missing userId from decoded access token`,
-    //         fileName,
-    //         funcName,
-    //         400,
-    //         true
-    //     );
-    // }
+    let userId = req.user && req.user.userId ? req.user.userId : null;
+    if (!userId) {
+        logg.info(`ended unsuccessfully`);
+        throw new CustomError(
+            `Missing userId from decoded access token`,
+            fileName,
+            funcName,
+            400,
+            true
+        );
+    }
 
     // api has account_id in query
     let { account_id: accountId } = req.query;
@@ -39,6 +39,12 @@ export async function isUserAllowedToUseResellerApi(req, res, next) {
     let allowedAccuntIds = process.env.TEST_ACCOUNTS.split(",");
     let isAllowed = false;
     if (allowedAccuntIds.includes(accountId)) {
+        logg.info(`this user is allowed to use reseller api`);
+        isAllowed = true;
+    }
+
+    let allowedUserIds = process.env.TEST_USERS.split(",");
+    if (allowedUserIds.includes(userId)) {
         logg.info(`this user is allowed to use reseller api`);
         isAllowed = true;
     }
