@@ -233,7 +233,7 @@ export const deleteAgent = functionWrapper(
 
 // List all agents for an account
 async function _listAgents(
-    { accountId, userId, getStatusInfo = false },
+    { accountId, userId, getStatusInfo = false, sortByDesc = false },
     { txid, logg, funcName }
 ) {
     logg.info(`started`);
@@ -283,6 +283,9 @@ async function _listAgents(
         logg.info(`agents: ${JSON.stringify(agents)}`);
     }
 
+    if (sortByDesc) {
+        agents.sort((a, b) => b.updated_on - a.updated_on);
+    }
     logg.info(`ended`);
     return [agents, null];
 }
