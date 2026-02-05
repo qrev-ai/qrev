@@ -1,0 +1,37 @@
+# QRev AI Server - Simplified Dockerfile
+FROM python:3.11-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=on \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get -y install --no-install-recommends build-essential curl git && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install --no-cache-dir --upgrade pip setuptools wheel poetry gunicorn
+
+# Copy project files
+COPY pyproject.toml poetry.lock ./
+COPY projects ./projects
+
+# Install Python dependencies
+RUN poetry install --no-root || true
+
+# Install individual projects
+WORKDIR /app/projects/server
+RUN poetry install || pip install -e . || true
+
+WORKDIR /app
+
+# Create config directory
+RUN mkdir -p /root/.config/qai
+
+EXPOSE 8081
+
+# Start server
+CMD ["python", "-m", "gunicorn", "-w", "1", "-b", "0.0.0.0:8081", "qai.server.serve:app"]

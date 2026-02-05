@@ -73,7 +73,7 @@ services:
   ai-server:
     build:
       context: ./ai
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.simple
     container_name: qrev-ai-server
     ports:
       - "8081:8081"
