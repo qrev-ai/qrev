@@ -1,5 +1,3 @@
-version: '3.8'
-
 # QRev Docker Compose - One command to run everything
 # Usage: docker-compose up --build
 
