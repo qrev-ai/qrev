@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, use } from 'react';
 import { ArrowLeft, Play, Pause, Trash2, Mail, Users, BarChart3, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
@@ -31,9 +31,11 @@ const statusColors = {
   bounced: 'bg-red-500/20 text-red-400',
 };
 
-export default function CampaignDetailPage({ params }: { params: { id: string } }) {
+export default function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const [selectedProspect, setSelectedProspect] = useState(mockCampaign.prospects[0]);
   const [campaign] = useState(mockCampaign);
+  // TODO: Fetch campaign by id from API
 
   return (
     <div className="min-h-screen bg-surface-1">

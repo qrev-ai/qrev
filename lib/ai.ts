@@ -1,8 +1,16 @@
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy initialization to avoid build-time errors
+let _openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return _openai;
+}
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -21,7 +29,7 @@ export async function chat(
   messages: Message[],
   onChunk?: (text: string) => void
 ): Promise<string> {
-  const stream = await openai.chat.completions.create({
+  const stream = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'system', content: QAI_SYSTEM_PROMPT }, ...messages],
     stream: true,
@@ -47,7 +55,7 @@ export async function generateEmail(
   template: string,
   step: number = 1
 ): Promise<{ subject: string; body: string }> {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [
       {
@@ -86,7 +94,7 @@ export async function researchProspect(
   person: { background: string; interests: string[] };
   insights: string[];
 }> {
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [
       {

@@ -1,9 +1,20 @@
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Force dynamic rendering - don't try to statically analyze at build time
+export const dynamic = 'force-dynamic';
+
+// Lazy initialization to avoid build-time errors
+let _openai: OpenAI | null = null;
+
+function getOpenAI(): OpenAI {
+  if (!_openai) {
+    _openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return _openai;
+}
 
 const QAI_SYSTEM_PROMPT = `You are QAi, an AI assistant for GTM (Go-To-Market) teams. You help with:
 - Creating and managing email campaigns
@@ -16,7 +27,7 @@ Be concise, helpful, and proactive. When users want to create campaigns, guide t
 export async function POST(request: NextRequest) {
   const { messages } = await request.json();
 
-  const stream = await openai.chat.completions.create({
+  const stream = await getOpenAI().chat.completions.create({
     model: 'gpt-4o',
     messages: [{ role: 'system', content: QAI_SYSTEM_PROMPT }, ...messages],
     stream: true,
