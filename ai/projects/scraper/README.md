@@ -1,1 +1,0 @@
-# Qai Scraper

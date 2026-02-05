@@ -1,42 +1,35 @@
-## Node
-node_modules
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
 
-## logs
-rejections.log
-exception.log
+# Build
+.next/
+out/
+build/
 
-## System
+# Environment
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-## Installer logs
-pip-log.txt
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-## Unit test / coverage reports
-.coverage
-.tox
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
 
-## lockfiles
-*.lock
-
-## caches
-cachedir
-.cache
-.pytest_cache
-
-## Mac
+# OS
 .DS_Store
+Thumbs.db
 
-## vscode
-.vscode
-
-## Python
-*.pyc
-*.mypy_cache/
-*.pytest_cache/
-
-## Private
-.private
-
-# Ignore server/data/temp folder because it is used for storing temporary files on server
-server/data/temp/
-server/uploads/
+# Prisma
+prisma/*.db
+prisma/*.db-journal

@@ -1,196 +1,138 @@
-<h1 align="center"> Welcome to QRev 👋</h1> 
+# QRev Lite 🚀
 
-<p align="center">
-  <em>🤖 AI Agents to scale your Sales org infinitely; Open Source alternative to Salesforce 🤖   </em>
-</p>
+> Modern, minimal GTM platform. Built to run in under 2 minutes.
 
-<h3 align="center">
-	<a href="https://qrev.ai?utm_medium=community&utm_source=github&utm_campaign=qrev%20repo">Website</a>
-	<span> | </span>
-	<a href="https://join.slack.com/t/qrev/shared_invite/zt-2gsc6omvb-L5bLaBubluDEdK5ZB133dg">Community Slack</a>
-</h3>
+## What is QRev Lite?
 
-<div style="text-align: center;">
-  <img
-    width="1028"  
-	style="display: block; margin-left: auto; margin-right: auto;"
-    class="block dark:hidden"
-    src="/images/Qai-Structure.png"
-    alt="Architecture"
-  />
-</div>
+A complete rewrite of QRev — the AI-native GTM (Go-To-Market) platform. Same features, 1/10th the complexity.
 
-<p align="center">
-    <img alt="Node version" src="https://img.shields.io/static/v1?label=node&message=%20%3E=18%2E18&logo=node.js&color=2334D058" />
-      <img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English">
-</p>
+### Features
 
-If Salesforce were built today, starting with AI, it would be built with AI Agents at the foundation. 
+- **🤖 QAi Chat** — AI assistant for creating campaigns, researching prospects
+- **📧 Campaign Management** — Create, preview, and manage email campaigns
+- **🔍 Research Agents** — AI-powered prospect and company research
+- **👥 Workspace Management** — Multi-tenant, team collaboration
+- **🌙 Dark Mode** — Beautiful Superhuman-inspired dark theme
 
-But Salesforce is too expensive, and hard to customise. 
+## Tech Stack
 
-> NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set with ideas from contributors like you. This repository will be updated regularly with changes and new releases.
+| Component | Technology |
+|-----------|------------|
+| Framework | Next.js 14 (App Router) |
+| Styling | Tailwind CSS |
+| Database | PostgreSQL + Prisma |
+| Auth | NextAuth.js (Google OAuth) |
+| AI | OpenAI SDK (direct, no wrappers) |
+| State | Zustand |
 
-## Digital Workers for each Sales Role or Superagent (a.k.a Qai )? 🤔
-
-Sales orgs have people like SDR's, BDR's, Account Execs, Head of Sales etc. 
-
-The question we ask ourselves constantly is whether we should mimic the real world and have Digital Worker equivalents 
-within the app ? or Have one superagent that co-ordinates with other software agents internally. 
-
-We are starting with the latter approach. We think based on the users role and role based permissions, Qai will be able 
-to do different things. It will also simplify the requirement of remembering names of Digial workers like Qai 
-just for the sake of seeming cool. But internally, there will be an army of digial workers / agents doing their job anyways. 
-
-Open to ideas. 
-
-## 🚀 Tech Stack
-
-- ✅ **Framework**: [Typescript for frontend](https://www.typescriptlang.org/) & [NodeJS for backend](https://nodejs.org/en)
-- ✅ **App Server Database**: [MongoDB](https://www.mongodb.com/)
-- ✅ **Vector Database**: [ChromaDB](https://www.trychroma.com/)
-- ✅ **AI Server SQL Relational Database**: [SQLite](https://www.sqlite.org/) or anything that works with [SQLAlchemy](https://www.sqlalchemy.org/)
-- ✅ **LLM Tooling**: [Langchain](https://github.com/hwchase17/langchain)
-
-## Prerequisites :point_down:
-
-Before you get started, please make sure you have the following installed:
-
-- An editor of your choice. For example, [Visual Studio Code (VS Code)](https://code.visualstudio.com/download)
-- [Node.js](https://nodejs.org/en/download)
-- [Git](https://git-scm.com/downloads)
-
-## Getting started :rocket:
-
-There's 3 main components to running the code 
-
-- 🎨 [Client App](https://github.com/qrev-ai/qrev/tree/main/client)
-- 🗂️ [App Server](https://github.com/qrev-ai/qrev/tree/main/server) 
-- 🤖 [AI Server](https://github.com/qrev-ai/qrev/tree/main/ai) 
-
-  > Please refer to the [sample People CSV file](https://github.com/qrev-ai/qrev/blob/main/qai_csv_sample.csv) for the structure of the CSV file that the user can upload to the QAI bot for generating campaigns.
-
-## Getting Started with the QRev App Server
-
-To get a local copy up and running, please follow these simple steps.
+## Quick Start
 
 ### Prerequisites
 
-Here is what you need to be able to run QRev.
+- Node.js 20+
+- Docker (for PostgreSQL)
+- OpenAI API key
+- Google OAuth credentials
 
--   Node.js (Version: >=18.18.0)
--   Mongo (Version: >=5.x)
+### Development
 
-    > If you want to enable any of the available integrations, you will have to obtain credentials for each one. More details on this can be found below under the [integrations section](#integrations).
-
-### Setup
-
-1. Clone the GitHub repo
-
-    ```sh
-    git clone https://github.com/qrev-ai/qrev.git
-    ```
-
-2. Go to the `server` folder
-
-    ```sh
-    cd server
-    ```
-
-3. Setup Node
-   If your Node version does not meet the project's requirements as instructed by the docs, "nvm" (Node Version Manager) allows using Node at the version required by the project:
-
-    ```sh
-    nvm install v18.18.0
-    ```
-
-    ```sh
-    nvm use 18.18.0
-    ```
-
-    > You can install nvm from [here](https://github.com/nvm-sh/nvm).
-
-4. Install the packages with `npm`
-
-    ```sh
-    npm ci
-    ```
-
-    > `npm ci` makes sure that the versions of the packages installed will be from `package-lock.json`, this will make sure the right version of packages are installed.
-
-5. Set up your `.env` file
-
-    - Duplicate `.env.example` to `.env`
-    - Use `openssl rand -base64 32` to generate a key and add this under `REFRESH_TOKEN_JWT_SECRET` in the `.env` file.
-    - Use `openssl rand -base64 32` to generate a key and add this under `ACCESS_TOKEN_JWT_SECRET` in the `.env` file.
-    - Use `openssl rand -base64 32` to generate a key and add this under `AI_BOT_SERVER_TOKEN` in the `.env` file and make sure the AI server uses the same token as well.
-
-6. If you haven't already configured MongoDB and got the MONGO_DB_URL, then follow the steps [here](https://www.mongodb.com/docs/v3.0/tutorial/install-mongodb-on-ubuntu/) to install Mongo DB locally.
-
-7. Run the below command to start the server:
-    ```sh
-    npm start
-    ```
-
-## Getting Started with the QRev App Client 
-
-Make sure you have the right [Environment variables](https://github.com/qrev-ai/qrev/tree/main/client/.env.example)
-
-These are referenced in the [Client Code](https://github.com/qrev-ai/qrev/tree/main/client/src/config/credential.js)
-
-
-### Setup 
-
-1. **Go to the `client` folder**
 ```bash
-cd client 
-```
+# Clone and checkout
+git clone https://github.com/qrev-ai/qrev.git
+cd qrev
+git checkout qrev-lite
 
-2. **Install libraries**
-
-```bash 
+# Install dependencies
 npm install
+
+# Set up environment
+cp .env.example .env
+# Edit .env with your keys
+
+# Start database
+docker-compose up db -d
+
+# Run migrations
+npx prisma db push
+
+# Start dev server
+npm run dev
 ```
 
-3. Set up the `.env` file via following commands
+Open http://localhost:3000
 
-    - Copy the example environment file:
-      ```
-      cp .env.example .env
-      ```
-    
-    - Add your Google client id for the variable `REACT_APP_GOOGLE_CLIENT_ID`
+### Docker (Production)
 
-    - Add your app backend server host url for `REACT_APP_BASE_API_URL`
-
-    - Add your app backend server host url for `REACT_APP_BACKEND_HOST_URL`
-
-    **Note**: Please make sure there is no `/` at the end of the URL environment values.
-
-4. **To prevent any formatting issues in the code files, run the following**
 ```bash
-git config --global core.autocrlf true
+# Create .env with your keys
+cp .env.example .env
+
+# Start everything
+docker-compose up --build
 ```
 
-5. **Run the client** 
+## Environment Variables
 
-```bash  
-npm start  
+```bash
+# Database
+DATABASE_URL=postgresql://qrev:qrev@localhost:5432/qrev
+
+# Auth
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret
+
+# AI
+OPENAI_API_KEY=sk-your-openai-key
 ```
 
-## Getting Started with the QRev AI Code
-Please refer the [Server README](https://github.com/qrev-ai/qrev/tree/main/ai/README.md)
+## Project Structure
 
-### Integrations
+```
+qrev/
+├── app/                    # Next.js App Router
+│   ├── page.tsx           # Dashboard
+│   ├── chat/              # QAi chat interface
+│   ├── campaigns/[id]/    # Campaign detail
+│   ├── research/          # Research agents
+│   └── api/               # API routes
+├── components/
+│   ├── ui/                # Base components
+│   ├── chat/              # Chat components
+│   ├── campaign/          # Campaign components
+│   └── research/          # Research components
+├── lib/
+│   ├── ai.ts              # OpenAI wrapper
+│   ├── db.ts              # Prisma client
+│   └── auth.ts            # Auth config
+├── prisma/
+│   └── schema.prisma      # Database schema
+└── docker-compose.yml     # Docker setup
+```
 
-QRev supports a few Integrations, which will expand over time
+## Why Lite?
 
-Please refer the [Server README](https://github.com/qrev-ai/qrev/tree/main/server/SERVER_README.md)
+The original QRev had:
+- 70+ Python dependencies
+- 10 Python sub-projects
+- 104 API endpoints
+- 7,150-line monolith files
+- AG-Grid Enterprise ($1000/year)
 
-<!-- CONTRIBUTORS -->
+QRev Lite has:
+- ~25 dependencies total
+- 1 unified codebase
+- 15 API routes
+- Modular, readable code
+- All open source
 
-### Contributors
+Same features. 10x simpler.
 
-<a href="https://github.com/qrev-ai/qrev/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=qrev-ai/qrev" />
-</a>
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## License
+
+[MIT](LICENSE)
