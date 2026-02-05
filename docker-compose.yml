@@ -1,0 +1,95 @@
+version: '3.8'
+
+# QRev Docker Compose - One command to run everything
+# Usage: docker-compose up --build
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:6
+    container_name: qrev-mongodb
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ChromaDB Vector Store
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: qrev-chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+
+  # Node.js Backend Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: qrev-server
+    ports:
+      - "8080:8080"
+    environment:
+      - EXPRESS_HTTP_SERVER_PORT=8080
+      - SERVER_URL_PATH=http://localhost:8080
+      - ENVIRONMENT_TYPE=dev
+      - MONGO_DB_URL=mongodb://mongodb:27017/qrev
+      - AI_BOT_SERVER_URL=http://ai-server:8081
+      - AI_BOT_SERVER_TOKEN=${AI_BOT_SERVER_TOKEN:-qrev-dev-token}
+      - REFRESH_TOKEN_JWT_SECRET=${REFRESH_TOKEN_JWT_SECRET:-dev-refresh-secret-change-in-prod}
+      - ACCESS_TOKEN_JWT_SECRET=${ACCESS_TOKEN_JWT_SECRET:-dev-access-secret-change-in-prod}
+      - REFRESH_TOKEN_EXPIRES_IN=180d
+      - ACCESS_TOKEN_EXPIRES_IN=15m
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # React Frontend Client
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: qrev-client
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_BASE_API_URL=http://localhost:8080
+      - REACT_APP_QREV_BACKEND_HOST_URL=http://localhost:8080
+      - REACT_APP_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+    depends_on:
+      - server
+    restart: unless-stopped
+
+  # Python AI Server
+  ai-server:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    container_name: qrev-ai-server
+    ports:
+      - "8081:8081"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB=qrev
+    volumes:
+      - ./ai-config:/root/.config/qai
+    depends_on:
+      - mongodb
+      - chromadb
+    restart: unless-stopped
+
+volumes:
+  mongo_data:
+  chroma_data:

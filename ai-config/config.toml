@@ -1,0 +1,21 @@
+version = "1.1"
+
+[openai]
+api_key = "${OPENAI_API_KEY}"
+
+[model]
+name = "gpt-4"
+temperature = 0.0
+
+[mongo]
+uri = "mongodb://mongodb:27017"
+db = "qrev"
+collection = "ai_generated_emails"
+
+[server]
+allowed_tokens = ["qrev-dev-token"]
+
+[chroma]
+type = "http"
+host = "chromadb"
+port = 8000
