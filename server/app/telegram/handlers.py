@@ -230,7 +230,9 @@ async def _process_message(update: Update, link: TelegramLink, user_text: str) -
     await update.effective_chat.send_action(ChatAction.TYPING)
 
     # Send initial status message that we'll edit in-place
-    status_msg = await update.message.reply_text("Thinking...")
+    # Use effective_message (works for both direct messages and callback queries)
+    msg_target = update.effective_message
+    status_msg = await msg_target.reply_text("Thinking...")
 
     async with async_session() as db:
         # Save user message to Prisma Conversation/Message tables

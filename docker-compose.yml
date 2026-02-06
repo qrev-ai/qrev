@@ -65,6 +65,7 @@ services:
       DATABASE_URL: postgresql://qrev:qrev@db:5432/qrev
       NEXTAUTH_URL: http://localhost:3000
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-in-production}
+      AUTH_TRUST_HOST: "true"
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       # Client-side calls go to localhost:8000 (browser → host → server container)
