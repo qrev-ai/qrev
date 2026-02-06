@@ -19,6 +19,14 @@ async function fetchAPI<T>(path: string, options?: RequestInit): Promise<T> {
 
 // ── Provider Management ─────────────────────────────
 
+export interface CredentialField {
+  key: string;
+  label: string;
+  type: 'password' | 'text';
+  placeholder: string;
+  required: boolean;
+}
+
 export interface AvailableProvider {
   id: string;
   name: string;
@@ -31,6 +39,7 @@ export interface AvailableProvider {
     input_cost_per_1m: number;
     output_cost_per_1m: number;
   }[];
+  credential_fields?: CredentialField[];
 }
 
 export interface ConnectedProvider {

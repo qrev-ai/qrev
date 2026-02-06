@@ -31,10 +31,14 @@ class RateLimits:
 @dataclass
 class EmailCredentials:
     api_key: str | None = None
+    # Mailgun
+    domain: str | None = None
     # Gmail OAuth
     access_token: str | None = None
     refresh_token: str | None = None
     expires_at: int | None = None
+    client_id: str | None = None
+    client_secret: str | None = None
     # AWS SES
     region: str | None = None
     access_key_id: str | None = None

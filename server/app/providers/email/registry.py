@@ -1,6 +1,10 @@
 from .types import EmailProvider
 from .sendgrid_provider import SendGridProvider
 from .resend_provider import ResendProvider
+from .mailgun_provider import MailgunProvider
+from .ses_provider import SESProvider
+from .postmark_provider import PostmarkProvider
+from .gmail_provider import GmailProvider
 
 
 class EmailRegistry:
@@ -24,3 +28,7 @@ class EmailRegistry:
 email_registry = EmailRegistry()
 email_registry.register(SendGridProvider())
 email_registry.register(ResendProvider())
+email_registry.register(MailgunProvider())
+email_registry.register(SESProvider())
+email_registry.register(PostmarkProvider())
+email_registry.register(GmailProvider())

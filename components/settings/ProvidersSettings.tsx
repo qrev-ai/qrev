@@ -14,15 +14,17 @@ import {
   disconnectProvider,
   type AvailableProvider,
   type ConnectedProvider,
+  type CredentialField,
 } from "@/lib/api-client";
-import { Key, Trash2, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Key, Trash2, CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
 
-const PROVIDER_ICONS: Record<string, string> = {
-  openai: "OpenAI",
-  anthropic: "Anthropic",
-  google: "Google",
-  sendgrid: "SendGrid",
-  resend: "Resend",
+const PROVIDER_DESCRIPTIONS: Record<string, string> = {
+  sendgrid: "Transactional & marketing email",
+  resend: "Developer-first email API",
+  mailgun: "Email API with analytics",
+  ses: "AWS cloud email service",
+  postmark: "Fast transactional email",
+  gmail: "Send from your Gmail account",
 };
 
 export function ProvidersSettings() {
@@ -31,7 +33,10 @@ export function ProvidersSettings() {
   const [connected, setConnected] = useState<ConnectedProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectingId, setConnectingId] = useState<string | null>(null);
+  // Single-field fallback for LLM providers
   const [apiKeyInput, setApiKeyInput] = useState("");
+  // Multi-field state for email providers
+  const [credFields, setCredFields] = useState<Record<string, string>>({});
   const [validating, setValidating] = useState<string | null>(null);
 
   const workspaceId = activeWorkspace?.id;
@@ -57,9 +62,15 @@ export function ProvidersSettings() {
     loadData();
   }, [loadData]);
 
-  const handleConnect = async (provider: AvailableProvider) => {
+  const resetConnectState = () => {
+    setConnectingId(null);
+    setApiKeyInput("");
+    setCredFields({});
+  };
+
+  const handleConnectLLM = async (provider: AvailableProvider) => {
     if (!workspaceId || !apiKeyInput.trim()) return;
-    setConnectingId(provider.id);
+    setConnectingId(provider.id + "_saving");
     try {
       await connectProvider({
         workspace_id: workspaceId,
@@ -67,12 +78,41 @@ export function ProvidersSettings() {
         provider_id: provider.id,
         credentials: { api_key: apiKeyInput.trim() },
       });
-      setApiKeyInput("");
-      setConnectingId(null);
+      resetConnectState();
       await loadData();
     } catch (err) {
       console.error("Failed to connect:", err);
-      setConnectingId(null);
+      setConnectingId(provider.id);
+    }
+  };
+
+  const handleConnectEmail = async (provider: AvailableProvider) => {
+    if (!workspaceId) return;
+    const fields = provider.credential_fields || [];
+    const requiredMissing = fields
+      .filter((f) => f.required)
+      .some((f) => !credFields[f.key]?.trim());
+    if (requiredMissing) return;
+
+    setConnectingId(provider.id + "_saving");
+    try {
+      const creds: Record<string, string> = {};
+      for (const f of fields) {
+        if (credFields[f.key]?.trim()) {
+          creds[f.key] = credFields[f.key].trim();
+        }
+      }
+      await connectProvider({
+        workspace_id: workspaceId,
+        provider_type: provider.type,
+        provider_id: provider.id,
+        credentials: creds,
+      });
+      resetConnectState();
+      await loadData();
+    } catch (err) {
+      console.error("Failed to connect:", err);
+      setConnectingId(provider.id);
     }
   };
 
@@ -96,8 +136,6 @@ export function ProvidersSettings() {
       console.error("Failed to disconnect:", err);
     }
   };
-
-  const connectedIds = new Set(connected.map((c) => c.provider_id));
 
   if (loading) {
     return (
@@ -180,7 +218,7 @@ export function ProvidersSettings() {
                           />
                           <Button
                             size="sm"
-                            onClick={() => handleConnect(provider)}
+                            onClick={() => handleConnectLLM(provider)}
                             disabled={!apiKeyInput.trim()}
                           >
                             Save
@@ -188,10 +226,7 @@ export function ProvidersSettings() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setConnectingId(null);
-                              setApiKeyInput("");
-                            }}
+                            onClick={resetConnectState}
                           >
                             Cancel
                           </Button>
@@ -200,7 +235,10 @@ export function ProvidersSettings() {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => setConnectingId(provider.id)}
+                          onClick={() => {
+                            resetConnectState();
+                            setConnectingId(provider.id);
+                          }}
                         >
                           Connect
                         </Button>
@@ -235,7 +273,7 @@ export function ProvidersSettings() {
           Email Providers
         </h3>
         <p className="text-xs text-text-muted mb-4">
-          Connect an email sending service to deliver campaign emails.
+          Connect an email sending service to deliver campaign emails. You can connect multiple providers.
         </p>
         <div className="space-y-3">
           {available
@@ -243,6 +281,14 @@ export function ProvidersSettings() {
             .map((provider) => {
               const conn = connected.find((c) => c.provider_id === provider.id);
               const isConnected = !!conn;
+              const fields = provider.credential_fields || [
+                { key: "api_key", label: "API Key", type: "password" as const, placeholder: "API key", required: true },
+              ];
+              const isSaving = connectingId === provider.id + "_saving";
+              const isEditing = connectingId === provider.id;
+              const requiredFilled = fields
+                .filter((f) => f.required)
+                .every((f) => credFields[f.key]?.trim());
 
               return (
                 <Card key={provider.id}>
@@ -250,11 +296,14 @@ export function ProvidersSettings() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded bg-surface-3 flex items-center justify-center">
-                          <Key className="h-4 w-4 text-text-muted" />
+                          <Mail className="h-4 w-4 text-text-muted" />
                         </div>
                         <div>
                           <p className="text-sm font-medium text-text-primary">
                             {provider.name}
+                          </p>
+                          <p className="text-xs text-text-muted">
+                            {PROVIDER_DESCRIPTIONS[provider.id] || "Email provider"}
                           </p>
                         </div>
                       </div>
@@ -262,8 +311,20 @@ export function ProvidersSettings() {
                       {isConnected ? (
                         <div className="flex items-center gap-2">
                           <Badge variant={conn.is_valid ? "success" : "error"} size="sm">
-                            {conn.is_valid ? "Connected" : "Invalid"}
+                            {conn.is_valid ? (
+                              <><CheckCircle className="h-3 w-3 mr-1" /> Connected</>
+                            ) : (
+                              <><XCircle className="h-3 w-3 mr-1" /> Invalid</>
+                            )}
                           </Badge>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleValidate(conn.id)}
+                            isLoading={validating === conn.id}
+                          >
+                            Test
+                          </Button>
                           <Button
                             variant="danger"
                             size="sm"
@@ -273,43 +334,61 @@ export function ProvidersSettings() {
                             Remove
                           </Button>
                         </div>
-                      ) : connectingId === provider.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="password"
-                            placeholder="API key"
-                            value={apiKeyInput}
-                            onChange={(e) => setApiKeyInput(e.target.value)}
-                            className="w-64 h-8 text-xs"
-                          />
+                      ) : !isEditing ? (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            resetConnectState();
+                            setConnectingId(provider.id);
+                          }}
+                        >
+                          Connect
+                        </Button>
+                      ) : null}
+                    </div>
+
+                    {/* Credential input fields */}
+                    {isEditing && (
+                      <div className="mt-3 pt-3 border-t border-border-subtle space-y-2">
+                        {fields.map((field) => (
+                          <div key={field.key}>
+                            <label className="text-xs text-text-muted mb-1 block">
+                              {field.label}{field.required ? " *" : ""}
+                            </label>
+                            <Input
+                              type={field.type === "text" ? "text" : "password"}
+                              placeholder={field.placeholder}
+                              value={credFields[field.key] || ""}
+                              onChange={(e) =>
+                                setCredFields((prev) => ({
+                                  ...prev,
+                                  [field.key]: e.target.value,
+                                }))
+                              }
+                              className="h-8 text-xs"
+                            />
+                          </div>
+                        ))}
+                        <div className="flex items-center gap-2 pt-1">
                           <Button
                             size="sm"
-                            onClick={() => handleConnect(provider)}
-                            disabled={!apiKeyInput.trim()}
+                            onClick={() => handleConnectEmail(provider)}
+                            disabled={!requiredFilled}
+                            isLoading={isSaving}
                           >
                             Save
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => {
-                              setConnectingId(null);
-                              setApiKeyInput("");
-                            }}
+                            onClick={resetConnectState}
                           >
                             Cancel
                           </Button>
                         </div>
-                      ) : (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => setConnectingId(provider.id)}
-                        >
-                          Connect
-                        </Button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );

@@ -44,11 +44,48 @@ class ValidateResponse(BaseModel):
     valid: bool
 
 
+class CredentialField(BaseModel):
+    key: str
+    label: str
+    type: str = "password"  # "password", "text"
+    placeholder: str = ""
+    required: bool = True
+
+
 class AvailableProvider(BaseModel):
     id: str
     name: str
     type: str
     models: list[dict] | None = None
+    credential_fields: list[CredentialField] | None = None
+
+
+# Map provider IDs to the credential fields the UI should show
+EMAIL_CREDENTIAL_FIELDS: dict[str, list[CredentialField]] = {
+    "sendgrid": [
+        CredentialField(key="api_key", label="API Key", placeholder="SG.xxxx"),
+    ],
+    "resend": [
+        CredentialField(key="api_key", label="API Key", placeholder="re_xxxx"),
+    ],
+    "mailgun": [
+        CredentialField(key="api_key", label="API Key", placeholder="key-xxxx"),
+        CredentialField(key="domain", label="Sending Domain", type="text", placeholder="mg.yourdomain.com"),
+    ],
+    "ses": [
+        CredentialField(key="access_key_id", label="Access Key ID", placeholder="AKIA..."),
+        CredentialField(key="secret_access_key", label="Secret Access Key", placeholder="wJalr..."),
+        CredentialField(key="region", label="AWS Region", type="text", placeholder="us-east-1"),
+    ],
+    "postmark": [
+        CredentialField(key="api_key", label="Server Token", placeholder="xxxx-xxxx-xxxx"),
+    ],
+    "gmail": [
+        CredentialField(key="client_id", label="OAuth Client ID", type="text", placeholder="xxxx.apps.googleusercontent.com"),
+        CredentialField(key="client_secret", label="OAuth Client Secret", placeholder="GOCSPX-xxxx"),
+        CredentialField(key="refresh_token", label="Refresh Token", placeholder="1//xxxx"),
+    ],
+}
 
 
 # ── Routes ───────────────────────────────────────────────
@@ -75,7 +112,12 @@ async def list_available_providers() -> list[AvailableProvider]:
             ],
         ))
     for p in email_registry.providers.values():
-        result.append(AvailableProvider(id=p.id, name=p.name, type="email"))
+        result.append(AvailableProvider(
+            id=p.id,
+            name=p.name,
+            type="email",
+            credential_fields=EMAIL_CREDENTIAL_FIELDS.get(p.id),
+        ))
     return result
 
 
