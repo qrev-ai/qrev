@@ -11,6 +11,7 @@ Anthropic's research shows: Opus lead + Sonnet workers outperforms single Opus b
 
 import asyncio
 import json
+import re
 from typing import AsyncIterator
 
 from app.providers.llm.types import ModelTier, ChatMessage
@@ -18,6 +19,40 @@ from app.providers.llm.types import ModelTier, ChatMessage
 from .types import Agent, AgentContext, AgentEvent, AgentEventType
 from .engine import agent_engine
 from .registry import agent_registry
+
+
+def _extract_json(text: str) -> dict | None:
+    """Extract JSON from LLM response, handling code blocks and surrounding text."""
+    # Try direct parse first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Try extracting from ```json ... ``` code block
+    match = re.search(r"```(?:json)?\s*\n?(.*?)```", text, re.DOTALL)
+    if match:
+        try:
+            return json.loads(match.group(1).strip())
+        except json.JSONDecodeError:
+            pass
+
+    # Try finding first { ... } block
+    start = text.find("{")
+    if start >= 0:
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start : i + 1])
+                    except json.JSONDecodeError:
+                        break
+
+    return None
 
 
 ORCHESTRATOR_SYSTEM_PROMPT = """You are QAi, the lead AI orchestrator for a GTM (Go-To-Market) platform.
@@ -105,9 +140,8 @@ class QAiOrchestrator(Agent):
 
         result = await agent_engine.run_chat(self, messages, context)
 
-        try:
-            parsed = json.loads(result.content)
-        except json.JSONDecodeError:
+        parsed = _extract_json(result.content)
+        if parsed is None:
             # Not JSON — treat as direct text response
             yield AgentEvent(
                 type=AgentEventType.TEXT,

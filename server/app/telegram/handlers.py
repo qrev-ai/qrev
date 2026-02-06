@@ -252,10 +252,18 @@ async def _process_message(update: Update, link: TelegramLink, user_text: str) -
         return
 
     messages = [ChatMessage(role=m["role"], content=m["content"]) for m in history]
+
+    # Collect sub-agent events via emit callback for progress updates
+    sub_events: list[AgentEvent] = []
+
+    async def _on_emit(event: AgentEvent):
+        sub_events.append(event)
+
     agent_context = AgentContext(
         workspace_id=link.workspace_id,
         session_id=f"tg-{link.telegram_user_id}",
         llm_credentials=llm_creds,
+        emit=_on_emit,
     )
 
     orchestrator = QAiOrchestrator()
@@ -264,6 +272,16 @@ async def _process_message(update: Update, link: TelegramLink, user_text: str) -
 
     try:
         async for event in orchestrator.run(messages, agent_context):
+            # Also drain any sub-agent events collected via emit
+            while sub_events:
+                sub_evt = sub_events.pop(0)
+                sub_formatted = format_event(sub_evt)
+                if sub_formatted and sub_formatted.update_status:
+                    now = time.monotonic()
+                    if now - last_edit_time >= STATUS_THROTTLE_SECONDS:
+                        await _safe_edit(status_msg, sub_formatted.status_text)
+                        last_edit_time = now
+
             formatted = format_event(event)
             if formatted is None:
                 continue
