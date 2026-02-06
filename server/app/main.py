@@ -10,12 +10,14 @@ from app.config import settings
 from app.db.session import engine
 from app.db.models import Base
 from app.campaigns.runner import campaign_runner
+from app.telegram.bot import telegram_bot
 
 from app.api.providers import router as providers_router
 from app.api.chat import router as chat_router
 from app.api.agents import router as agents_router
 from app.api.usage import router as usage_router
 from app.api.campaigns import router as campaigns_router
+from app.api.telegram_admin import router as telegram_admin_router
 
 logger = logging.getLogger("qrev")
 
@@ -28,11 +30,16 @@ async def lifespan(app: FastAPI):
 
     # Start background campaign runner
     campaign_runner.start()
+
+    # Start Telegram bot (skips silently if token not configured)
+    await telegram_bot.start(app)
+
     logger.info("QREV server started")
 
     yield
 
     # Shutdown
+    await telegram_bot.stop()
     campaign_runner.stop()
     await engine.dispose()
 
@@ -59,6 +66,7 @@ app.include_router(chat_router, prefix="/api")
 app.include_router(agents_router, prefix="/api")
 app.include_router(usage_router, prefix="/api")
 app.include_router(campaigns_router, prefix="/api")
+app.include_router(telegram_admin_router, prefix="/api")
 
 
 @app.get("/api/health")

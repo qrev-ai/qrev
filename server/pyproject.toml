@@ -24,6 +24,9 @@ dependencies = [
     "resend>=2.0.0",
     "httpx>=0.28.0",
 
+    # Telegram bot
+    "python-telegram-bot[webhooks]>=21.0",
+
     # Utilities
     "pydantic>=2.10.0",
     "pydantic-settings>=2.7.0",

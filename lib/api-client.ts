@@ -165,3 +165,34 @@ export interface UsageSummary {
 export async function getUsageSummary(workspaceId: string, days = 30): Promise<UsageSummary> {
   return fetchAPI(`/usage/${workspaceId}?days=${days}`);
 }
+
+// ── Telegram ─────────────────────────────────────────
+
+export interface TelegramLinkToken {
+  link_token: string;
+  bot_url: string;
+}
+
+export interface TelegramLink {
+  id: string;
+  telegram_user_id: number | null;
+  telegram_username: string | null;
+  workspace_id: string;
+  conversation_id: string | null;
+  is_active: boolean;
+}
+
+export async function generateTelegramLink(workspaceId: string): Promise<TelegramLinkToken> {
+  return fetchAPI('/telegram/generate-link', {
+    method: 'POST',
+    body: JSON.stringify({ workspace_id: workspaceId }),
+  });
+}
+
+export async function getTelegramLinks(workspaceId: string): Promise<TelegramLink[]> {
+  return fetchAPI(`/telegram/links/${workspaceId}`);
+}
+
+export async function revokeTelegramLink(linkId: string): Promise<void> {
+  await fetchAPI(`/telegram/links/${linkId}`, { method: 'DELETE' });
+}

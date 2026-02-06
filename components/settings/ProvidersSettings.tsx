@@ -14,7 +14,7 @@ import {
   type AvailableProvider,
   type ConnectedProvider,
 } from "@/lib/api-client";
-import { Trash2, CheckCircle, XCircle, Loader2, KeyRound, X } from "lucide-react";
+import { Trash2, CheckCircle, XCircle, Loader2, KeyRound, X, Zap, Terminal } from "lucide-react";
 import { PROVIDER_LOGO_MAP } from "./ProviderLogos";
 
 const PROVIDER_DESCRIPTIONS: Record<string, string> = {
@@ -37,6 +37,7 @@ export function ProvidersSettings() {
   const [connected, setConnected] = useState<ConnectedProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectingId, setConnectingId] = useState<string | null>(null);
+  const [connectMode, setConnectMode] = useState<"api_key" | "setup_token">("api_key");
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [credFields, setCredFields] = useState<Record<string, string>>({});
   const [validating, setValidating] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export function ProvidersSettings() {
 
   const resetForm = () => {
     setConnectingId(null);
+    setConnectMode("api_key");
     setApiKeyInput("");
     setCredFields({});
     setSaving(false);
@@ -228,7 +230,34 @@ export function ProvidersSettings() {
                           Remove
                         </Button>
                       </>
-                    ) : isEditing ? null : (
+                    ) : isEditing ? null : provider.id === "anthropic" ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            resetForm();
+                            setConnectMode("setup_token");
+                            setConnectingId(provider.id);
+                          }}
+                          leftIcon={<Zap className="h-3 w-3" />}
+                        >
+                          Max Account
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            resetForm();
+                            setConnectMode("api_key");
+                            setConnectingId(provider.id);
+                          }}
+                          leftIcon={<KeyRound className="h-3 w-3" />}
+                        >
+                          API Key
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         variant="secondary"
                         size="sm"
@@ -244,37 +273,90 @@ export function ProvidersSettings() {
                   </div>
                 </div>
 
-                {/* Inline API key form */}
+                {/* Inline credential form */}
                 {isEditing && (
                   <div className="px-4 pb-3.5 pt-0">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="password"
-                        placeholder="Paste your API key..."
-                        value={apiKeyInput}
-                        onChange={(e) => setApiKeyInput(e.target.value)}
-                        className="flex-1 h-8 text-xs bg-surface-3"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" && apiKeyInput.trim()) handleConnectLLM(provider);
-                          if (e.key === "Escape") resetForm();
-                        }}
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleConnectLLM(provider)}
-                        disabled={!apiKeyInput.trim()}
-                        isLoading={saving}
-                      >
-                        Save
-                      </Button>
-                      <button
-                        onClick={resetForm}
-                        className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+                    {/* Setup-token mode for Anthropic Max */}
+                    {connectMode === "setup_token" && provider.id === "anthropic" ? (
+                      <div className="space-y-2.5">
+                        <div className="rounded-md bg-surface-3 border border-border-subtle p-3">
+                          <p className="text-xs text-text-muted mb-2">
+                            Use your Claude Max/Pro subscription instead of API billing:
+                          </p>
+                          <div className="flex items-start gap-2 text-xs text-text-secondary">
+                            <Terminal className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                            <div>
+                              <p>Run in your terminal:</p>
+                              <code className="block mt-1 px-2 py-1 bg-surface-1 rounded text-text-primary font-mono text-[11px]">
+                                claude setup-token
+                              </code>
+                              <p className="mt-1.5 text-text-muted">
+                                Copy the <code className="px-1 py-0.5 bg-surface-1 rounded">sk-ant-oat01-...</code> token and paste below.
+                                Token expires ~8 hours — re-paste when needed.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="password"
+                            placeholder="sk-ant-oat01-..."
+                            value={apiKeyInput}
+                            onChange={(e) => setApiKeyInput(e.target.value)}
+                            className="flex-1 h-8 text-xs bg-surface-3"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && apiKeyInput.trim()) handleConnectLLM(provider);
+                              if (e.key === "Escape") resetForm();
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            onClick={() => handleConnectLLM(provider)}
+                            disabled={!apiKeyInput.trim() || !apiKeyInput.trim().startsWith("sk-ant-")}
+                            isLoading={saving}
+                          >
+                            Connect
+                          </Button>
+                          <button
+                            onClick={resetForm}
+                            className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      /* Standard API key mode */
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="password"
+                          placeholder="Paste your API key..."
+                          value={apiKeyInput}
+                          onChange={(e) => setApiKeyInput(e.target.value)}
+                          className="flex-1 h-8 text-xs bg-surface-3"
+                          autoFocus
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && apiKeyInput.trim()) handleConnectLLM(provider);
+                            if (e.key === "Escape") resetForm();
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleConnectLLM(provider)}
+                          disabled={!apiKeyInput.trim()}
+                          isLoading={saving}
+                        >
+                          Save
+                        </Button>
+                        <button
+                          onClick={resetForm}
+                          className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 

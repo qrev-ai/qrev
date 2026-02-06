@@ -87,6 +87,31 @@ NEXTAUTH_SECRET=your-secret
 OPENAI_API_KEY=sk-your-openai-key
 ```
 
+## Telegram Bot (Optional)
+
+Chat with QAi agents directly from Telegram — research companies, write emails, deploy campaigns.
+
+### Setup
+
+1. **Create a bot**: Message [@BotFather](https://t.me/BotFather) on Telegram, send `/newbot`, and follow the prompts
+2. **Add env vars** to `server/.env`:
+   ```bash
+   TELEGRAM_BOT_TOKEN=123456:ABC-DEF...    # from BotFather
+   TELEGRAM_BOT_USERNAME=your_bot_name      # without the @
+   ```
+3. **Restart the server** — the bot starts in polling mode automatically
+4. **Generate a link** in the web dashboard: Settings > Integrations > Telegram > Generate Link
+5. **Open the link** in Telegram and send `/start` — you're connected
+
+### Production (Webhook Mode)
+
+For production, set a webhook URL so Telegram pushes updates to your server instead of polling:
+
+```bash
+TELEGRAM_WEBHOOK_URL=https://your-domain.com/api/telegram/webhook
+TELEGRAM_WEBHOOK_SECRET=some-random-secret    # optional but recommended
+```
+
 ## Project Structure
 
 ```

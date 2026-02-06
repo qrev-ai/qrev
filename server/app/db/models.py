@@ -6,6 +6,7 @@ from sqlalchemy import (
     Text,
     Float,
     Integer,
+    BigInteger,
     Boolean,
     DateTime,
     Enum,
@@ -154,4 +155,26 @@ class UsageLog(Base):
 
     __table_args__ = (
         Index("ix_usage_workspace_created", "workspace_id", "created_at"),
+    )
+
+
+# ============================================
+# Telegram Links
+# ============================================
+
+
+class TelegramLink(Base):
+    __tablename__ = "telegram_links"
+
+    id: Mapped[str] = mapped_column(String(30), primary_key=True)
+    telegram_user_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
+    telegram_username: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    workspace_id: Mapped[str] = mapped_column(String(30), index=True)
+    conversation_id: Mapped[str | None] = mapped_column(String(30), nullable=True)
+    link_token: Mapped[str | None] = mapped_column(String(64), nullable=True, unique=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
     )

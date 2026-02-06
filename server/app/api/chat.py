@@ -30,7 +30,7 @@ class ChatRequest(BaseModel):
     messages: list[dict]  # [{"role": "user", "content": "..."}]
 
 
-async def _load_credentials(db: AsyncSession, workspace_id: str) -> dict[str, dict]:
+async def load_workspace_credentials(db: AsyncSession, workspace_id: str) -> dict[str, dict]:
     """Load and decrypt all LLM credentials for a workspace."""
     result = await db.execute(
         select(ProviderCredential).where(
@@ -53,7 +53,7 @@ async def chat_stream(
     db: AsyncSession = Depends(get_db),
 ):
     """Stream a chat response from the QAi orchestrator via SSE."""
-    llm_creds = await _load_credentials(db, body.workspace_id)
+    llm_creds = await load_workspace_credentials(db, body.workspace_id)
 
     if not llm_creds:
         raise HTTPException(
@@ -89,7 +89,7 @@ async def chat_sync(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     """Non-streaming chat — collects all events and returns the final text."""
-    llm_creds = await _load_credentials(db, body.workspace_id)
+    llm_creds = await load_workspace_credentials(db, body.workspace_id)
 
     if not llm_creds:
         raise HTTPException(

@@ -5,6 +5,7 @@ import { Tabs, TabList, Tab, TabPanel } from "@/components/ui";
 import { ProfileForm } from "@/components/settings/ProfileForm";
 import { UsersTeamsList } from "@/components/settings/UsersTeamsList";
 import { ProvidersSettings } from "@/components/settings/ProvidersSettings";
+import { TelegramSettings } from "@/components/settings/TelegramSettings";
 import { useAuthStore } from "@/store/auth-store";
 
 // Placeholder user — replaced by real session data when auth is connected
@@ -45,6 +46,9 @@ export default function SettingsPage() {
 
           <TabPanel value="integrations" className="mt-6">
             <ProvidersSettings />
+            <div className="mt-10">
+              <TelegramSettings />
+            </div>
           </TabPanel>
 
           <TabPanel value="profile" className="mt-6">

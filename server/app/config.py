@@ -27,6 +27,12 @@ class Settings(BaseSettings):
     port: int = 8000
     debug: bool = True
 
+    # Telegram bot
+    telegram_bot_token: str = ""
+    telegram_bot_username: str = ""
+    telegram_webhook_url: str = ""        # empty = polling mode
+    telegram_webhook_secret: str = ""
+
     model_config = {"env_file": str(_env_file), "env_file_encoding": "utf-8"}
 
     @property
