@@ -121,7 +121,7 @@ class AgentSession(Base):
     conversation_id: Mapped[str | None] = mapped_column(String(30), nullable=True)
 
     messages: Mapped[list] = mapped_column(JSON, default=list)
-    metadata: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    session_metadata: Mapped[dict | None] = mapped_column("session_metadata", JSON, nullable=True)
     token_count: Mapped[int] = mapped_column(Integer, default=0)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

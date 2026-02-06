@@ -63,26 +63,32 @@ class CampaignRunner:
 
     async def _process_due_sends(self):
         """Find and process all due campaign sends."""
-        async with async_session() as db:
-            # Find CampaignProspect rows due for sending
-            result = await db.execute(
-                text("""
-                    SELECT cp.id, cp."campaignId", cp."prospectId", cp."currentStep",
-                           cp."personalizedEmails",
-                           p.email, p."firstName", p."lastName", p.company,
-                           c."workspaceId", c.status as campaign_status
-                    FROM "CampaignProspect" cp
-                    JOIN "Prospect" p ON p.id = cp."prospectId"
-                    JOIN "Campaign" c ON c.id = cp."campaignId"
-                    WHERE cp."nextSendAt" <= :now
-                      AND cp.status IN ('PENDING', 'READY')
-                      AND c.status = 'ACTIVE'
-                    ORDER BY cp."nextSendAt"
-                    LIMIT 50
-                """),
-                {"now": datetime.utcnow()},
-            )
-            due_sends = result.mappings().all()
+        try:
+            async with async_session() as db:
+                # Find CampaignProspect rows due for sending
+                result = await db.execute(
+                    text("""
+                        SELECT cp.id, cp."campaignId", cp."prospectId", cp."currentStep",
+                               cp."personalizedEmails",
+                               p.email, p."firstName", p."lastName", p.company,
+                               c."workspaceId", c.status as campaign_status
+                        FROM "CampaignProspect" cp
+                        JOIN "Prospect" p ON p.id = cp."prospectId"
+                        JOIN "Campaign" c ON c.id = cp."campaignId"
+                        WHERE cp."nextSendAt" <= :now
+                          AND cp.status IN ('PENDING', 'READY')
+                          AND c.status = 'ACTIVE'
+                        ORDER BY cp."nextSendAt"
+                        LIMIT 50
+                    """),
+                    {"now": datetime.utcnow()},
+                )
+                due_sends = result.mappings().all()
+        except Exception as e:
+            # Tables may not exist yet (Prisma hasn't run db push)
+            if "does not exist" in str(e) or "UndefinedTable" in str(e):
+                return
+            raise
 
         if not due_sends:
             return
