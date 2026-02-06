@@ -65,11 +65,29 @@ ANTHROPIC_MODELS = [
 ]
 
 
+def _is_setup_token(key: str) -> bool:
+    """Setup-tokens (from `claude setup-token`) start with sk-ant-oat01-."""
+    return key.startswith("sk-ant-oat01-")
+
+
 def _build_client(credentials: ProviderCredentials) -> anthropic.AsyncAnthropic:
-    return anthropic.AsyncAnthropic(
-        api_key=credentials.api_key,
-        **({"base_url": credentials.base_url} if credentials.base_url else {}),
-    )
+    key = credentials.api_key or ""
+    kwargs: dict = {}
+
+    if credentials.base_url:
+        kwargs["base_url"] = credentials.base_url
+
+    if _is_setup_token(key):
+        # Setup-tokens use Bearer auth, not x-api-key
+        kwargs["api_key"] = "placeholder"
+        kwargs["default_headers"] = {
+            "Authorization": f"Bearer {key}",
+            "anthropic-beta": "oauth-2025-04-20",
+        }
+    else:
+        kwargs["api_key"] = key
+
+    return anthropic.AsyncAnthropic(**kwargs)
 
 
 class AnthropicProvider(LLMProvider):
