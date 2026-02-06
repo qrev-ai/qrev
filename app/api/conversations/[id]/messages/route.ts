@@ -1,22 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiUserId } from "@/lib/auth-utils";
 import { db } from "@/lib/db";
-import OpenAI from "openai";
 
-const QAI_SYSTEM_PROMPT = `You are QAi, an AI assistant for GTM (Go-To-Market) teams. You help with:
-- Creating and managing email campaigns
-- Researching prospects and companies
-- Generating personalized outreach emails
-- Analyzing campaign performance
-
-Be concise, helpful, and proactive. When users want to create campaigns, guide them through the process.
-
-When asked to generate an email, respond with a JSON block in this format:
-\`\`\`email
-{"subject": "...", "body": "...", "to": "..."}
-\`\`\`
-
-When responding with tabular data, use markdown tables.`;
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 // POST /api/conversations/[id]/messages — send message + get AI response
 export async function POST(
@@ -56,11 +42,11 @@ export async function POST(
     userContent = userContent
       ? `${userContent}\n\n${csvSummary}`
       : csvSummary;
-    metadata = { type: "csv_data", data: csvData.slice(0, 50) }; // Store up to 50 rows
+    metadata = { type: "csv_data", data: csvData.slice(0, 50) };
   }
 
   // Save user message
-  const userMessage = await db.message.create({
+  await db.message.create({
     data: {
       conversationId: params.id,
       role: "user",
@@ -69,40 +55,73 @@ export async function POST(
     },
   });
 
-  // Build messages for OpenAI
+  // Build full message history for the agent backend
   const history = conversation.messages.map((m) => ({
     role: m.role as "user" | "assistant",
     content: m.content,
   }));
   history.push({ role: "user", content: userContent });
 
-  // Stream response
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4o",
-    messages: [
-      { role: "system", content: QAI_SYSTEM_PROMPT },
-      ...history,
-    ],
-    stream: true,
-  });
-
+  // Call Python backend — try SSE stream first, fall back to sync
   const encoder = new TextEncoder();
   let fullResponse = "";
 
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        const text = chunk.choices[0]?.delta?.content || "";
-        fullResponse += text;
-        controller.enqueue(encoder.encode(text));
+      try {
+        const backendRes = await fetch(`${API_BASE}/chat/stream`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            workspace_id: conversation.workspaceId,
+            messages: history,
+          }),
+        });
+
+        if (!backendRes.ok || !backendRes.body) {
+          // Backend unavailable — return error message
+          const errText = "I'm having trouble connecting to the agent backend. Make sure the Python server is running on port 8000.";
+          fullResponse = errText;
+          controller.enqueue(encoder.encode(errText));
+        } else {
+          // Parse SSE stream from Python backend
+          const reader = backendRes.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() || "";
+
+            for (const line of lines) {
+              if (line.startsWith("data:")) {
+                try {
+                  const data = JSON.parse(line.slice(5).trim());
+                  // Forward text events to the client
+                  if (data.text) {
+                    fullResponse += data.text;
+                    controller.enqueue(encoder.encode(data.text));
+                  }
+                } catch {
+                  // Skip malformed SSE lines
+                }
+              }
+            }
+          }
+        }
+      } catch (err) {
+        const errText = "Agent backend is not reachable. Start it with: cd server && python run.py";
+        fullResponse = errText;
+        controller.enqueue(encoder.encode(errText));
       }
 
       // Save assistant message after streaming completes
       let assistantMetadata: any = undefined;
 
-      // Detect email draft in response
       const emailMatch = fullResponse.match(
         /```email\s*\n?([\s\S]*?)\n?```/
       );
