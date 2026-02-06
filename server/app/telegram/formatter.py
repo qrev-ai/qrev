@@ -130,6 +130,8 @@ def extract_inline_keyboard(text: str) -> tuple[str, InlineKeyboardMarkup | None
     buttons = []
     for key, label in matches:
         label = label.strip()
+        # Strip HTML tags — inline keyboard buttons are plain text only
+        label = re.sub(r"<[^>]+>", "", label)
         # Truncate long labels (Telegram callback_data max 64 bytes)
         display = label[:40] + "..." if len(label) > 40 else label
         callback = f"choice:{key}"
