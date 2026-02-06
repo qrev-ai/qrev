@@ -1,7 +1,15 @@
 """QREV Server — FastAPI backend for the GTM Agent Platform."""
 
 import logging
+import sys
 from contextlib import asynccontextmanager
+
+# Configure logging so INFO messages are visible
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
+    stream=sys.stdout,
+)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
