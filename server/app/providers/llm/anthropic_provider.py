@@ -70,6 +70,22 @@ def _is_setup_token(key: str) -> bool:
     return key.startswith("sk-ant-oat01-")
 
 
+class _BearerAnthropic(anthropic.AsyncAnthropic):
+    """Anthropic client that uses Bearer auth instead of x-api-key.
+
+    Required for setup-tokens from `claude setup-token` (sk-ant-oat01-...).
+    The default SDK always sends x-api-key which doesn't work for these tokens.
+    """
+
+    def __init__(self, bearer_token: str, **kwargs):
+        self._bearer_token = bearer_token
+        super().__init__(api_key="unused", **kwargs)
+
+    @property
+    def auth_headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self._bearer_token}"}
+
+
 def _build_client(credentials: ProviderCredentials) -> anthropic.AsyncAnthropic:
     key = credentials.api_key or ""
     kwargs: dict = {}
@@ -78,15 +94,10 @@ def _build_client(credentials: ProviderCredentials) -> anthropic.AsyncAnthropic:
         kwargs["base_url"] = credentials.base_url
 
     if _is_setup_token(key):
-        # Setup-tokens use Bearer auth, not x-api-key
-        kwargs["api_key"] = "placeholder"
-        kwargs["default_headers"] = {
-            "Authorization": f"Bearer {key}",
-            "anthropic-beta": "oauth-2025-04-20",
-        }
-    else:
-        kwargs["api_key"] = key
+        kwargs["default_headers"] = {"anthropic-beta": "oauth-2025-04-20"}
+        return _BearerAnthropic(bearer_token=key, **kwargs)
 
+    kwargs["api_key"] = key
     return anthropic.AsyncAnthropic(**kwargs)
 
 
