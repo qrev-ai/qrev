@@ -1,5 +1,6 @@
 """QREV Server — FastAPI backend for the GTM Agent Platform."""
 
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -8,11 +9,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.db.session import engine
 from app.db.models import Base
+from app.campaigns.runner import campaign_runner
 
 from app.api.providers import router as providers_router
 from app.api.chat import router as chat_router
 from app.api.agents import router as agents_router
 from app.api.usage import router as usage_router
+from app.api.campaigns import router as campaigns_router
+
+logger = logging.getLogger("qrev")
 
 
 @asynccontextmanager
@@ -20,7 +25,15 @@ async def lifespan(app: FastAPI):
     # Create tables on startup (dev convenience — use Alembic migrations in prod)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Start background campaign runner
+    campaign_runner.start()
+    logger.info("QREV server started")
+
     yield
+
+    # Shutdown
+    campaign_runner.stop()
     await engine.dispose()
 
 
@@ -45,6 +58,7 @@ app.include_router(providers_router, prefix="/api")
 app.include_router(chat_router, prefix="/api")
 app.include_router(agents_router, prefix="/api")
 app.include_router(usage_router, prefix="/api")
+app.include_router(campaigns_router, prefix="/api")
 
 
 @app.get("/api/health")
