@@ -6,6 +6,19 @@ export async function getSession() {
   return await auth()
 }
 
+/**
+ * Returns the authenticated user ID, or falls back to "dev-user" when
+ * auth is skipped in local dev. Returns null only if dev-user doesn't exist.
+ */
+export async function getApiUserId(): Promise<string | null> {
+  const session = await auth()
+  if (session?.user?.id) return session.user.id
+
+  // Fallback for local dev when login is skipped
+  const devUser = await db.user.findUnique({ where: { id: "dev-user" } })
+  return devUser?.id ?? null
+}
+
 export async function getCurrentUser() {
   const session = await auth()
   

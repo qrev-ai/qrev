@@ -1,10 +1,6 @@
 import { NextRequest } from 'next/server';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const QAI_SYSTEM_PROMPT = `You are QAi, an AI assistant for GTM (Go-To-Market) teams. You help with:
 - Creating and managing email campaigns
 - Researching prospects and companies
@@ -14,6 +10,10 @@ const QAI_SYSTEM_PROMPT = `You are QAi, an AI assistant for GTM (Go-To-Market) t
 Be concise, helpful, and proactive. When users want to create campaigns, guide them through the process.`;
 
 export async function POST(request: NextRequest) {
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  });
+
   const { messages } = await request.json();
 
   const stream = await openai.chat.completions.create({

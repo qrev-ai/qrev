@@ -1,0 +1,43 @@
+[project]
+name = "qrev-server"
+version = "0.1.0"
+description = "QREV GTM Agent Platform - Python Backend"
+requires-python = ">=3.11"
+dependencies = [
+    # Web framework
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "sse-starlette>=2.0.0",
+
+    # Database
+    "sqlalchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.30.0",
+    "alembic>=1.14.0",
+
+    # LLM providers
+    "openai>=1.60.0",
+    "anthropic>=0.42.0",
+    "google-genai>=1.0.0",
+
+    # Email providers
+    "sendgrid>=6.11.0",
+    "resend>=2.0.0",
+    "httpx>=0.28.0",
+
+    # Utilities
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "cryptography>=44.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
+    "ruff>=0.8.0",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100

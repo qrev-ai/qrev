@@ -76,9 +76,10 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members   WorkspaceMember[]
-  campaigns Campaign[]
-  prospects Prospect[]
+  members       WorkspaceMember[]
+  campaigns     Campaign[]
+  prospects     Prospect[]
+  conversations Conversation[]
 }
 
 enum WorkspaceRole {
@@ -193,4 +194,32 @@ model CampaignProspect {
   @@index([prospectId])
   @@index([status])
   @@index([nextSendAt])
+}
+
+// ============================================
+// Chat / Conversation Models
+// ============================================
+
+model Conversation {
+  id          String    @id @default(cuid())
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  title       String    @default("New Conversation")
+  messages    Message[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([workspaceId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String       // "user" | "assistant"
+  content        String       @db.Text
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
 }

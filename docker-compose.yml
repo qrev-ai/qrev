@@ -1,40 +1,70 @@
-# QRev Lite - Docker Compose
-# Usage: docker-compose up --build
+# QREV Platform — run everything with: docker compose up --build
+#
+# Services:
+#   db     → PostgreSQL 16 (shared by frontend + backend)
+#   server → Python FastAPI backend (agents, providers, orchestration)
+#   web    → Next.js 14 frontend
+#
+# First time setup:
+#   1. cp .env.example .env
+#   2. Fill in CREDENTIALS_ENCRYPTION_KEY (see .env.example)
+#   3. docker compose up --build
 
 services:
+  # ── PostgreSQL ───────────────────────
   db:
     image: postgres:16-alpine
-    container_name: qrev-lite-db
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: qrev
       POSTGRES_USER: qrev
       POSTGRES_PASSWORD: qrev
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      POSTGRES_DB: qrev
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U qrev"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-  app:
-    build: .
-    container_name: qrev-lite-app
+  # ── Python Backend (FastAPI) ─────────
+  server:
+    build:
+      context: ./server
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://qrev:qrev@db:5432/qrev
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      NEXTAUTH_URL: http://localhost:3000
-      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-secret-here}
+      DATABASE_URL: postgresql+asyncpg://qrev:qrev@db:5432/qrev
+      CREDENTIALS_ENCRYPTION_KEY: ${CREDENTIALS_ENCRYPTION_KEY}
+      FRONTEND_URL: http://localhost:3000
+      DEBUG: "true"
+
+  # ── Next.js Frontend ─────────────────
+  web:
+    build:
+      context: .
+    restart: unless-stopped
     ports:
       - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
-    restart: unless-stopped
+      server:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql://qrev:qrev@db:5432/qrev
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-change-me-in-production}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      # Client-side calls go to localhost:8000 (browser → host → server container)
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
 
 volumes:
-  postgres_data:
+  pgdata:

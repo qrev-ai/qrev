@@ -18,3 +18,5 @@ export {
   DropdownLabel,
   SelectDropdown,
 } from "./dropdown";
+export { DataTable, type Column } from "./data-table";
+export { Tabs, TabList, Tab, TabPanel } from "./tabs";
