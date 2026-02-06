@@ -5,8 +5,9 @@ import { db } from "@/lib/db";
 // PUT /api/workspaces/[id]/switch — switch active workspace
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export async function PUT(
     where: {
       userId_workspaceId: {
         userId,
-        workspaceId: params.id,
+        workspaceId: id,
       },
     },
     include: { workspace: { select: { id: true, name: true } } },

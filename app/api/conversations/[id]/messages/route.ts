@@ -7,8 +7,9 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 // POST /api/conversations/[id]/messages — send message + get AI response
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -16,7 +17,7 @@ export async function POST(
 
   // Verify access
   const conversation = await db.conversation.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       messages: { orderBy: { createdAt: "asc" } },
       workspace: {
@@ -48,7 +49,7 @@ export async function POST(
   // Save user message
   await db.message.create({
     data: {
-      conversationId: params.id,
+      conversationId: id,
       role: "user",
       content: userContent,
       metadata,
@@ -134,7 +135,7 @@ export async function POST(
 
       await db.message.create({
         data: {
-          conversationId: params.id,
+          conversationId: id,
           role: "assistant",
           content: fullResponse,
           metadata: assistantMetadata,
@@ -146,7 +147,7 @@ export async function POST(
         const title =
           content.length > 60 ? content.slice(0, 60) + "..." : content;
         await db.conversation.update({
-          where: { id: params.id },
+          where: { id },
           data: { title },
         });
       }

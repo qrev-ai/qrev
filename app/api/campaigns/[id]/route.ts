@@ -5,15 +5,16 @@ import { db } from "@/lib/db";
 // GET /api/campaigns/[id]
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const campaign = await db.campaign.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       workspace: {
         include: { members: { where: { userId } } },
@@ -68,15 +69,16 @@ export async function GET(
 // PUT /api/campaigns/[id] — update status
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const campaign = await db.campaign.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       workspace: {
         include: { members: { where: { userId } } },
@@ -92,7 +94,7 @@ export async function PUT(
   const { name, description, status } = body;
 
   const updated = await db.campaign.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...(name !== undefined && { name }),
       ...(description !== undefined && { description }),
@@ -106,15 +108,16 @@ export async function PUT(
 // DELETE /api/campaigns/[id]
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const campaign = await db.campaign.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       workspace: {
         include: { members: { where: { userId } } },
@@ -126,7 +129,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  await db.campaign.delete({ where: { id: params.id } });
+  await db.campaign.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
 }

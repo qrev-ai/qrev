@@ -5,15 +5,16 @@ import { db } from "@/lib/db";
 // GET /api/campaigns/[id]/prospects
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const campaign = await db.campaign.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       workspace: {
         include: { members: { where: { userId } } },

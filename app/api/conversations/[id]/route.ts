@@ -5,15 +5,16 @@ import { db } from "@/lib/db";
 // GET /api/conversations/[id] — get conversation with messages
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const conversation = await db.conversation.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       messages: {
         orderBy: { createdAt: "asc" },
@@ -46,15 +47,16 @@ export async function GET(
 // DELETE /api/conversations/[id] — delete conversation
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const userId = await getApiUserId();
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const conversation = await db.conversation.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       workspace: {
         include: {
@@ -68,7 +70,7 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  await db.conversation.delete({ where: { id: params.id } });
+  await db.conversation.delete({ where: { id } });
 
   return NextResponse.json({ success: true });
 }
