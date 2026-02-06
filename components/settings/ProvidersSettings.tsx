@@ -5,7 +5,6 @@ import { useAuthStore } from "@/store/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import {
   getAvailableProviders,
   getConnectedProviders,
@@ -14,17 +13,22 @@ import {
   disconnectProvider,
   type AvailableProvider,
   type ConnectedProvider,
-  type CredentialField,
 } from "@/lib/api-client";
-import { Key, Trash2, CheckCircle, XCircle, Loader2, Mail } from "lucide-react";
+import { Trash2, CheckCircle, XCircle, Loader2, KeyRound, X } from "lucide-react";
+import { PROVIDER_LOGO_MAP } from "./ProviderLogos";
 
 const PROVIDER_DESCRIPTIONS: Record<string, string> = {
+  // LLM
+  openai: "GPT-4o, GPT-4o Mini, o3-mini",
+  anthropic: "Claude Opus, Sonnet, Haiku",
+  google: "Gemini 2.0 Flash, Gemini 2.5 Pro",
+  // Email
   sendgrid: "Transactional & marketing email",
   resend: "Developer-first email API",
-  mailgun: "Email API with analytics",
-  ses: "AWS cloud email service",
-  postmark: "Fast transactional email",
-  gmail: "Send from your Gmail account",
+  mailgun: "Email API with powerful analytics",
+  ses: "AWS cloud email at scale",
+  postmark: "Fast transactional delivery",
+  gmail: "Send from your Google account",
 };
 
 export function ProvidersSettings() {
@@ -33,11 +37,10 @@ export function ProvidersSettings() {
   const [connected, setConnected] = useState<ConnectedProvider[]>([]);
   const [loading, setLoading] = useState(true);
   const [connectingId, setConnectingId] = useState<string | null>(null);
-  // Single-field fallback for LLM providers
   const [apiKeyInput, setApiKeyInput] = useState("");
-  // Multi-field state for email providers
   const [credFields, setCredFields] = useState<Record<string, string>>({});
   const [validating, setValidating] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const workspaceId = activeWorkspace?.id;
 
@@ -62,15 +65,16 @@ export function ProvidersSettings() {
     loadData();
   }, [loadData]);
 
-  const resetConnectState = () => {
+  const resetForm = () => {
     setConnectingId(null);
     setApiKeyInput("");
     setCredFields({});
+    setSaving(false);
   };
 
   const handleConnectLLM = async (provider: AvailableProvider) => {
     if (!workspaceId || !apiKeyInput.trim()) return;
-    setConnectingId(provider.id + "_saving");
+    setSaving(true);
     try {
       await connectProvider({
         workspace_id: workspaceId,
@@ -78,11 +82,11 @@ export function ProvidersSettings() {
         provider_id: provider.id,
         credentials: { api_key: apiKeyInput.trim() },
       });
-      resetConnectState();
+      resetForm();
       await loadData();
     } catch (err) {
       console.error("Failed to connect:", err);
-      setConnectingId(provider.id);
+      setSaving(false);
     }
   };
 
@@ -94,7 +98,7 @@ export function ProvidersSettings() {
       .some((f) => !credFields[f.key]?.trim());
     if (requiredMissing) return;
 
-    setConnectingId(provider.id + "_saving");
+    setSaving(true);
     try {
       const creds: Record<string, string> = {};
       for (const f of fields) {
@@ -108,11 +112,11 @@ export function ProvidersSettings() {
         provider_id: provider.id,
         credentials: creds,
       });
-      resetConnectState();
+      resetForm();
       await loadData();
     } catch (err) {
       console.error("Failed to connect:", err);
-      setConnectingId(provider.id);
+      setSaving(false);
     }
   };
 
@@ -139,260 +143,317 @@ export function ProvidersSettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-text-muted py-8">
+      <div className="flex items-center gap-2 text-text-muted py-12 justify-center">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Loading providers...
+        <span className="text-sm">Loading integrations...</span>
       </div>
     );
   }
 
+  const llmProviders = available.filter((p) => p.type === "llm");
+  const emailProviders = available.filter((p) => p.type === "email");
+
   return (
-    <div className="max-w-2xl space-y-8">
-      {/* LLM Providers */}
+    <div className="max-w-3xl space-y-10">
+      {/* ── LLM Providers ────────────────────────────── */}
       <section>
-        <h3 className="text-sm font-semibold text-text-primary mb-3">
-          LLM Providers
-        </h3>
-        <p className="text-xs text-text-muted mb-4">
-          Connect your API keys to use different AI models. Agents will automatically route to the best model based on task complexity and cost.
-        </p>
-        <div className="space-y-3">
-          {available
-            .filter((p) => p.type === "llm")
-            .map((provider) => {
-              const conn = connected.find((c) => c.provider_id === provider.id);
-              const isConnected = !!conn;
+        <div className="mb-4">
+          <h3 className="text-base font-semibold text-text-primary">
+            LLM Providers
+          </h3>
+          <p className="text-xs text-text-muted mt-1">
+            Bring your own API keys. Agents auto-route to the cheapest model per task.
+          </p>
+        </div>
 
-              return (
-                <Card key={provider.id}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded bg-surface-3 flex items-center justify-center">
-                          <Key className="h-4 w-4 text-text-muted" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">
-                            {provider.name}
-                          </p>
-                          <p className="text-xs text-text-muted">
-                            {provider.models?.length || 0} models available
-                          </p>
-                        </div>
-                      </div>
+        <div className="grid grid-cols-1 gap-3">
+          {llmProviders.map((provider) => {
+            const conn = connected.find((c) => c.provider_id === provider.id);
+            const isConnected = !!conn;
+            const isEditing = connectingId === provider.id;
+            const LogoComponent = PROVIDER_LOGO_MAP[provider.id];
 
-                      {isConnected ? (
-                        <div className="flex items-center gap-2">
-                          <Badge variant={conn.is_valid ? "success" : "error"} size="sm">
-                            {conn.is_valid ? (
-                              <><CheckCircle className="h-3 w-3 mr-1" /> Connected</>
-                            ) : (
-                              <><XCircle className="h-3 w-3 mr-1" /> Invalid</>
-                            )}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleValidate(conn.id)}
-                            isLoading={validating === conn.id}
-                          >
-                            Test
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDisconnect(conn.id)}
-                            leftIcon={<Trash2 className="h-3 w-3" />}
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ) : connectingId === provider.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="password"
-                            placeholder="sk-... or API key"
-                            value={apiKeyInput}
-                            onChange={(e) => setApiKeyInput(e.target.value)}
-                            className="w-64 h-8 text-xs"
-                          />
-                          <Button
-                            size="sm"
-                            onClick={() => handleConnectLLM(provider)}
-                            disabled={!apiKeyInput.trim()}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={resetConnectState}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            resetConnectState();
-                            setConnectingId(provider.id);
-                          }}
-                        >
-                          Connect
-                        </Button>
-                      )}
+            return (
+              <div
+                key={provider.id}
+                className={`
+                  rounded-lg border transition-all duration-150
+                  ${isConnected
+                    ? "bg-surface-2 border-status-success/20"
+                    : "bg-surface-2 border-border hover:border-border-strong"
+                  }
+                `}
+              >
+                <div className="px-4 py-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-9 h-9 rounded-lg bg-surface-3 border border-border-subtle flex items-center justify-center text-text-secondary">
+                      {LogoComponent ? <LogoComponent className="h-5 w-5" /> : <KeyRound className="h-4 w-4" />}
                     </div>
-
-                    {/* Model list for connected providers */}
-                    {isConnected && provider.models && (
-                      <div className="mt-3 pt-3 border-t border-border-subtle">
-                        <div className="flex flex-wrap gap-1.5">
-                          {provider.models.map((m) => (
-                            <Badge key={m.id} variant="outline" size="sm">
-                              {m.name}
-                              <span className="ml-1 text-text-muted">
-                                ${m.input_cost_per_1m}/{m.output_cost_per_1m}
-                              </span>
-                            </Badge>
-                          ))}
-                        </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-text-primary">
+                          {provider.name}
+                        </span>
+                        {isConnected && (
+                          <Badge variant="success" size="sm">
+                            <CheckCircle className="h-2.5 w-2.5 mr-1" />
+                            Connected
+                          </Badge>
+                        )}
                       </div>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {PROVIDER_DESCRIPTIONS[provider.id] || `${provider.models?.length || 0} models`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {isConnected ? (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleValidate(conn.id)}
+                          isLoading={validating === conn.id}
+                        >
+                          Test
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDisconnect(conn.id)}
+                          leftIcon={<Trash2 className="h-3 w-3" />}
+                          className="text-text-muted hover:text-status-error"
+                        >
+                          Remove
+                        </Button>
+                      </>
+                    ) : isEditing ? null : (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          resetForm();
+                          setConnectingId(provider.id);
+                        }}
+                        leftIcon={<KeyRound className="h-3 w-3" />}
+                      >
+                        BYO Key
+                      </Button>
                     )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  </div>
+                </div>
+
+                {/* Inline API key form */}
+                {isEditing && (
+                  <div className="px-4 pb-3.5 pt-0">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="password"
+                        placeholder="Paste your API key..."
+                        value={apiKeyInput}
+                        onChange={(e) => setApiKeyInput(e.target.value)}
+                        className="flex-1 h-8 text-xs bg-surface-3"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && apiKeyInput.trim()) handleConnectLLM(provider);
+                          if (e.key === "Escape") resetForm();
+                        }}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => handleConnectLLM(provider)}
+                        disabled={!apiKeyInput.trim()}
+                        isLoading={saving}
+                      >
+                        Save
+                      </Button>
+                      <button
+                        onClick={resetForm}
+                        className="p-1.5 text-text-muted hover:text-text-primary transition-colors"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Model badges for connected providers */}
+                {isConnected && provider.models && provider.models.length > 0 && (
+                  <div className="px-4 pb-3 pt-0">
+                    <div className="flex flex-wrap gap-1.5">
+                      {provider.models.map((m) => (
+                        <span
+                          key={m.id}
+                          className="inline-flex items-center text-[10px] px-2 py-0.5 rounded-full bg-surface-3 text-text-muted border border-border-subtle"
+                        >
+                          {m.name}
+                          <span className="ml-1 opacity-60">
+                            ${m.input_cost_per_1m}/${m.output_cost_per_1m}
+                          </span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* Email Providers */}
+      {/* ── Email Providers ──────────────────────────── */}
       <section>
-        <h3 className="text-sm font-semibold text-text-primary mb-3">
-          Email Providers
-        </h3>
-        <p className="text-xs text-text-muted mb-4">
-          Connect an email sending service to deliver campaign emails. You can connect multiple providers.
-        </p>
-        <div className="space-y-3">
-          {available
-            .filter((p) => p.type === "email")
-            .map((provider) => {
-              const conn = connected.find((c) => c.provider_id === provider.id);
-              const isConnected = !!conn;
-              const fields = provider.credential_fields || [
-                { key: "api_key", label: "API Key", type: "password" as const, placeholder: "API key", required: true },
-              ];
-              const isSaving = connectingId === provider.id + "_saving";
-              const isEditing = connectingId === provider.id;
-              const requiredFilled = fields
-                .filter((f) => f.required)
-                .every((f) => credFields[f.key]?.trim());
+        <div className="mb-4">
+          <h3 className="text-base font-semibold text-text-primary">
+            Email Providers
+          </h3>
+          <p className="text-xs text-text-muted mt-1">
+            Connect your email service to send campaign emails. You can connect multiple providers.
+          </p>
+        </div>
 
-              return (
-                <Card key={provider.id}>
-                  <CardContent className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded bg-surface-3 flex items-center justify-center">
-                          <Mail className="h-4 w-4 text-text-muted" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-text-primary">
-                            {provider.name}
-                          </p>
-                          <p className="text-xs text-text-muted">
-                            {PROVIDER_DESCRIPTIONS[provider.id] || "Email provider"}
-                          </p>
-                        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {emailProviders.map((provider) => {
+            const conn = connected.find((c) => c.provider_id === provider.id);
+            const isConnected = !!conn;
+            const isEditing = connectingId === provider.id;
+            const LogoComponent = PROVIDER_LOGO_MAP[provider.id];
+            const fields = provider.credential_fields || [
+              { key: "api_key", label: "API Key", type: "password" as const, placeholder: "API key", required: true },
+            ];
+            const requiredFilled = fields
+              .filter((f) => f.required)
+              .every((f) => credFields[f.key]?.trim());
+
+            return (
+              <div
+                key={provider.id}
+                className={`
+                  rounded-lg border transition-all duration-150
+                  ${isConnected
+                    ? "bg-surface-2 border-status-success/20"
+                    : isEditing
+                      ? "bg-surface-2 border-accent/30"
+                      : "bg-surface-2 border-border hover:border-border-strong"
+                  }
+                `}
+              >
+                {/* Header */}
+                <div className="px-4 py-3.5">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-surface-3 border border-border-subtle flex items-center justify-center text-text-secondary shrink-0">
+                        {LogoComponent ? <LogoComponent className="h-5 w-5" /> : <KeyRound className="h-4 w-4" />}
                       </div>
-
-                      {isConnected ? (
+                      <div>
                         <div className="flex items-center gap-2">
-                          <Badge variant={conn.is_valid ? "success" : "error"} size="sm">
-                            {conn.is_valid ? (
-                              <><CheckCircle className="h-3 w-3 mr-1" /> Connected</>
-                            ) : (
-                              <><XCircle className="h-3 w-3 mr-1" /> Invalid</>
-                            )}
-                          </Badge>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleValidate(conn.id)}
-                            isLoading={validating === conn.id}
-                          >
-                            Test
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDisconnect(conn.id)}
-                            leftIcon={<Trash2 className="h-3 w-3" />}
-                          >
-                            Remove
-                          </Button>
+                          <span className="text-sm font-medium text-text-primary">
+                            {provider.name}
+                          </span>
                         </div>
-                      ) : !isEditing ? (
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            resetConnectState();
-                            setConnectingId(provider.id);
-                          }}
-                        >
-                          Connect
-                        </Button>
-                      ) : null}
+                        <p className="text-xs text-text-muted mt-0.5">
+                          {PROVIDER_DESCRIPTIONS[provider.id] || "Email provider"}
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Credential input fields */}
-                    {isEditing && (
-                      <div className="mt-3 pt-3 border-t border-border-subtle space-y-2">
-                        {fields.map((field) => (
-                          <div key={field.key}>
-                            <label className="text-xs text-text-muted mb-1 block">
-                              {field.label}{field.required ? " *" : ""}
-                            </label>
-                            <Input
-                              type={field.type === "text" ? "text" : "password"}
-                              placeholder={field.placeholder}
-                              value={credFields[field.key] || ""}
-                              onChange={(e) =>
-                                setCredFields((prev) => ({
-                                  ...prev,
-                                  [field.key]: e.target.value,
-                                }))
-                              }
-                              className="h-8 text-xs"
-                            />
-                          </div>
-                        ))}
-                        <div className="flex items-center gap-2 pt-1">
-                          <Button
-                            size="sm"
-                            onClick={() => handleConnectEmail(provider)}
-                            disabled={!requiredFilled}
-                            isLoading={isSaving}
-                          >
-                            Save
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={resetConnectState}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
+                    {isConnected && (
+                      <Badge variant="success" size="sm">
+                        <CheckCircle className="h-2.5 w-2.5 mr-1" />
+                        Live
+                      </Badge>
                     )}
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="mt-3">
+                    {isConnected ? (
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleValidate(conn.id)}
+                          isLoading={validating === conn.id}
+                          className="flex-1"
+                        >
+                          Test Connection
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDisconnect(conn.id)}
+                          className="text-text-muted hover:text-status-error"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ) : !isEditing ? (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => {
+                          resetForm();
+                          setConnectingId(provider.id);
+                        }}
+                        leftIcon={<KeyRound className="h-3 w-3" />}
+                      >
+                        BYO Key
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Credential form */}
+                {isEditing && (
+                  <div className="px-4 pb-4 space-y-2.5 border-t border-border-subtle pt-3">
+                    {fields.map((field) => (
+                      <div key={field.key}>
+                        <label className="text-[11px] font-medium text-text-muted uppercase tracking-wider mb-1 block">
+                          {field.label}
+                          {field.required && <span className="text-status-error ml-0.5">*</span>}
+                        </label>
+                        <Input
+                          type={field.type === "text" ? "text" : "password"}
+                          placeholder={field.placeholder}
+                          value={credFields[field.key] || ""}
+                          onChange={(e) =>
+                            setCredFields((prev) => ({
+                              ...prev,
+                              [field.key]: e.target.value,
+                            }))
+                          }
+                          className="h-8 text-xs bg-surface-3"
+                          onKeyDown={(e) => {
+                            if (e.key === "Escape") resetForm();
+                          }}
+                        />
+                      </div>
+                    ))}
+                    <div className="flex items-center gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleConnectEmail(provider)}
+                        disabled={!requiredFilled}
+                        isLoading={saving}
+                      >
+                        Connect
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={resetForm}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

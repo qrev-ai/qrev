@@ -35,15 +35,15 @@ export default function SettingsPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-auto px-6 py-4">
-        <Tabs defaultTab="providers">
+        <Tabs defaultTab="integrations">
           <TabList>
-            <Tab value="providers">Providers</Tab>
+            <Tab value="integrations">Integrations</Tab>
             <Tab value="profile">My Profile</Tab>
             <Tab value="account">Account</Tab>
             <Tab value="team">Users & Teams</Tab>
           </TabList>
 
-          <TabPanel value="providers" className="mt-6">
+          <TabPanel value="integrations" className="mt-6">
             <ProvidersSettings />
           </TabPanel>
 
