@@ -1,10 +1,11 @@
 """API routes for managing provider credentials (LLM + Email)."""
 
+import logging
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_db
@@ -233,3 +234,91 @@ async def disconnect_provider(
     )
     await db.commit()
     return {"deleted": True}
+
+
+# ── Gmail auto-sync (called from NextAuth signIn event) ──
+
+logger = logging.getLogger("qrev.providers")
+
+
+class SyncGmailRequest(BaseModel):
+    user_id: str
+    access_token: str
+    refresh_token: str | None = None
+    expires_at: int | None = None
+    client_id: str
+    client_secret: str
+
+
+@router.post("/sync-gmail")
+async def sync_gmail(
+    body: SyncGmailRequest,
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Auto-sync Gmail OAuth tokens from NextAuth into provider_credentials.
+
+    Called server-side from the NextAuth signIn event. Finds the user's
+    workspace and upserts a gmail email provider credential.
+    """
+    # Find the user's workspace (Prisma-managed tables, use raw SQL)
+    row = (await db.execute(
+        text(
+            'SELECT "workspaceId" FROM "WorkspaceMember" '
+            'WHERE "userId" = :uid LIMIT 1'
+        ),
+        {"uid": body.user_id},
+    )).first()
+
+    if not row:
+        logger.warning("sync-gmail: no workspace found for user %s", body.user_id)
+        return {"synced": False, "reason": "no_workspace"}
+
+    workspace_id = row[0]
+
+    # Get user email for from_email
+    user_row = (await db.execute(
+        text('SELECT "email" FROM "User" WHERE "id" = :uid LIMIT 1'),
+        {"uid": body.user_id},
+    )).first()
+    user_email = user_row[0] if user_row else None
+
+    # Build credentials dict
+    creds_data = {
+        "access_token": body.access_token,
+        "refresh_token": body.refresh_token,
+        "expires_at": body.expires_at,
+        "client_id": body.client_id,
+        "client_secret": body.client_secret,
+        "email": user_email,
+    }
+    ciphertext, nonce = encrypt_credentials(creds_data)
+
+    # Upsert: find existing gmail credential for this workspace
+    existing = (await db.execute(
+        select(ProviderCredential).where(
+            ProviderCredential.workspace_id == workspace_id,
+            ProviderCredential.provider_id == "gmail",
+            ProviderCredential.provider_type == ProviderType.EMAIL,
+        )
+    )).scalar_one_or_none()
+
+    if existing:
+        existing.credentials_encrypted = ciphertext
+        existing.nonce = nonce
+        existing.is_active = True
+        existing.is_valid = True
+        logger.info("sync-gmail: updated gmail credentials for workspace %s", workspace_id)
+    else:
+        cred = ProviderCredential(
+            id=uuid.uuid4().hex[:24],
+            workspace_id=workspace_id,
+            provider_type=ProviderType.EMAIL,
+            provider_id="gmail",
+            credentials_encrypted=ciphertext,
+            nonce=nonce,
+        )
+        db.add(cred)
+        logger.info("sync-gmail: created gmail credentials for workspace %s", workspace_id)
+
+    await db.commit()
+    return {"synced": True, "workspace_id": workspace_id}

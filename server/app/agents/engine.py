@@ -8,6 +8,8 @@ This is the core runtime that:
 """
 
 import json
+import logging
+import re
 import uuid
 from typing import AsyncIterator
 
@@ -16,9 +18,74 @@ from app.providers.llm.types import ProviderCredentials, ModelTier
 
 from .types import Agent, AgentContext, AgentEvent, AgentEventType, ToolDefinition
 
+logger = logging.getLogger("qrev.engine")
+
 
 def _new_id() -> str:
     return uuid.uuid4().hex[:24]
+
+
+def _extract_json(text: str) -> dict | None:
+    """Extract a JSON object from LLM output that may contain surrounding text.
+
+    Handles: pure JSON, ```json``` code blocks, JSON embedded in narrative text,
+    and JSON arrays (takes the first element).
+    """
+    # Try direct parse
+    try:
+        obj = json.loads(text)
+        if isinstance(obj, list) and obj:
+            return obj[0]
+        if isinstance(obj, dict):
+            return obj
+    except (json.JSONDecodeError, ValueError):
+        pass
+
+    # Try code block
+    match = re.search(r"```(?:json)?\s*\n?(.*?)```", text, re.DOTALL)
+    if match:
+        try:
+            obj = json.loads(match.group(1).strip())
+            if isinstance(obj, list) and obj:
+                return obj[0]
+            if isinstance(obj, dict):
+                return obj
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Try finding first { ... } block
+    start = text.find("{")
+    if start >= 0:
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == "{":
+                depth += 1
+            elif text[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        return json.loads(text[start : i + 1])
+                    except (json.JSONDecodeError, ValueError):
+                        break
+
+    # Try finding first [ ... ] block (JSON array)
+    start = text.find("[")
+    if start >= 0:
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == "[":
+                depth += 1
+            elif text[i] == "]":
+                depth -= 1
+                if depth == 0:
+                    try:
+                        arr = json.loads(text[start : i + 1])
+                        if isinstance(arr, list) and arr:
+                            return arr[0]
+                    except (json.JSONDecodeError, ValueError):
+                        break
+
+    return None
 
 
 class AgentEngine:
@@ -102,6 +169,7 @@ class AgentEngine:
         conversation = [ChatMessage(role="system", content=agent.system_prompt)] + list(messages)
 
         tools_map = {t.name: t for t in agent.tools}
+        has_called_tool = False
 
         for iteration in range(max_iterations):
             yield AgentEvent(
@@ -113,14 +181,21 @@ class AgentEngine:
             params = ChatParams(model=model_id, messages=conversation, json_mode=True)
             result = await provider.chat(params, credentials)
 
-            # Try to parse as JSON to detect tool calls
-            try:
-                parsed = json.loads(result.content)
+            logger.info(
+                "[%s] iteration=%d response=%s",
+                agent.id, iteration, result.content[:200],
+            )
 
+            # Extract JSON from the response (handles text-wrapped JSON,
+            # code blocks, and JSON arrays — Anthropic doesn't support json_mode)
+            parsed = _extract_json(result.content)
+
+            if parsed is not None:
                 # Convention: {"tool": "name", "input": {...}} means tool call
                 if "tool" in parsed and parsed["tool"] in tools_map:
                     tool_name = parsed["tool"]
                     tool_input = parsed.get("input", {})
+                    has_called_tool = True
 
                     yield AgentEvent(
                         type=AgentEventType.TOOL_CALL,
@@ -139,16 +214,50 @@ class AgentEngine:
 
                     # Feed result back into conversation
                     conversation.append(ChatMessage(role="assistant", content=result.content))
+
+                    result_payload: dict = {"tool_result": tool_name, "output": tool_result}
+
+                    # If the tool failed, add an explicit signal so the LLM
+                    # doesn't hallucinate success
+                    if isinstance(tool_result, dict) and tool_result.get("success") is False:
+                        result_payload["IMPORTANT"] = (
+                            "The tool call FAILED. Report this failure to the user. "
+                            "Do NOT claim the action succeeded."
+                        )
+
                     conversation.append(
                         ChatMessage(
                             role="user",
-                            content=json.dumps({"tool_result": tool_name, "output": tool_result}),
+                            content=json.dumps(result_payload),
                         )
                     )
                     continue
 
                 # Convention: {"response": "..."} means final answer
                 if "response" in parsed:
+                    # Guard: if agent has tools but hasn't used any yet,
+                    # reject and tell LLM to actually use its tools
+                    if tools_map and not has_called_tool:
+                        logger.warning(
+                            "[%s] LLM tried to respond without calling any tools, "
+                            "pushing back (iteration %d)", agent.id, iteration,
+                        )
+                        tool_names = ", ".join(tools_map.keys())
+                        conversation.append(
+                            ChatMessage(role="assistant", content=result.content)
+                        )
+                        conversation.append(
+                            ChatMessage(
+                                role="user",
+                                content=json.dumps({
+                                    "error": "You must use your tools before responding. "
+                                    f"You have NOT performed any action yet. "
+                                    f"Call one of your tools: {tool_names}",
+                                }),
+                            )
+                        )
+                        continue
+
                     yield AgentEvent(
                         type=AgentEventType.TEXT,
                         agent_id=agent.id,
@@ -156,10 +265,29 @@ class AgentEngine:
                     )
                     break
 
-            except (json.JSONDecodeError, KeyError):
-                pass
+            # If no JSON found or no recognized structure, treat as final text
+            if tools_map and not has_called_tool:
+                # Agent has tools but returned plain text — push back
+                logger.warning(
+                    "[%s] No JSON found, pushing back to use tools (iteration %d)",
+                    agent.id, iteration,
+                )
+                tool_names = ", ".join(tools_map.keys())
+                conversation.append(
+                    ChatMessage(role="assistant", content=result.content)
+                )
+                conversation.append(
+                    ChatMessage(
+                        role="user",
+                        content=json.dumps({
+                            "error": "Invalid response format. You MUST respond with JSON. "
+                            f"Call one of your tools: {tool_names}. "
+                            'Format: {"tool": "tool_name", "input": {...}}',
+                        }),
+                    )
+                )
+                continue
 
-            # If not JSON or no tool call, treat as final text response
             yield AgentEvent(
                 type=AgentEventType.TEXT,
                 agent_id=agent.id,

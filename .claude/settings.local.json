@@ -6,7 +6,9 @@
       "Bash(lsof:*)",
       "Bash(npm run build:*)",
       "Bash(npm run dev:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "Bash(test:*)"
     ]
   }
 }

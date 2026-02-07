@@ -246,8 +246,22 @@ class QAiOrchestrator(Agent):
                         content=task["objective"] + dep_context,
                     )
 
-                result = await agent_engine.run_chat(agent, sub_messages, context)
-                return idx, result.content
+                # Use agent.run() for the full tool-execution loop
+                # (agent_engine.run_chat() was a single LLM call — tools never ran)
+                text_parts: list[str] = []
+                async for event in agent.run(sub_messages, context):
+                    # Forward sub-agent events for progress tracking
+                    if context.emit and event.type not in (
+                        AgentEventType.DONE,
+                        AgentEventType.TEXT,
+                    ):
+                        await context.emit(event)
+                    if event.type == AgentEventType.TEXT:
+                        text_parts.append(event.data.get("text", ""))
+                    elif event.type == AgentEventType.ERROR:
+                        text_parts.append(f"Error: {event.data.get('error', 'unknown')}")
+
+                return idx, "\n".join(text_parts) if text_parts else "No result"
 
             parallel_results = await asyncio.gather(
                 *[_run_one(i) for i in ready],

@@ -47,7 +47,30 @@ def format_event(event: AgentEvent) -> FormattedEvent | None:
 
         case AgentEventType.TOOL_RESULT:
             data = event.data
+            tool_name = data.get("tool", "")
+            result = data.get("result", {})
+
+            # Email-specific tool result formatting
+            if tool_name == "send_email":
+                if isinstance(result, dict) and result.get("success") is False:
+                    error = result.get("error", "Unknown error")
+                    text = f"Email failed: {error}"
+                elif isinstance(result, dict) and result.get("success"):
+                    text = "Email sent successfully"
+                else:
+                    text = "Email send attempted..."
+                return FormattedEvent(update_status=True, status_text=text)
+
+            if tool_name == "check_email_provider":
+                if isinstance(result, dict) and result.get("connected"):
+                    text = "Email provider connected"
+                else:
+                    text = "No email provider configured"
+                return FormattedEvent(update_status=True, status_text=text)
+
             count = data.get("count") or data.get("results_count")
+            if isinstance(result, dict):
+                count = count or result.get("count") or result.get("results_count")
             if count is not None:
                 text = f"Found {count} results"
             else:
