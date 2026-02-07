@@ -1,4 +1,4 @@
-<h1 align="center"> Welcome to QRev 2.0</h1>
+<h1 align="center"> Welcome to QRev AI 2.0</h1>
 
 <p align="center">
   <em>AI Agents to scale your Sales org infinitely; Open Source alternative to Salesforce</em>
@@ -20,9 +20,16 @@
   />
 </div>
 
+<p align="center">
+    <img alt="Node version" src="https://img.shields.io/static/v1?label=node&message=%20%3E=18%2E18&logo=node.js&color=2334D058" />
+      <img src="https://img.shields.io/badge/lang-English-blue.svg" alt="English">
+</p>
+
 If Salesforce were built today, starting with AI, it would be built with AI Agents at the foundation.
 
 But Salesforce is too expensive, and hard to customise.
+
+> NOTE: QRev is under active development, and we are releasing an early version so that a strong Agentic foundation can be set with ideas from contributors like you. This repository will be updated regularly with changes and new releases.
 
 ## Digital Workers for each Sales Role or Superagent (a.k.a Qai )?
 
@@ -115,6 +122,47 @@ This starts:
 4. You're ready to chat with QAi
 
 > **Get an Anthropic API key**: Go to https://console.anthropic.com > API Keys > Create Key
+
+## Set Up Google OAuth (for Login)
+
+QRev uses Google OAuth for user authentication. Here's how to set it up:
+
+### 1. Go to Google Cloud Console
+
+- Open https://console.cloud.google.com
+- Create a new project (e.g. "QRev") or select an existing one
+
+### 2. Configure the OAuth Consent Screen
+
+- Go to **APIs & Services > OAuth consent screen** (or search "OAuth consent screen" in the top bar)
+- Choose **External** user type (unless you have a Google Workspace org)
+- Fill in:
+  - **App name**: QRev (or anything you like)
+  - **User support email**: your email
+  - **Developer contact email**: your email
+- Click **Save and Continue** through the remaining steps (Scopes, Test Users)
+- On the **Test Users** step, add your own Gmail address (required while the app is in "Testing" status)
+
+### 3. Create OAuth Credentials
+
+- Go to **APIs & Services > Credentials**
+- Click **Create Credentials > OAuth client ID**
+- Application type: **Web application**
+- Name: `QRev Local` (or anything)
+- **Authorized JavaScript origins**: add `http://localhost:3000`
+- **Authorized redirect URIs**: add `http://localhost:3000/api/auth/callback/google`
+- Click **Create**
+
+### 4. Copy the credentials
+
+Google will show your **Client ID** and **Client Secret**. Add them to your `.env`:
+
+```bash
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-your-client-secret
+```
+
+Restart the app and you're ready to log in at http://localhost:3000/login.
 
 ## Connect Anthropic
 
