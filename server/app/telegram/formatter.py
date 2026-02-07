@@ -150,3 +150,51 @@ def truncate_for_telegram(text: str, max_length: int = TELEGRAM_MAX_LENGTH) -> s
     if len(text) <= max_length:
         return text
     return text[: max_length - 20] + "\n\n... (truncated)"
+
+
+def split_for_telegram(
+    text: str, max_parts: int = 3, max_length: int = TELEGRAM_MAX_LENGTH
+) -> list[str]:
+    """Split long text into multiple Telegram messages (up to max_parts).
+
+    Tries to split on paragraph boundaries (double newline) so messages
+    read naturally. Falls back to hard split if a single paragraph exceeds
+    the limit.
+    """
+    if len(text) <= max_length:
+        return [text]
+
+    parts: list[str] = []
+    remaining = text
+
+    while remaining and len(parts) < max_parts:
+        is_last_allowed = len(parts) == max_parts - 1
+
+        if len(remaining) <= max_length:
+            parts.append(remaining)
+            remaining = ""
+            break
+
+        # Find a paragraph break to split on
+        # Search backwards from max_length for a clean break
+        split_at = remaining.rfind("\n\n", 0, max_length)
+
+        if split_at < max_length // 4:
+            # No good paragraph break — try single newline
+            split_at = remaining.rfind("\n", 0, max_length)
+
+        if split_at < max_length // 4:
+            # No good break at all — hard split
+            split_at = max_length - 20
+
+        chunk = remaining[:split_at].rstrip()
+        remaining = remaining[split_at:].lstrip()
+
+        if is_last_allowed and remaining:
+            # Last allowed part — truncate if there's still more
+            chunk = truncate_for_telegram(chunk + "\n\n" + remaining, max_length)
+            remaining = ""
+
+        parts.append(chunk)
+
+    return parts

@@ -26,7 +26,7 @@ from app.db.session import async_session
 from app.db.models import TelegramLink
 from app.api.chat import load_workspace_credentials
 from app.agents.orchestrator import QAiOrchestrator
-from app.agents.types import AgentContext, AgentEventType
+from app.agents.types import AgentContext, AgentEvent, AgentEventType
 from app.providers.llm.types import ChatMessage
 
 # Import agents so they register themselves
@@ -40,6 +40,7 @@ from .formatter import (
     format_html,
     extract_inline_keyboard,
     truncate_for_telegram,
+    split_for_telegram,
 )
 
 logger = logging.getLogger("qrev.telegram")
@@ -305,26 +306,45 @@ async def _process_message(update: Update, link: TelegramLink, user_text: str) -
         await _safe_edit(status_msg, "No response generated. Try rephrasing your request.")
         return
 
-    # Format and send final response
+    # Format and send final response — split into up to 3 messages
     combined = "\n\n".join(final_text_parts)
     html_text = format_html(combined)
-    html_text = truncate_for_telegram(html_text)
 
-    # Check for inline keyboard choices
-    cleaned_text, keyboard = extract_inline_keyboard(html_text)
+    # Extract inline keyboard from full text (before splitting)
+    html_text, keyboard = extract_inline_keyboard(html_text)
 
-    try:
-        await status_msg.edit_text(
-            cleaned_text,
-            parse_mode=ParseMode.HTML,
-            reply_markup=keyboard,
-        )
-    except Exception:
-        # Fall back to plain text if HTML parsing fails
-        plain = truncate_for_telegram(combined)
-        await _safe_edit(status_msg, plain, keyboard=keyboard)
+    parts = split_for_telegram(html_text, max_parts=3)
 
-    # Save assistant response
+    for i, part in enumerate(parts):
+        is_last = i == len(parts) - 1
+        # Attach keyboard to last message only
+        markup = keyboard if is_last else None
+
+        if i == 0:
+            # Edit the status message with the first part
+            try:
+                await status_msg.edit_text(
+                    part,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=markup,
+                )
+            except Exception:
+                # Fall back to plain text if HTML parsing fails
+                plain_parts = split_for_telegram(combined, max_parts=3)
+                await _safe_edit(status_msg, plain_parts[0], keyboard=markup)
+        else:
+            # Send additional parts as new messages
+            try:
+                await update.effective_chat.send_message(
+                    part,
+                    parse_mode=ParseMode.HTML,
+                    reply_markup=markup,
+                )
+            except Exception:
+                # Fall back to plain text
+                await update.effective_chat.send_message(part, reply_markup=markup)
+
+    # Save assistant response (full text, not split)
     async with async_session() as db:
         await _save_message(db, link.conversation_id, "assistant", combined)
 
