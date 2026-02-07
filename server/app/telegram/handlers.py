@@ -9,7 +9,7 @@ import asyncio
 import logging
 import time
 import secrets
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import select, text
 from telegram import Update
@@ -236,11 +236,14 @@ async def _process_message(update: Update, link: TelegramLink, user_text: str) -
     status_msg = await msg_target.reply_text("Thinking...")
 
     async with async_session() as db:
-        # Save user message to Prisma Conversation/Message tables
-        await _save_message(db, link.conversation_id, "user", user_text)
+        # Ensure we have a conversation for today (daily threading)
+        conv_id = await _ensure_daily_conversation(db, link)
 
-        # Load recent history
-        history = await _load_messages(db, link.conversation_id, limit=20)
+        # Save user message to Prisma Conversation/Message tables
+        await _save_message(db, conv_id, "user", user_text)
+
+        # Load recent history (from today's conversation only)
+        history = await _load_messages(db, conv_id, limit=20)
 
         # Load LLM credentials
         llm_creds = await load_workspace_credentials(db, link.workspace_id)
@@ -401,10 +404,14 @@ async def _get_link(telegram_user_id: int) -> TelegramLink | None:
         return result.scalar_one_or_none()
 
 
-async def _create_conversation(db, workspace_id: str, telegram_user_id: int) -> str:
+async def _create_conversation(
+    db, workspace_id: str, telegram_user_id: int, title: str | None = None,
+) -> str:
     """Create a Conversation row in the Prisma table. Returns the conversation ID."""
     conv_id = f"tg_{secrets.token_hex(12)}"
     now = datetime.utcnow()
+    if not title:
+        title = f"Telegram ({telegram_user_id})"
     try:
         await db.execute(
             text("""
@@ -414,7 +421,7 @@ async def _create_conversation(db, workspace_id: str, telegram_user_id: int) -> 
             {
                 "id": conv_id,
                 "wid": workspace_id,
-                "title": f"Telegram ({telegram_user_id})",
+                "title": title,
                 "now": now,
             },
         )
@@ -423,6 +430,57 @@ async def _create_conversation(db, workspace_id: str, telegram_user_id: int) -> 
         logger.debug("Could not create Conversation row (table may not exist yet)")
         await db.rollback()
     return conv_id
+
+
+async def _ensure_daily_conversation(db, link: TelegramLink) -> str:
+    """Ensure the TelegramLink points to a conversation for today's date.
+
+    If the current conversation was created on a different day (or doesn't exist),
+    creates a new conversation for today and updates the link.
+
+    Returns the conversation_id to use.
+    """
+    today = date.today()
+    conv_id = link.conversation_id
+
+    # Check if existing conversation was created today
+    if conv_id:
+        try:
+            result = await db.execute(
+                text("""
+                    SELECT "createdAt" FROM "Conversation" WHERE id = :cid
+                """),
+                {"cid": conv_id},
+            )
+            row = result.mappings().first()
+            if row and row["createdAt"].date() == today:
+                return conv_id
+        except Exception:
+            logger.debug("Could not check conversation date")
+
+    # Create a new conversation for today
+    title = f"Telegram \u2014 {today.strftime('%b %-d, %Y')}"
+    new_conv_id = await _create_conversation(
+        db, link.workspace_id, link.telegram_user_id, title=title,
+    )
+
+    # Update the link to point to today's conversation
+    try:
+        await db.execute(
+            text("""
+                UPDATE telegram_links SET conversation_id = :cid, updated_at = :now
+                WHERE id = :lid
+            """),
+            {"cid": new_conv_id, "now": datetime.utcnow(), "lid": link.id},
+        )
+        await db.commit()
+    except Exception:
+        logger.debug("Could not update telegram_links conversation_id")
+        await db.rollback()
+
+    # Also update the in-memory object so the rest of the handler uses it
+    link.conversation_id = new_conv_id
+    return new_conv_id
 
 
 async def _load_messages(db, conversation_id: str | None, limit: int = 20) -> list[dict]:

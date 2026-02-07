@@ -164,6 +164,18 @@ GOOGLE_CLIENT_SECRET=GOCSPX-your-client-secret
 
 Restart the app and you're ready to log in at http://localhost:3000/login.
 
+## Enable Gmail (Email Sending)
+
+To let QRev agents send emails through your Gmail account, you need to enable the Gmail API in the same Google Cloud project:
+
+1. Go to [Google Cloud Console > APIs & Services > Library](https://console.cloud.google.com/apis/library)
+2. Search for **Gmail API** and click **Enable**
+3. Log out of QRev and log back in to grant Gmail permissions
+
+That's it — QRev handles token sync and refresh automatically.
+
+> **Full setup guide**: See [PROVIDERS_README.md](PROVIDERS_README.md) for detailed instructions, troubleshooting, and how the token lifecycle works.
+
 ## Connect Anthropic
 
 1. Go to https://console.anthropic.com
