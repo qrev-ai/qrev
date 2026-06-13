@@ -109,7 +109,7 @@ These APIs is responsible for handling all campaign sequence-related operations,
    2. Generate a new sequence ID and store the prospect list in a Mongo collection. 
    3. AI server will asynchronously generate a message subject and message body for each prospect and store it in the Mongo collection and it will call a backend API notifying that message generation is complete.
    4. Return back the list of actions in the response.
-5. After recieving response from AI server, it performs the following actions:
+5. After receiving response from AI server, it performs the following actions:
    1. Detect the sequence ID in the list of actions present in the response of AI server.
    2. Create/update People in the CRM.
    3. Create the sequence, sequence step, and sequence prospects.
